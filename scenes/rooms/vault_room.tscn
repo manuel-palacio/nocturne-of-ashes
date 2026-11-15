@@ -1,0 +1,396 @@
+[gd_scene format=3]
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_nm287"]
+vertices = PackedVector3Array(-7, 0.3, -4.25, -5.75, 0.3, -4.5, -5.75, 0.3, -7.25, -11.25, 0.3, -2, -6.5, 0.3, -2.25, -7, 0.3, -2.5, -11.25, 0.3, -7.25, -5, 0.3, -4.5, 5, 0.3, -4.25, 6.25, 0.3, -4.5, 6.25, 0.3, -7.25, 1.25, 0.3, -3.5, 5, 0.3, -3.25, 1, 0.3, -4.5, -4.75, 0.3, -3.5, -1, 0.3, -3.25, -0.75, 0.3, -4.5, 7.25, 0.3, -4.25, 11.5, 0.3, -7.25, 6, 0.3, -2.25, 6, 0.3, 2.5, 6.75, 0.3, 2.5, 7.25, 0.3, -2.75, 11.5, 0.3, 2.25, -1, 0.3, -2.5, -5.25, 0.3, -2.25, -5, 0.3, 2.5, -4.75, 0.3, 3.5, -1, 0.3, 3.5, -0.75, 0.3, 2.5, 0, 0.3, -2.25, 0.25, 0.3, 2.5, -6, 0.3, -2.25, -5.75, 0.3, 2.5, 1.25, 0.3, 3.5, 5, 0.3, 3.5, 5, 0.3, 2.75, 1, 0.3, 2.5, 5, 0.3, -2.5, 0.75, 0.3, -2.25, -6, 0.3, 7.5, -6, 0.3, 4.75, -7, 0.3, 4.5, -11.25, 0.3, 7.5, -7, 0.3, 2.75, 7.25, 0.3, 4.25, 6, 0.3, 4.75, 6, 0.3, 7.5, 7.25, 0.3, 2.75, 11.5, 0.3, 7.5, -5.25, 0.3, 4.75, 5, 0.3, 4.5, -0.75, 0.3, 4.75, 0.75, 0.3, 4.75)
+polygons = [PackedInt32Array(2, 1, 0), PackedInt32Array(5, 4, 3), PackedInt32Array(0, 5, 3), PackedInt32Array(2, 0, 6), PackedInt32Array(6, 0, 3), PackedInt32Array(7, 1, 2), PackedInt32Array(10, 9, 8), PackedInt32Array(8, 12, 11), PackedInt32Array(11, 13, 8), PackedInt32Array(8, 13, 10), PackedInt32Array(14, 7, 15), PackedInt32Array(15, 7, 16), PackedInt32Array(16, 2, 13), PackedInt32Array(13, 2, 10), PackedInt32Array(16, 7, 2), PackedInt32Array(9, 10, 17), PackedInt32Array(17, 10, 18), PackedInt32Array(20, 19, 21), PackedInt32Array(21, 19, 22), PackedInt32Array(22, 17, 18), PackedInt32Array(21, 22, 23), PackedInt32Array(23, 22, 18), PackedInt32Array(15, 24, 14), PackedInt32Array(14, 24, 25), PackedInt32Array(28, 27, 26), PackedInt32Array(28, 26, 29), PackedInt32Array(29, 26, 25), PackedInt32Array(29, 25, 24), PackedInt32Array(29, 24, 30), PackedInt32Array(30, 31, 29), PackedInt32Array(26, 33, 25), PackedInt32Array(25, 33, 32), PackedInt32Array(35, 34, 36), PackedInt32Array(36, 34, 37), PackedInt32Array(12, 38, 11), PackedInt32Array(11, 38, 39), PackedInt32Array(37, 31, 39), PackedInt32Array(39, 31, 30), PackedInt32Array(36, 37, 20), PackedInt32Array(20, 37, 19), PackedInt32Array(19, 37, 38), PackedInt32Array(38, 37, 39), PackedInt32Array(41, 40, 42), PackedInt32Array(42, 40, 43), PackedInt32Array(32, 33, 4), PackedInt32Array(4, 33, 44), PackedInt32Array(4, 44, 3), PackedInt32Array(42, 43, 44), PackedInt32Array(44, 43, 3), PackedInt32Array(47, 46, 45), PackedInt32Array(48, 21, 23), PackedInt32Array(45, 48, 23), PackedInt32Array(47, 45, 49), PackedInt32Array(49, 45, 23), PackedInt32Array(40, 41, 50), PackedInt32Array(51, 46, 47), PackedInt32Array(34, 35, 51), PackedInt32Array(50, 27, 40), PackedInt32Array(40, 27, 52), PackedInt32Array(52, 27, 28), PackedInt32Array(52, 53, 40), PackedInt32Array(40, 53, 47), PackedInt32Array(34, 51, 53), PackedInt32Array(53, 51, 47)]
+geometry_parsed_geometry_type = 1
+geometry_collision_mask = 1
+agent_radius = 0.4
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_q8qhh"]
+size = Vector3(24, 0.2, 16)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_v5ykc"]
+albedo_color = Color(0.33, 0.3, 0.27, 1)
+roughness = 0.95
+
+[sub_resource type="BoxMesh" id="BoxMesh_46q5e"]
+material = SubResource("StandardMaterial3D_v5ykc")
+size = Vector3(24, 0.2, 16)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fpvns"]
+size = Vector3(25, 4, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ty2ey"]
+albedo_color = Color(0.25, 0.23, 0.21, 1)
+roughness = 0.95
+
+[sub_resource type="BoxMesh" id="BoxMesh_7w2ed"]
+material = SubResource("StandardMaterial3D_ty2ey")
+size = Vector3(25, 4, 0.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pedi6"]
+size = Vector3(25, 4, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7j6a3"]
+material = SubResource("StandardMaterial3D_ty2ey")
+size = Vector3(25, 4, 0.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qky0d"]
+size = Vector3(0.5, 4, 16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6repd"]
+material = SubResource("StandardMaterial3D_ty2ey")
+size = Vector3(0.5, 4, 16)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qpr11"]
+size = Vector3(0.5, 4, 16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_r2g1e"]
+material = SubResource("StandardMaterial3D_ty2ey")
+size = Vector3(0.5, 4, 16)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7pivj"]
+size = Vector3(1, 4, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2qdfj"]
+albedo_color = Color(0.4, 0.37, 0.33, 1)
+roughness = 0.95
+
+[sub_resource type="BoxMesh" id="BoxMesh_hjb5d"]
+material = SubResource("StandardMaterial3D_2qdfj")
+size = Vector3(1, 4, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6b8w1"]
+size = Vector3(1, 4, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ax8yr"]
+material = SubResource("StandardMaterial3D_2qdfj")
+size = Vector3(1, 4, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_lkyly"]
+size = Vector3(1, 4, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_agc71"]
+material = SubResource("StandardMaterial3D_2qdfj")
+size = Vector3(1, 4, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_nlfsq"]
+size = Vector3(1, 4, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4fiat"]
+material = SubResource("StandardMaterial3D_2qdfj")
+size = Vector3(1, 4, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jiwma"]
+size = Vector3(1, 4, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_py4iw"]
+material = SubResource("StandardMaterial3D_2qdfj")
+size = Vector3(1, 4, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_nihnu"]
+size = Vector3(1, 4, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_q68d8"]
+material = SubResource("StandardMaterial3D_2qdfj")
+size = Vector3(1, 4, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3ri82"]
+albedo_color = Color(1, 0.55, 0.2, 1)
+roughness = 0.95
+emission_enabled = true
+emission = Color(1, 0.5, 0.15, 1)
+emission_energy_multiplier = 3.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_1l5qb"]
+material = SubResource("StandardMaterial3D_3ri82")
+radius = 0.08
+height = 0.16
+
+[sub_resource type="Animation" id="Animation_sssp6"]
+length = 1.3
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:light_energy")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.26, 0.585, 0.78, 1.04, 1.3),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [2.0, 2.3, 1.8, 2.2, 1.7, 2.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_4yw8k"]
+_data = {
+&"flicker": SubResource("Animation_sssp6")
+}
+
+[sub_resource type="Animation" id="Animation_mayn8"]
+length = 1.1
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:light_energy")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.22, 0.495, 0.66, 0.88, 1.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [2.0, 2.3, 1.8, 2.2, 1.7, 2.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_vupmm"]
+_data = {
+&"flicker": SubResource("Animation_mayn8")
+}
+
+[sub_resource type="Animation" id="Animation_ss3rp"]
+length = 1.2
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:light_energy")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.24, 0.54, 0.72, 0.96, 1.2),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [2.0, 2.3, 1.8, 2.2, 1.7, 2.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_eaw6n"]
+_data = {
+&"flicker": SubResource("Animation_ss3rp")
+}
+
+[sub_resource type="Animation" id="Animation_ss8ca"]
+length = 1.4
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:light_energy")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.28, 0.63, 0.84, 1.12, 1.4),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [2.0, 2.3, 1.8, 2.2, 1.7, 2.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_wa4b7"]
+_data = {
+&"flicker": SubResource("Animation_ss8ca")
+}
+
+[sub_resource type="Environment" id="Environment_nnbwr"]
+background_mode = 1
+ambient_light_source = 2
+ambient_light_color = Color(0.05, 0.05, 0.06, 1)
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.11, 0.13, 0.17, 1)
+fog_density = 0.03
+
+[node name="VaultRoom" type="Node3D" unique_id=1926692727]
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=21525076]
+navigation_mesh = SubResource("NavigationMesh_nm287")
+
+[node name="Floor" type="StaticBody3D" parent="NavigationRegion3D" unique_id=559950544]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Floor" unique_id=1603541000]
+shape = SubResource("BoxShape3D_q8qhh")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Floor" unique_id=1976042615]
+mesh = SubResource("BoxMesh_46q5e")
+
+[node name="Walls" type="Node3D" parent="NavigationRegion3D" unique_id=197247660]
+
+[node name="North" type="StaticBody3D" parent="NavigationRegion3D/Walls" unique_id=745302295]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -8.25)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Walls/North" unique_id=957374597]
+shape = SubResource("BoxShape3D_fpvns")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Walls/North" unique_id=1637675718]
+mesh = SubResource("BoxMesh_7w2ed")
+
+[node name="South" type="StaticBody3D" parent="NavigationRegion3D/Walls" unique_id=2090563938]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 8.25)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Walls/South" unique_id=1777041344]
+shape = SubResource("BoxShape3D_pedi6")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Walls/South" unique_id=1536038055]
+mesh = SubResource("BoxMesh_7j6a3")
+
+[node name="West" type="StaticBody3D" parent="NavigationRegion3D/Walls" unique_id=170994453]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.25, 2, 0)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Walls/West" unique_id=785128716]
+shape = SubResource("BoxShape3D_qky0d")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Walls/West" unique_id=1492181714]
+mesh = SubResource("BoxMesh_6repd")
+
+[node name="East" type="StaticBody3D" parent="NavigationRegion3D/Walls" unique_id=989040879]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.25, 2, 0)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Walls/East" unique_id=264627546]
+shape = SubResource("BoxShape3D_qpr11")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Walls/East" unique_id=65729891]
+mesh = SubResource("BoxMesh_r2g1e")
+
+[node name="Pillars" type="Node3D" parent="NavigationRegion3D" unique_id=1686351429]
+
+[node name="Pillar1" type="StaticBody3D" parent="NavigationRegion3D/Pillars" unique_id=1390528635]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 2, -3.5)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Pillars/Pillar1" unique_id=2046301019]
+shape = SubResource("BoxShape3D_7pivj")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Pillars/Pillar1" unique_id=1424682907]
+mesh = SubResource("BoxMesh_hjb5d")
+
+[node name="Pillar2" type="StaticBody3D" parent="NavigationRegion3D/Pillars" unique_id=1457936859]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -3.5)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Pillars/Pillar2" unique_id=319809165]
+shape = SubResource("BoxShape3D_6b8w1")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Pillars/Pillar2" unique_id=187437175]
+mesh = SubResource("BoxMesh_ax8yr")
+
+[node name="Pillar3" type="StaticBody3D" parent="NavigationRegion3D/Pillars" unique_id=1554379845]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 2, -3.5)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Pillars/Pillar3" unique_id=1636535537]
+shape = SubResource("BoxShape3D_lkyly")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Pillars/Pillar3" unique_id=1639995127]
+mesh = SubResource("BoxMesh_agc71")
+
+[node name="Pillar4" type="StaticBody3D" parent="NavigationRegion3D/Pillars" unique_id=821200900]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 2, 3.5)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Pillars/Pillar4" unique_id=1639164494]
+shape = SubResource("BoxShape3D_nlfsq")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Pillars/Pillar4" unique_id=1818349113]
+mesh = SubResource("BoxMesh_4fiat")
+
+[node name="Pillar5" type="StaticBody3D" parent="NavigationRegion3D/Pillars" unique_id=505596366]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 3.5)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Pillars/Pillar5" unique_id=796733152]
+shape = SubResource("BoxShape3D_jiwma")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Pillars/Pillar5" unique_id=830666083]
+mesh = SubResource("BoxMesh_py4iw")
+
+[node name="Pillar6" type="StaticBody3D" parent="NavigationRegion3D/Pillars" unique_id=334071684]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 2, 3.5)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Pillars/Pillar6" unique_id=852044342]
+shape = SubResource("BoxShape3D_nihnu")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Pillars/Pillar6" unique_id=1585164199]
+mesh = SubResource("BoxMesh_q68d8")
+
+[node name="Torches" type="Node3D" parent="." unique_id=1898916311]
+
+[node name="Torch1" type="OmniLight3D" parent="Torches" unique_id=1650986968]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 2.6, -2.85)
+light_color = Color(1, 0.58, 0.28, 1)
+light_energy = 2.0
+shadow_enabled = true
+omni_range = 9.0
+
+[node name="Flame" type="MeshInstance3D" parent="Torches/Torch1" unique_id=2128110749]
+cast_shadow = 0
+mesh = SubResource("SphereMesh_1l5qb")
+
+[node name="Flicker" type="AnimationPlayer" parent="Torches/Torch1" unique_id=1409374225]
+libraries/ = SubResource("AnimationLibrary_4yw8k")
+autoplay = &"flicker"
+
+[node name="Torch2" type="OmniLight3D" parent="Torches" unique_id=826710581]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 2.6, 2.85)
+light_color = Color(1, 0.58, 0.28, 1)
+light_energy = 2.0
+omni_range = 9.0
+
+[node name="Flame" type="MeshInstance3D" parent="Torches/Torch2" unique_id=1311647394]
+cast_shadow = 0
+mesh = SubResource("SphereMesh_1l5qb")
+
+[node name="Flicker" type="AnimationPlayer" parent="Torches/Torch2" unique_id=506269796]
+libraries/ = SubResource("AnimationLibrary_vupmm")
+autoplay = &"flicker"
+
+[node name="Torch3" type="OmniLight3D" parent="Torches" unique_id=938976402]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 2.6, -2.85)
+light_color = Color(1, 0.58, 0.28, 1)
+light_energy = 2.0
+omni_range = 9.0
+
+[node name="Flame" type="MeshInstance3D" parent="Torches/Torch3" unique_id=1172309749]
+cast_shadow = 0
+mesh = SubResource("SphereMesh_1l5qb")
+
+[node name="Flicker" type="AnimationPlayer" parent="Torches/Torch3" unique_id=1960037888]
+libraries/ = SubResource("AnimationLibrary_eaw6n")
+autoplay = &"flicker"
+
+[node name="Torch4" type="OmniLight3D" parent="Torches" unique_id=2116177500]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 2.6, 2.85)
+light_color = Color(1, 0.58, 0.28, 1)
+light_energy = 2.0
+shadow_enabled = true
+omni_range = 9.0
+
+[node name="Flame" type="MeshInstance3D" parent="Torches/Torch4" unique_id=723722767]
+cast_shadow = 0
+mesh = SubResource("SphereMesh_1l5qb")
+
+[node name="Flicker" type="AnimationPlayer" parent="Torches/Torch4" unique_id=1783572570]
+libraries/ = SubResource("AnimationLibrary_wa4b7")
+autoplay = &"flicker"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=794636359]
+environment = SubResource("Environment_nnbwr")
+
+[node name="PlayerSpawn" type="Marker3D" parent="." unique_id=613580563]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.3, 0)
+
+[node name="EnemySpawn1" type="Marker3D" parent="." unique_id=446674365]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.3, 0)
+
+[node name="EnemySpawn2" type="Marker3D" parent="." unique_id=1306045798]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0.3, -2.5)
+
+[node name="EnemySpawn3" type="Marker3D" parent="." unique_id=771915445]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0.3, 2.5)

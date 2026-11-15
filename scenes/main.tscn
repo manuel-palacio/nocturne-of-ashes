@@ -1,0 +1,25 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://src/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/rooms/vault_room.tscn" id="2_room"]
+[ext_resource type="Script" path="res://src/player/camera_rig.gd" id="3_rig"]
+[ext_resource type="Script" path="res://src/player/player_input.gd" id="4_input"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="5_hud"]
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="VaultRoom" parent="." instance=ExtResource("2_room")]
+
+[node name="Units" type="Node3D" parent="."]
+
+[node name="CameraRig" type="Node3D" parent="."]
+script = ExtResource("3_rig")
+
+[node name="Camera" type="Camera3D" parent="CameraRig"]
+current = true
+
+[node name="PlayerInput" type="Node" parent="."]
+script = ExtResource("4_input")
+
+[node name="Hud" parent="." instance=ExtResource("5_hud")]
