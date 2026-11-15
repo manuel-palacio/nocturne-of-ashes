@@ -48,15 +48,19 @@ func _physics_process(delta: float) -> void:
 	if _order_pending:
 		_apply_order()
 		return
+	var chasing: bool = not is_same(_attack_target, null)
 	if _agent.is_navigation_finished():
 		_halt()
-		arrived.emit()
+		if not chasing:
+			arrived.emit()
 		return
 	var to_next: Vector3 = _agent.get_next_path_position() - global_position
 	to_next.y = 0.0
 	velocity = to_next.normalized() * move_speed
 	move_and_slide()
-	_check_progress(delta)
+	# A chase re-aims on its own, and a blocked chaser keeps trying.
+	if not chasing:
+		_check_progress(delta)
 
 
 ## Walks to the reachable navmesh point nearest to `target`. Ignored once dead.
@@ -73,6 +77,7 @@ func order_attack(target: Unit) -> void:
 	if not is_alive() or _melee == null or target == null or not target.is_alive() or not is_hostile_to(target):
 		return
 	_attack_target = target
+	_walk_to(target.global_position)
 
 
 func attack_target() -> Unit:
@@ -124,7 +129,8 @@ func _pursue() -> void:
 	var target_at: Vector3 = _attack_target.global_position
 	if not _melee.in_range(_attack_target):
 		var drift: Vector3 = target_at - _ordered_target
-		if not _moving or Vector2(drift.x, drift.z).length() > _CHASE_RETARGET:
+		# Re-aim only when the target has moved, so a path ending short of it does not re-path each frame.
+		if Vector2(drift.x, drift.z).length() > _CHASE_RETARGET:
 			_walk_to(target_at)
 		return
 	_halt()
