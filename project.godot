@@ -48,6 +48,10 @@ confirm={
 3d_physics/layer_1="world"
 3d_physics/layer_2="units"
 
+[navigation]
+
+world/region_use_async_iterations=false
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
