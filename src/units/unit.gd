@@ -4,6 +4,7 @@ extends CharacterBody3D
 
 signal died(unit: Unit)
 signal arrived
+signal attack_ended
 
 @export var stats: Stats
 @export var faction: StringName = &"player"
@@ -13,6 +14,8 @@ signal arrived
 ## An order that has moved the unit less than this in `_STALL_TIME` is dropped with a warning.
 const _STALL_DISTANCE: float = 0.1
 const _STALL_TIME: float = 1.0
+## While chasing, the walk is re-aimed once the target has moved this far from where it was headed.
+const _CHASE_RETARGET: float = 0.5
 
 var _moving: bool = false
 ## True while the order waits for the navigation map to contain a navmesh.
@@ -20,10 +23,12 @@ var _order_pending: bool = false
 var _ordered_target: Vector3
 var _stall_from: Vector3
 var _stall_timer: float = 0.0
+var _attack_target: Unit
 
 @onready var _agent: NavigationAgent3D = $Agent
 @onready var _body: MeshInstance3D = $Body
 @onready var _collision: CollisionShape3D = $CollisionShape3D
+@onready var _melee: MeleeAttack = get_node_or_null(^"Melee")
 
 
 func _ready() -> void:
@@ -35,13 +40,16 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# A freed target compares equal to null, so test for "no reference held" with is_same.
+	if not is_same(_attack_target, null):
+		_pursue()
 	if not _moving:
 		return
 	if _order_pending:
 		_apply_order()
 		return
 	if _agent.is_navigation_finished():
-		stop()
+		_halt()
 		arrived.emit()
 		return
 	var to_next: Vector3 = _agent.get_next_path_position() - global_position
@@ -56,13 +64,35 @@ func _physics_process(delta: float) -> void:
 func order_move(target: Vector3) -> void:
 	if not is_alive():
 		return
+	_attack_target = null
+	_walk_to(target)
+
+
+## Chases `target` into melee range and strikes it until it dies. Ignored for friends and the dead.
+func order_attack(target: Unit) -> void:
+	if not is_alive() or _melee == null or target == null or not target.is_alive() or not is_hostile_to(target):
+		return
+	_attack_target = target
+
+
+func attack_target() -> Unit:
+	return _attack_target if is_instance_valid(_attack_target) else null
+
+
+## Halts and drops any attack.
+func stop() -> void:
+	_attack_target = null
+	_halt()
+
+
+func _walk_to(target: Vector3) -> void:
 	_ordered_target = target
 	_order_pending = true
 	_moving = true
 	_apply_order()
 
 
-func stop() -> void:
+func _halt() -> void:
 	_moving = false
 	_order_pending = false
 	velocity = Vector3.ZERO
@@ -84,6 +114,25 @@ func _apply_order() -> void:
 	_order_pending = false
 	_stall_from = global_position
 	_stall_timer = 0.0
+
+
+func _pursue() -> void:
+	if not is_instance_valid(_attack_target) or not _attack_target.is_alive():
+		stop()
+		attack_ended.emit()
+		return
+	var target_at: Vector3 = _attack_target.global_position
+	if not _melee.in_range(_attack_target):
+		var drift: Vector3 = target_at - _ordered_target
+		if not _moving or Vector2(drift.x, drift.z).length() > _CHASE_RETARGET:
+			_walk_to(target_at)
+		return
+	_halt()
+	var facing: Vector3 = target_at - global_position
+	if Vector2(facing.x, facing.z).length() > 0.01:
+		rotation.y = atan2(-facing.x, -facing.z)
+	if _melee.ready_to_swing():
+		_melee.try_hit(_attack_target)
 
 
 func _check_progress(delta: float) -> void:
