@@ -1,0 +1,47 @@
+[gd_scene format=3]
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_0ll1q"]
+vertices = PackedVector3Array(6.5, 0.3, -1.5, 6.75, 0.3, 0, 9.5, 0.3, 0, 9.5, 0.3, -9.5, 3.75, 0.3, -1.5, -9.5, 0.3, -9.5, -9.5, 0.3, 0, 3.5, 0.3, 0, 5, 0.3, 9.5, 5.25, 0.3, 1.75, 3.5, 0.3, 1.5, -9.5, 0.3, 9.5, 6.75, 0.3, 1.25, 9.5, 0.3, 9.5)
+polygons = [PackedInt32Array(1, 0, 2), PackedInt32Array(2, 0, 3), PackedInt32Array(6, 5, 4), PackedInt32Array(4, 5, 3), PackedInt32Array(3, 0, 4), PackedInt32Array(4, 7, 6), PackedInt32Array(9, 8, 10), PackedInt32Array(10, 8, 11), PackedInt32Array(10, 11, 6), PackedInt32Array(6, 7, 10), PackedInt32Array(12, 1, 2), PackedInt32Array(8, 9, 12), PackedInt32Array(2, 13, 12), PackedInt32Array(12, 13, 8)]
+geometry_parsed_geometry_type = 1
+region_min_size = 8.0
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7esbw"]
+size = Vector3(20, 0.2, 20)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ikcxo"]
+size = Vector3(20, 0.2, 20)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_nsk2c"]
+size = Vector3(2, 2, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4t1vc"]
+size = Vector3(2, 2, 2)
+
+[node name="FlatRoom" type="Node3D" unique_id=204905686]
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=1463164054]
+navigation_mesh = SubResource("NavigationMesh_0ll1q")
+
+[node name="Floor" type="StaticBody3D" parent="NavigationRegion3D" unique_id=639794426]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Floor" unique_id=1043683890]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+shape = SubResource("BoxShape3D_7esbw")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Floor" unique_id=157992740]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+mesh = SubResource("BoxMesh_ikcxo")
+
+[node name="Obstacle" type="StaticBody3D" parent="NavigationRegion3D" unique_id=256164640]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Obstacle" unique_id=973361854]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("BoxShape3D_nsk2c")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Obstacle" unique_id=401633877]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("BoxMesh_4t1vc")
+
+[node name="Spawn" type="Marker3D" parent="." unique_id=581369655]
