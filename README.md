@@ -8,5 +8,9 @@ party, use blood powers and make choices that cost something.
 
 Run the tests: `ops/test.sh`
 
+Build for the browser: `ops/build-web.sh`
+
+Browser tests: `npx playwright test` (after `npm install` and a browser build; Chromium runs headed)
+
 - Design: [docs/superpowers/specs/2026-11-15-vertical-slice-design.md](docs/superpowers/specs/2026-11-15-vertical-slice-design.md)
 - Plan: [docs/superpowers/plans/2026-11-15-milestone-1-first-room.md](docs/superpowers/plans/2026-11-15-milestone-1-first-room.md)
