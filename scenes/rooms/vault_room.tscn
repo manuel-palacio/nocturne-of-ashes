@@ -25,30 +25,30 @@ size = Vector3(25, 4, 0.5)
 albedo_color = Color(0.25, 0.23, 0.21, 1)
 roughness = 0.95
 
-[sub_resource type="BoxMesh" id="BoxMesh_7w2ed"]
+[sub_resource type="QuadMesh" id="QuadMesh_north"]
 material = SubResource("StandardMaterial3D_ty2ey")
-size = Vector3(25, 4, 0.5)
+size = Vector2(24, 4)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_pedi6"]
 size = Vector3(25, 4, 0.5)
 
-[sub_resource type="BoxMesh" id="BoxMesh_7j6a3"]
+[sub_resource type="QuadMesh" id="QuadMesh_south"]
 material = SubResource("StandardMaterial3D_ty2ey")
-size = Vector3(25, 4, 0.5)
+size = Vector2(24, 4)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_qky0d"]
 size = Vector3(0.5, 4, 16)
 
-[sub_resource type="BoxMesh" id="BoxMesh_6repd"]
+[sub_resource type="QuadMesh" id="QuadMesh_west"]
 material = SubResource("StandardMaterial3D_ty2ey")
-size = Vector3(0.5, 4, 16)
+size = Vector2(16, 4)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_qpr11"]
 size = Vector3(0.5, 4, 16)
 
-[sub_resource type="BoxMesh" id="BoxMesh_r2g1e"]
+[sub_resource type="QuadMesh" id="QuadMesh_east"]
 material = SubResource("StandardMaterial3D_ty2ey")
-size = Vector3(0.5, 4, 16)
+size = Vector2(16, 4)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_7pivj"]
 size = Vector3(1, 4, 1)
@@ -195,12 +195,8 @@ _data = {
 [sub_resource type="Environment" id="Environment_nnbwr"]
 background_mode = 1
 ambient_light_source = 2
-ambient_light_color = Color(0.05, 0.05, 0.06, 1)
+ambient_light_color = Color(0.16, 0.18, 0.26, 1)
 tonemap_mode = 2
-fog_enabled = true
-fog_light_color = Color(0.11, 0.13, 0.17, 1)
-fog_density = 0.03
-fog_sky_affect = 0.0
 
 [node name="VaultRoom" type="Node3D" unique_id=1926692727]
 
@@ -227,7 +223,9 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_fpvns")
 
 [node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Walls/North" unique_id=1637675718]
-mesh = SubResource("BoxMesh_7w2ed")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.25)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_north")
 
 [node name="South" type="StaticBody3D" parent="NavigationRegion3D/Walls" unique_id=2090563938]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 8.25)
@@ -237,7 +235,9 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_pedi6")
 
 [node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Walls/South" unique_id=1536038055]
-mesh = SubResource("BoxMesh_7j6a3")
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -0.25)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_south")
 
 [node name="West" type="StaticBody3D" parent="NavigationRegion3D/Walls" unique_id=170994453]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.25, 2, 0)
@@ -247,7 +247,9 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_qky0d")
 
 [node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Walls/West" unique_id=1492181714]
-mesh = SubResource("BoxMesh_6repd")
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0.25, 0, 0)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_west")
 
 [node name="East" type="StaticBody3D" parent="NavigationRegion3D/Walls" unique_id=989040879]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.25, 2, 0)
@@ -257,7 +259,9 @@ collision_mask = 0
 shape = SubResource("BoxShape3D_qpr11")
 
 [node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Walls/East" unique_id=65729891]
-mesh = SubResource("BoxMesh_r2g1e")
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -0.25, 0, 0)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_east")
 
 [node name="Pillars" type="Node3D" parent="NavigationRegion3D" unique_id=1686351429]
 
