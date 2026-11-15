@@ -1,0 +1,9 @@
+.godot/
+build/
+node_modules/
+test-results/
+playwright-report/
+logs/
+LOCAL.md
+__pycache__/
+.superpowers/
