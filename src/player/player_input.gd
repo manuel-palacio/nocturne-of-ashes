@@ -4,7 +4,8 @@ extends Node
 
 ## Length of the click ray, in metres.
 const _RAY_LENGTH: float = 100.0
-## The click ray tests the "world" (1) and "units" (2) physics layers.
+## The click ray tests the "world" (1) and "units" (2) physics layers. It skips "walls" (3):
+## the wall nearest the camera is not drawn, and its collider must not catch clicks meant for the floor.
 const _RAY_MASK: int = 0b11
 
 var unit: Unit
