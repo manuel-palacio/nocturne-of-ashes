@@ -24,10 +24,10 @@ var _ordered_target: Vector3
 var _stall_from: Vector3
 var _stall_timer: float = 0.0
 var _attack_target: Unit
+var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @onready var _agent: NavigationAgent3D = $Agent
 @onready var _body: MeshInstance3D = $Body
-@onready var _collision: CollisionShape3D = $CollisionShape3D
 @onready var _melee: MeleeAttack = get_node_or_null(^"Melee")
 
 
@@ -43,24 +43,39 @@ func _physics_process(delta: float) -> void:
 	# A freed target compares equal to null, so test for "no reference held" with is_same.
 	if not is_same(_attack_target, null):
 		_pursue()
+	var chasing: bool = not is_same(_attack_target, null)
+	var walking: bool = _steer()
+	var was_on_floor: bool = is_on_floor()
+	if not was_on_floor:
+		velocity.y -= _gravity * delta
+	move_and_slide()
+	# An order measured in the air holds the wrong height gap; measure it again on landing.
+	if _moving and not was_on_floor and is_on_floor():
+		_order_pending = true
+	# A chase re-aims on its own, and a blocked chaser keeps trying.
+	if walking and not chasing:
+		_check_progress(delta)
+
+
+## Sets the horizontal velocity towards the next path point. Returns whether the unit walks this frame.
+func _steer() -> bool:
 	if not _moving:
-		return
+		return false
 	if _order_pending:
 		_apply_order()
-		return
-	var chasing: bool = not is_same(_attack_target, null)
+		return false
 	if _agent.is_navigation_finished():
+		var chasing: bool = not is_same(_attack_target, null)
 		_halt()
 		if not chasing:
 			arrived.emit()
-		return
+		return false
 	var to_next: Vector3 = _agent.get_next_path_position() - global_position
 	to_next.y = 0.0
-	velocity = to_next.normalized() * move_speed
-	move_and_slide()
-	# A chase re-aims on its own, and a blocked chaser keeps trying.
-	if not chasing:
-		_check_progress(delta)
+	var step: Vector3 = to_next.normalized() * move_speed
+	velocity.x = step.x
+	velocity.z = step.z
+	return true
 
 
 ## Walks to the reachable navmesh point nearest to `target`. Ignored once dead.
@@ -97,10 +112,12 @@ func _walk_to(target: Vector3) -> void:
 	_apply_order()
 
 
+## Stops walking; a fall in progress carries on.
 func _halt() -> void:
 	_moving = false
 	_order_pending = false
-	velocity = Vector3.ZERO
+	velocity.x = 0.0
+	velocity.z = 0.0
 
 
 func _apply_order() -> void:
@@ -109,6 +126,9 @@ func _apply_order() -> void:
 	if not map.is_valid() or NavigationServer3D.map_get_iteration_id(map) == 0:
 		return
 	if not NavigationServer3D.map_get_closest_point_owner(map, _ordered_target).is_valid():
+		return
+	# The height gap below is measured from where the feet come to rest, so wait for the landing.
+	if not is_on_floor():
 		return
 	# The baked surface rarely lies exactly at the unit's feet. The agent compares positions in 3D,
 	# so its path points are lowered by the measured gap, and so is the target.
@@ -166,6 +186,7 @@ func is_hostile_to(other: Unit) -> bool:
 
 func _on_stats_died() -> void:
 	stop()
-	_collision.set_deferred(&"disabled", true)
+	# Off every layer, so clicks and rays pass through the body, which still rests on the floor.
+	set_deferred(&"collision_layer", 0)
 	_body.rotation.x = PI / 2.0
 	died.emit(self)
