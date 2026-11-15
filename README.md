@@ -10,7 +10,9 @@ Run the tests: `ops/test.sh`
 
 Build for the browser: `ops/build-web.sh`
 
-Browser tests: `npx playwright test` (after `npm install` and a browser build; Chromium runs headed)
+Browser tests: `npx playwright test` (after `npm install` and a browser build)
+
+The Chromium run opens a browser window, because headless Chromium renders WebGL in software and cannot hold the frame rate.
 
 - Design: [docs/superpowers/specs/2026-11-15-vertical-slice-design.md](docs/superpowers/specs/2026-11-15-vertical-slice-design.md)
 - Plan: [docs/superpowers/plans/2026-11-15-milestone-1-first-room.md](docs/superpowers/plans/2026-11-15-milestone-1-first-room.md)

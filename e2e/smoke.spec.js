@@ -39,9 +39,15 @@ test('a click on the floor walks the character there', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('left alone, the enemies come and the character can fall and rise again', async ({ page }) => {
+test('approached, the enemies attack and the character can fall and rise again', async ({ page }) => {
   test.setTimeout(180000);
   const errors = await open(page, 'probe=1');
+  // The enemies hold until he comes within their aggro radius, so walk him east towards them.
+  const box = await page.locator('canvas').boundingBox();
+  for (let clicks = 0; clicks < 12 && (await state(page)).health === 120; clicks++) {
+    await page.mouse.click(box.x + box.width * 0.75, box.y + box.height * 0.5);
+    await page.waitForTimeout(1000);
+  }
   await page.waitForFunction(() => { window.nocturneProbe(); return window.nocturneState.fallen; }, null, { timeout: 120000 });
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => { window.nocturneProbe(); const s = window.nocturneState; return !s.fallen && s.health === 120 && s.enemies === 3; }, null, { timeout: 15000 });
