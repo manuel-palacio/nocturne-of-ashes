@@ -36,4 +36,3 @@ mesh = SubResource("CapsuleMesh_body")
 [node name="Agent" type="NavigationAgent3D" parent="."]
 path_desired_distance = 0.3
 target_desired_distance = 0.3
-path_height_offset = 0.3
