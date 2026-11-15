@@ -200,6 +200,7 @@ tonemap_mode = 2
 fog_enabled = true
 fog_light_color = Color(0.11, 0.13, 0.17, 1)
 fog_density = 0.03
+fog_sky_affect = 0.0
 
 [node name="VaultRoom" type="Node3D" unique_id=1926692727]
 
