@@ -2,6 +2,9 @@ class_name Main
 extends Node3D
 ## Runs the vault room: spawns Álvar and the crusaders, wires camera, input and HUD, and restarts after a fall.
 
+## Emitted at the end of `start_room()`, once the new round's units are in place.
+signal room_started
+
 const ALVAR: PackedScene = preload("res://scenes/units/alvar.tscn")
 const CRUSADER: PackedScene = preload("res://scenes/units/crusader.tscn")
 
@@ -46,6 +49,7 @@ func start_room() -> void:
 	input.enabled = true
 	hud.bind(player)
 	hud.hide_fallen()
+	room_started.emit()
 
 
 func enemies_alive() -> int:
