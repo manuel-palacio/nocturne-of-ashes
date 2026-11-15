@@ -824,3 +824,53 @@ The last assertion assumes the camera's starting yaw puts world +X to the right 
 - [ ] **Step 7: Look at it** — open `build/e2e/room.png`. Expected: the same readable torch-lit room as in Task 6, Step 5. Differences between the desktop and browser renders are the point of this milestone: list any in the task report.
 - [ ] **Step 8: Update `README.md`** — add "Build for the browser: `ops/build-web.sh`" and "Browser tests: `npx playwright test`".
 - [ ] **Step 9: Commit** — `feat: add the web export with browser tests`
+
+---
+
+## Amendments made while building
+
+These decisions changed what the tasks above describe. The code follows the amendments.
+
+- **Test totals.** Review fixes added tests, so the suite ends at 61 unit tests, not the 44 the tasks predict.
+- **Navigation.** A unit holds an order until the navigation map is ready and it is standing on the floor, measures the height between its feet and the navmesh itself, and stops with a warning if a plain move order makes no progress for a second. Units have gravity. Navigation region updates run synchronously (`project.godot`).
+- **Chasing.** The stall check does not apply while a unit holds an attack target, and `arrived` is emitted only for move orders.
+- **Task 6, look of the room.** The environment fog is off: distance fog measured from an elevated camera hazes the whole picture. Darkness comes from light fall-off over a low cool ambient. The camera uses a 25° field of view at 30 m (range 20–40) set on the rig instance in `scenes/main.tscn`; `CameraRig`'s script defaults are unchanged. Walls are drawn as inward-facing surfaces so the wall nearest the camera is not drawn. Each torch has a small glowing sphere as its visible source.
+- **Task 6, `confirm`.** `Main` polls the `confirm` action each frame.
+- **Task 7, `room_started`.** `Main` emits `room_started` at the end of `start_room()`; `Probe` uses it for `calm=1`.
+- **Task 7, the fall test.** Enemies hold until the player comes within their aggro radius, so the third smoke test walks the character toward them before waiting for the fall.
+- **Task 7, Chromium.** The Chromium browser tests run headed, because headless Chromium renders WebGL in software and cannot measure the frame rate. The 30 frames-per-second threshold is unchanged.
+- **Walls and clicks.** Wall colliders sit on their own physics layer, `walls` (3), which the click ray skips, so clicks pass through the undrawn wall nearest the camera to the floor or the unit behind it. Units collide with the walls layer and the navmesh bake includes it, so walls still block movement.
+
+## Carried forward
+
+Known and accepted at the end of this milestone, with the milestone that should pick each up.
+
+**Milestone 2 (party and blood)**
+- Give `Unit` an explicit order state in place of its three flags, and move its navigation plumbing into a child node, before adding stun, feeding, the Fury or casting.
+- Add a `Unit` entry point for taking a hit and one for reviving; melee damage currently goes straight to `Stats`. Death presentation must be reversible and rest on the floor (the body currently pivots at mid-height).
+- Split click picking into "unit under the cursor" and "ground under the cursor", shared by select, attack, Gift targeting and move. Clicking the controlled unit currently orders a move.
+- `Main.player` becomes a party with a selected unit; `Probe` and the browser tests change with it, and `Main` should register with `Probe`.
+- Enemies never reconsider a target and have no leash; they measure aggro in 3D while melee range is flat. A chaser idles until its target drifts 0.5 m, and a chaser blocked forever never ends its attack.
+- `Stats` does not guard a maximum of zero or less; `MeleeAttack.try_hit` does not check its own unit is alive.
+- A base unit scene, before more unit types copy the layout.
+- Space is bound to `confirm` and is wanted for pause.
+- Camera follow runs per frame while units move per physics tick; judge jitter on a high-refresh display.
+- Untested: the `hit` signal, nearest-of-several targeting, wheel zoom, Q/E rotation, follow smoothing.
+- No feedback when the last enemy dies.
+
+**Milestone 3 (talk and choose)**
+- An order given on a map that never becomes ready waits forever without a warning.
+- Wheel zoom ignores `PlayerInput.enabled`.
+- The fallen prompt is a hard-coded English string.
+- Restart needs keyboard focus on the canvas.
+
+**Milestone 4 (Toledo's look)**
+- Pillars lean 15–20° at the screen edges with the camera pitched 50°; pillar-mounted shadow torches throw a large dark wedge; the ambient was raised to keep unlit surfaces readable. Revisit pitch, wall and pillar heights and fog with real art.
+- Units do not face their direction of travel.
+- Navigation on non-flat ground: the height gap is measured once per order, landing re-arms a pending order, and an order waits forever if a unit never lands.
+- The agent radius of 0.4 rounds up to 0.5 at the default bake cell size.
+
+**Milestone 6 (out the door)**
+- `Probe` ships in the release build, so `?probe=1&calm=1` works on a public URL.
+- The headed Chromium test project fails on a machine without a display.
+- The repository has no licence file.
