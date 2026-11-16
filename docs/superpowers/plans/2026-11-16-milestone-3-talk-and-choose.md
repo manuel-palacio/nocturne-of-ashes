@@ -1987,3 +1987,9 @@ Each item is one small change with its test.
 - [ ] **Step 2: Fix items 1–6, one commit each** (`fix:` with a subject that says what changed).
 - [ ] **Step 3: Item 7** — `test: free everything the tests create` and `chore: fail the test run on orphan nodes`.
 - [ ] **Step 4: Run** — `ops/test.sh`, `ops/build-web.sh`, `npx playwright test --trace off`. Expected: all green, no orphans reported.
+
+---
+
+### After the last task: put the milestone online
+
+Once the final review's fixes are in and the suites are green, the controller (not a task implementer) runs `ops/deploy-fly.sh`, checks that https://nocturne-of-ashes.fly.dev/ serves the new build and that the game starts there, and reports the address. The owner has asked for this at the end of every milestone.

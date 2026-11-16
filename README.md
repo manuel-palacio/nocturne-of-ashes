@@ -6,6 +6,8 @@ a waking in the present day. The first deliverable is a vertical slice set in me
 Toledo that proves the core loop is fun: explore a hub, talk, feed, fight with a small
 party, use blood powers and make choices that cost something.
 
+Play the latest milestone in a desktop browser: https://nocturne-of-ashes.fly.dev/
+
 Run the tests: `ops/test.sh`
 
 Build for the browser: `ops/build-web.sh`
@@ -27,3 +29,5 @@ The Chromium run opens a browser window, because headless Chromium renders WebGL
 - Space pauses and resumes the world; orders given while paused begin on resume.
 - Q and E turn the camera; the mouse wheel zooms.
 - Enter restarts the room after Álvar falls.
+
+Deploy to Fly.io (needs the fly CLI, logged in): `ops/deploy-fly.sh`
