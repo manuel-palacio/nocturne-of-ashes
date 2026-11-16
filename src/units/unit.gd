@@ -51,6 +51,7 @@ var _fallen: Transform3D
 @onready var _effects: Effects = $Effects
 @onready var _feeder: Feeder = $Feeder
 @onready var _fury: Fury = $Fury
+@onready var _feed_mark: Node3D = $FeedMark
 
 
 func _ready() -> void:
@@ -144,6 +145,15 @@ func can_feed_on(target: Unit) -> bool:
 	if not is_hostile_to(target) or Feeder.is_held(target):
 		return false
 	return float(target.stats.health) / target.stats.max_health <= feed_threshold
+
+
+## Shows or hides the mark that tells the player this unit is weak enough to feed on.
+func set_feed_mark(on: bool) -> void:
+	_feed_mark.visible = on
+
+
+func has_feed_mark() -> bool:
+	return _feed_mark.visible
 
 
 ## True while drinking from the target, after the walk there: the unit neither walks nor strikes.

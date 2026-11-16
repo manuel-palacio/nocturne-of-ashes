@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://src/units/unit.gd" id="1_unit"]
 [ext_resource type="Script" path="res://src/units/mover.gd" id="2_mover"]
@@ -14,6 +14,17 @@ height = 1.8
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
 radius = 0.35
 height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_feed_mark"]
+shading_mode = 0
+albedo_color = Color(1, 0.08, 0.08, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_feed_mark"]
+material = SubResource("StandardMaterial3D_feed_mark")
+radius = 0.15
+height = 0.3
+radial_segments = 12
+rings = 6
 
 [node name="Unit" type="CharacterBody3D"]
 collision_layer = 2
@@ -46,3 +57,9 @@ script = ExtResource("5_feeder")
 
 [node name="Fury" type="Node" parent="."]
 script = ExtResource("6_fury")
+
+[node name="FeedMark" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
+visible = false
+cast_shadow = 0
+mesh = SubResource("SphereMesh_feed_mark")

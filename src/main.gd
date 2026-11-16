@@ -2,7 +2,7 @@ class_name Main
 extends Node3D
 ## Runs the vault room: spawns the party and the crusaders, a sergeant among each group, wires camera,
 ## input and HUD, hands control to the selected party member, raises fallen companions once a fight is
-## over, and restarts after Álvar's fall.
+## over, marks the enemies the selected member can feed on, and restarts after Álvar's fall.
 
 ## Emitted at the end of `start_room()`, once the new round's units are in place.
 signal room_started
@@ -74,6 +74,8 @@ func _process(_delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	if not _paused:
 		_advance_fight_flow(delta)
+	# Also while paused, so the marks are right while the player plans.
+	_update_feed_marks()
 
 
 ## Clears the last round's units and spawns a fresh one, with Álvar selected.
@@ -141,6 +143,7 @@ func select(unit: Unit) -> void:
 	for member: Unit in party:
 		if member.is_alive():
 			_steer_brain(member)
+	_update_feed_marks()
 	selection_changed.emit(unit)
 
 
@@ -189,6 +192,14 @@ func _advance_fight_flow(delta: float) -> void:
 		_revive_fallen()
 
 
+## Marks exactly the living enemies the selected member can feed on, whatever its Blood; none while
+## Álvar is down.
+func _update_feed_marks() -> void:
+	var feeder: Unit = selected if player != null and player.is_alive() else null
+	for enemy: Unit in enemies:
+		enemy.set_feed_mark(feeder != null and feeder.can_feed_on(enemy))
+
+
 func _revive_fallen() -> void:
 	for member: Unit in party:
 		if not member.is_alive():
@@ -218,6 +229,7 @@ func _on_member_died(unit: Unit) -> void:
 	if unit == player:
 		input.cancel_targeting()
 		input.enabled = false
+		_update_feed_marks()
 		hud.show_fallen()
 	elif unit == selected:
 		select(player)
