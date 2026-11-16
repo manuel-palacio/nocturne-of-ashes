@@ -2,7 +2,7 @@ class_name Unit
 extends CharacterBody3D
 ## The body every character uses: carries out its orders, walking through its `Mover`, takes hits,
 ## carries timed status effects, dies with its stats and can be revived. A blood-drinking unit feeds
-## on weakened enemies through its `Feeder`.
+## on weakened enemies through its `Feeder`, and its `Fury` takes it over when Blood is spent too low.
 
 signal died(unit: Unit)
 signal arrived
@@ -14,6 +14,8 @@ signal revived(unit: Unit)
 signal fed(target: Unit)
 ## A feed in progress was given up, with no Blood gained.
 signal feed_broken
+signal fury_started
+signal fury_ended
 
 @export var stats: Stats
 @export var faction: StringName = &"player"
@@ -25,6 +27,11 @@ signal feed_broken
 @export var feed_threshold: float = 0.35
 @export var feed_time: float = 2.0
 @export var feed_gain: int = 40
+## Spending Blood from at or above this to below it starts the Fury.
+@export var fury_threshold: int = 10
+@export var fury_time: float = 5.0
+## Damage dealt is multiplied by this during the Fury.
+@export var fury_damage: float = 1.5
 
 ## What the unit was last told to do; NONE once it is done, stopped or dead.
 enum Order { NONE, MOVE, ATTACK, FEED }
@@ -43,6 +50,7 @@ var _fallen: Transform3D
 @onready var _melee: MeleeAttack = get_node_or_null(^"Melee")
 @onready var _effects: Effects = $Effects
 @onready var _feeder: Feeder = $Feeder
+@onready var _fury: Fury = $Fury
 
 
 func _ready() -> void:
@@ -56,6 +64,9 @@ func _ready() -> void:
 	_effects.changed.connect(effects_changed.emit)
 	_feeder.finished.connect(_on_feed_finished)
 	_feeder.broken.connect(_on_feed_broken)
+	_fury.watch(stats)
+	_fury.started.connect(_on_fury_started)
+	_fury.ended.connect(_on_fury_ended)
 	_standing = _body.transform
 	# Lying on its side, lowered so its lowest point touches the floor at the unit's feet.
 	var lying: Basis = Basis(Vector3.RIGHT, PI / 2.0)
@@ -68,6 +79,8 @@ func _physics_process(delta: float) -> void:
 	if is_stunned():
 		_stand_still()
 	else:
+		if is_in_fury():
+			_rage()
 		if _order == Order.ATTACK:
 			_pursue()
 		elif _order == Order.FEED:
@@ -87,10 +100,10 @@ func current_order() -> Order:
 	return _order
 
 
-## Walks to the reachable navmesh point nearest to `target`. Ignored once dead.
+## Walks to the reachable navmesh point nearest to `target`. Ignored once dead and in the Fury.
 ## An order given before the navigation map has synced is held until it has.
 func order_move(target: Vector3) -> void:
-	if not is_alive():
+	if not is_alive() or is_in_fury():
 		return
 	_feeder.cancel()
 	_attack_target = null
@@ -100,14 +113,12 @@ func order_move(target: Vector3) -> void:
 	_mover.walk_to(target)
 
 
-## Chases `target` into melee range and strikes it until it dies. Ignored for friends and the dead.
+## Chases `target` into melee range and strikes it until it dies. Ignored for friends and the dead,
+## and in the Fury.
 func order_attack(target: Unit) -> void:
-	if not is_alive() or _melee == null or target == null or not target.is_alive() or not is_hostile_to(target):
+	if not is_alive() or is_in_fury() or target == null or not target.is_alive() or not is_hostile_to(target):
 		return
-	_feeder.cancel()
-	_attack_target = target
-	_order = Order.ATTACK
-	_close_in(target)
+	_chase(target)
 
 
 func attack_target() -> Unit:
@@ -115,7 +126,7 @@ func attack_target() -> Unit:
 
 
 ## Closes to melee range of `target`, then feeds on it for `feed_time`, holding it stunned. Ignored
-## unless `can_feed_on(target)`.
+## unless `can_feed_on(target)`, which is never the case in the Fury.
 func order_feed(target: Unit) -> void:
 	if _melee == null or not can_feed_on(target):
 		return
@@ -128,7 +139,7 @@ func order_feed(target: Unit) -> void:
 ## Whether this living blood-drinker can feed on `target`: a living hostile at or below this unit's
 ## `feed_threshold` of its maximum health.
 func can_feed_on(target: Unit) -> bool:
-	if not is_alive() or not drinks_blood or not is_instance_valid(target) or not target.is_alive():
+	if not is_alive() or not drinks_blood or is_in_fury() or not is_instance_valid(target) or not target.is_alive():
 		return false
 	return is_hostile_to(target) and float(target.stats.health) / target.stats.max_health <= feed_threshold
 
@@ -138,9 +149,19 @@ func is_feeding() -> bool:
 	return _feeder.is_drinking()
 
 
-## Halts and drops any order; a feed in progress is broken.
+func is_in_fury() -> bool:
+	return _fury.is_active()
+
+
+## Halts and drops any order; a feed in progress is broken. Ignored in the Fury.
 func stop() -> void:
+	if is_in_fury():
+		return
 	_feeder.cancel()
+	_drop_order()
+
+
+func _drop_order() -> void:
 	_attack_target = null
 	_order = Order.NONE
 	_halt()
@@ -186,6 +207,16 @@ func _approach_feed() -> void:
 		_feeder.start_drinking()
 
 
+## Attacks `target` whatever its faction: the checks are the caller's. Breaks a feed in progress.
+func _chase(target: Unit) -> void:
+	if _melee == null:
+		return
+	_feeder.cancel()
+	_attack_target = target
+	_order = Order.ATTACK
+	_close_in(target)
+
+
 ## Starts a chase towards `target`. A chase re-aims on its own, and a blocked chaser keeps trying.
 func _close_in(target: Unit) -> void:
 	_mover.stall_check = false
@@ -219,6 +250,31 @@ func _on_feed_broken() -> void:
 	_order = Order.NONE
 	_halt()
 	feed_broken.emit()
+
+
+## In the Fury the unit keeps after its victim while it lives, then turns on the nearest unit of any
+## faction; with no one left it stands idle.
+func _rage() -> void:
+	var victim: Unit = attack_target()
+	if victim != null and victim.is_alive():
+		return
+	victim = _fury.nearest_victim()
+	if victim == null:
+		_drop_order()
+	else:
+		_chase(victim)
+
+
+func _on_fury_started() -> void:
+	_feeder.cancel()
+	_drop_order()
+	fury_started.emit()
+	_rage()
+
+
+func _on_fury_ended() -> void:
+	_drop_order()
+	fury_ended.emit()
 
 
 ## Metres per second while walking, with the effects applied.
@@ -302,6 +358,7 @@ func is_hostile_to(other: Unit) -> bool:
 
 
 func _on_stats_died() -> void:
+	_fury.end()
 	stop()
 	clear_effects()
 	# Off every layer, so clicks and rays pass through the body, which still rests on the floor.
