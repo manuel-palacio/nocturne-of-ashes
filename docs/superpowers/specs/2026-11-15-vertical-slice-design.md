@@ -132,7 +132,7 @@ instead of Istanbul and London **(call; outside this slice)**.
   few seconds.
 - **Gifts (six, two per character) (call):**
   - Álvar — *Iron Sinew* (short burst of strength and speed),
-    *Dread Gaze* (stuns one enemy).
+    *Baleful Eye* (stuns one enemy).
   - Zahra — *Mend Flesh* (heal an ally), *Blood Lance* (ranged damage).
   - Gonzalo — *Stone Hide* (damage reduction, draws enemies),
     *Hammerfall* (area knock-down).

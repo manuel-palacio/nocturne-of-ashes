@@ -47,7 +47,7 @@ src/units/melee_attack.gd      (modify) hits through Unit, respects effects
 src/units/combat_brain.gd      CombatBrain: replaces enemy_brain.gd
 src/gifts/gift.gd              Gift: base resource
 src/gifts/gift_user.gd         GiftUser: a unit's Gifts, costs and cooldowns
-src/gifts/iron_sinew.gd  dread_gaze.gd  mend_flesh.gd  blood_lance.gd  stone_hide.gd  hammerfall.gd
+src/gifts/iron_sinew.gd  baleful_eye.gd  mend_flesh.gd  blood_lance.gd  stone_hide.gd  hammerfall.gd
 resources/gifts/*.tres         one resource per Gift
 src/player/picker.gd           Picker: unit or ground under a screen point
 src/player/player_input.gd     (modify) selection, Gift keys, targeting
@@ -993,7 +993,7 @@ func test_falling_further_while_already_in_the_fury_does_not_restart_it() -> voi
 ### Task 7: Gifts and Álvar's two
 
 **Files:**
-- Create: `src/gifts/gift.gd`, `src/gifts/gift_user.gd`, `src/gifts/iron_sinew.gd`, `src/gifts/dread_gaze.gd`, `resources/gifts/iron_sinew.tres`, `resources/gifts/dread_gaze.tres`, `tests/gifts/test_gift_user.gd`, `tests/gifts/test_alvar_gifts.gd`
+- Create: `src/gifts/gift.gd`, `src/gifts/gift_user.gd`, `src/gifts/iron_sinew.gd`, `src/gifts/baleful_eye.gd`, `resources/gifts/iron_sinew.tres`, `resources/gifts/baleful_eye.tres`, `tests/gifts/test_gift_user.gd`, `tests/gifts/test_alvar_gifts.gd`
 - Modify: `scenes/units/alvar.tscn`
 
 **Interfaces:**
@@ -1013,9 +1013,9 @@ func test_falling_further_while_already_in_the_fury_does_not_restart_it() -> voi
 | Gift (`id`) | Class | Targeting | Range | Cost | Cooldown | Effect |
 |---|---|---|---|---|---|---|
 | Iron Sinew (`iron_sinew`) | `IronSinew` | SELF | — | 20 | 12 | effect `&"iron_sinew"` on the caster for `duration = 8.0`: `speed_multiplier = 1.4`, `damage_dealt_multiplier = 1.5` |
-| Dread Gaze (`dread_gaze`) | `DreadGaze` | ENEMY | 8 | 15 | 10 | effect `&"dread_gaze"` on the target for `duration = 4.0`: `stuns = true` |
+| Baleful Eye (`baleful_eye`) | `BalefulEye` | ENEMY | 8 | 15 | 10 | effect `&"baleful_eye"` on the target for `duration = 4.0`: `stuns = true` |
 
-- `alvar.tscn` gains `Gifts` with Iron Sinew then Dread Gaze.
+- `alvar.tscn` gains `Gifts` with Iron Sinew then Baleful Eye.
 
 - [ ] **Step 1: Write the failing tests** (9 + 4 tests)
 
@@ -1132,9 +1132,9 @@ func before_each() -> void:
 	gifts = alvar.get_node("Gifts")
 	await wait_physics_frames(3)
 
-func test_alvar_carries_iron_sinew_and_dread_gaze() -> void:
+func test_alvar_carries_iron_sinew_and_baleful_eye() -> void:
 	assert_eq(gifts.count(), 2)
-	assert_eq([gifts.gift(0).display_name, gifts.gift(1).display_name], ["Iron Sinew", "Dread Gaze"])
+	assert_eq([gifts.gift(0).display_name, gifts.gift(1).display_name], ["Iron Sinew", "Baleful Eye"])
 	assert_eq([gifts.gift(0).blood_cost, gifts.gift(1).blood_cost], [20, 15])
 	assert_eq([gifts.gift(0).cooldown, gifts.gift(1).cooldown], [12.0, 10.0])
 
@@ -1145,12 +1145,12 @@ func test_iron_sinew_makes_him_faster_and_stronger() -> void:
 	assert_almost_eq(alvar.damage_dealt_multiplier(), 1.5, 0.001)
 	assert_eq(alvar.stats.blood, 40)
 
-func test_dread_gaze_stuns_an_enemy_in_range() -> void:
+func test_baleful_eye_stuns_an_enemy_in_range() -> void:
 	assert_true(gifts.use(1, foe))
 	assert_true(foe.is_stunned())
 	assert_eq(alvar.stats.blood, 45)
 
-func test_dread_gaze_does_not_reach_past_eight_metres() -> void:
+func test_baleful_eye_does_not_reach_past_eight_metres() -> void:
 	foe.global_position = Vector3(0, 0, 8.5)
 	assert_false(gifts.use(1, foe))
 	assert_eq(alvar.stats.blood, 60)
@@ -1159,7 +1159,7 @@ func test_dread_gaze_does_not_reach_past_eight_metres() -> void:
 - [ ] **Step 2: Run to verify failure** — `ops/test.sh`.
 - [ ] **Step 3: Implement.**
 - [ ] **Step 4: Run to verify pass** — `ops/test.sh`. Expected: all pass, 13 new.
-- [ ] **Step 5: Commit** — `feat: add the Gift system with Iron Sinew and Dread Gaze`
+- [ ] **Step 5: Commit** — `feat: add the Gift system with Iron Sinew and Baleful Eye`
 
 ---
 
@@ -1534,7 +1534,7 @@ func test_the_state_label_shows_fallen_then_fury_then_feeding() -> void:
 	assert_eq(_panel(0).find_child("StateLabel").text, "")
 
 func test_the_gift_bar_shows_the_selected_members_gifts() -> void:
-	assert_eq(hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Iron Sinew (20)", "2 Dread Gaze (15)"])
+	assert_eq(hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Iron Sinew (20)", "2 Baleful Eye (15)"])
 	main.select(main.party[2])
 	assert_eq(hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Stone Hide (20)", "2 Hammerfall (25)"])
 

@@ -47,7 +47,7 @@ func test_the_state_label_shows_fallen_then_fury_then_feeding() -> void:
 	assert_eq(_panel(0).find_child("StateLabel").text, "")
 
 func test_the_gift_bar_shows_the_selected_members_gifts() -> void:
-	assert_eq(hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Iron Sinew (20)", "2 Dread Gaze (15)"])
+	assert_eq(hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Iron Sinew (20)", "2 Baleful Eye (15)"])
 	main.select(main.party[2])
 	assert_eq(hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Stone Hide (20)", "2 Hammerfall (25)"])
 

@@ -6,7 +6,7 @@
 [ext_resource type="Script" path="res://src/gifts/gift_user.gd" id="4_gift_user"]
 [ext_resource type="Script" path="res://src/gifts/gift.gd" id="5_gift"]
 [ext_resource type="Resource" path="res://resources/gifts/iron_sinew.tres" id="6_iron_sinew"]
-[ext_resource type="Resource" path="res://resources/gifts/dread_gaze.tres" id="7_dread_gaze"]
+[ext_resource type="Resource" path="res://resources/gifts/baleful_eye.tres" id="7_baleful_eye"]
 
 [sub_resource type="Resource" id="Resource_stats"]
 script = ExtResource("2_stats")
@@ -31,7 +31,7 @@ cooldown = 0.9
 
 [node name="Gifts" type="Node" parent="."]
 script = ExtResource("4_gift_user")
-gifts = Array[ExtResource("5_gift")]([ExtResource("6_iron_sinew"), ExtResource("7_dread_gaze")])
+gifts = Array[ExtResource("5_gift")]([ExtResource("6_iron_sinew"), ExtResource("7_baleful_eye")])
 
 [node name="Brain" type="Node" parent="."]
 script = ExtResource("3_brain")

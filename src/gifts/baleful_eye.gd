@@ -1,4 +1,4 @@
-class_name DreadGaze
+class_name BalefulEye
 extends Gift
 ## An enemy in range is stunned for a while.
 
@@ -6,8 +6,8 @@ extends Gift
 
 
 func _init() -> void:
-	id = &"dread_gaze"
-	display_name = "Dread Gaze"
+	id = &"baleful_eye"
+	display_name = "Baleful Eye"
 	blood_cost = 15
 	cooldown = 10.0
 	targeting = Targeting.ENEMY
