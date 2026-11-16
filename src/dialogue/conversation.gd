@@ -15,8 +15,7 @@ var _runner: DialogueRunner
 var _input: PlayerInput
 var _party: Party
 var _encounter: Encounter
-## Holds the world while called with true and releases this hold with false.
-var _hold: Callable
+var _world_hold: WorldHold
 var _room: Room
 var _state: GameState
 ## True while `stop()` ends a conversation, so that end is not reported as `ended`.
@@ -25,12 +24,12 @@ var _stopping: bool = false
 
 ## Called once by `Main`, before any room.
 func setup(runner: DialogueRunner, input: PlayerInput, party: Party, encounter: Encounter,
-		hold: Callable) -> void:
+		world_hold: WorldHold) -> void:
 	_runner = runner
 	_input = input
 	_party = party
 	_encounter = encounter
-	_hold = hold
+	_world_hold = world_hold
 	runner.finished.connect(_on_finished)
 
 
@@ -49,7 +48,7 @@ func talk(resource: Resource, title: String) -> void:
 ## is talking.
 func can_talk() -> bool:
 	return (not _runner.is_running() and _state != null and not _encounter.fight_is_on()
-			and _leader_alive())
+			and _party.leader_alive())
 
 
 func is_talking() -> bool:
@@ -92,11 +91,7 @@ func _show_characters() -> void:
 
 
 func _hold_while_talking() -> void:
-	_hold.call(_runner.is_running())
-
-
-func _leader_alive() -> bool:
-	return _party.leader != null and _party.leader.is_alive()
+	_world_hold.set_held(&"talk", _runner.is_running())
 
 
 func _on_room_child_entered(child: Node) -> void:
@@ -113,7 +108,7 @@ func _on_talk_requested(npc: Npc, _by: Unit) -> void:
 
 
 func _on_finished() -> void:
-	_hold.call(false)
+	_world_hold.set_held(&"talk", false)
 	_input.enabled = true
 	if not _stopping and not _runner.ended_in_error():
 		ended.emit()

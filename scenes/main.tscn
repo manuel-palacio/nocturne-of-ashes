@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://src/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/player/camera_rig.gd" id="3_rig"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://src/rooms/encounter.gd" id="7_encounter"]
 [ext_resource type="Script" path="res://src/dialogue/dialogue_runner.gd" id="8_runner"]
 [ext_resource type="Script" path="res://src/dialogue/conversation.gd" id="9_conversation"]
+[ext_resource type="Script" path="res://src/core/world_hold.gd" id="10_world_hold"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -25,6 +26,9 @@ script = ExtResource("8_runner")
 
 [node name="Conversation" type="Node" parent="."]
 script = ExtResource("9_conversation")
+
+[node name="WorldHold" type="Node" parent="."]
+script = ExtResource("10_world_hold")
 
 [node name="CameraRig" type="Node3D" parent="."]
 script = ExtResource("3_rig")

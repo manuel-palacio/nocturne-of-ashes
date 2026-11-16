@@ -68,8 +68,6 @@ var show_title: bool = true
 var opening_enabled: bool = true
 
 var _paused: bool = false
-## Why the world is held: any of `&"pause"`, `&"talk"` and `&"title"`, each released on its own.
-var _holds: Dictionary = {}  # StringName -> true
 ## The state at the last checkpoint, as `GameState.to_dict()`, for a reload when the store has none.
 var _last_checkpoint: Dictionary = {}
 
@@ -82,6 +80,7 @@ var _last_checkpoint: Dictionary = {}
 @onready var _party: Party = $Party
 @onready var _encounter: Encounter = $Encounter
 @onready var _conversation: Conversation = $Conversation
+@onready var _world_hold: WorldHold = $WorldHold
 ## Only the story scene has one.
 @onready var _title: TitleScreen = get_node_or_null(^"TitleLayer/TitleScreen")
 
@@ -96,6 +95,7 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+	_world_hold.setup(_units, _encounter)
 	# First, so the feed marks are right before anyone else hears of a fall or a selection.
 	_encounter.watch(_party)
 	_encounter.cleared.connect(room_cleared.emit)
@@ -112,7 +112,7 @@ func _ready() -> void:
 	room_cleared.connect(hud.show_cleared)
 	# A cleared room stays cleared even if Álvar falls right after.
 	room_cleared.connect(checkpoint)
-	_conversation.setup(dialogue, input, _party, _encounter, _hold.bind(&"talk"))
+	_conversation.setup(dialogue, input, _party, _encounter, _world_hold)
 	hud.bind_dialogue(dialogue)
 	# The end of a conversation is a checkpoint; a stopped one is not.
 	_conversation.ended.connect(checkpoint)
@@ -205,7 +205,7 @@ func set_paused(on: bool) -> void:
 	if on == _paused or (on and (player == null or not player.is_alive())):
 		return
 	_paused = on
-	_hold(on, &"pause")
+	_world_hold.set_held(&"pause", on)
 	pause_changed.emit(on)
 
 
@@ -213,9 +213,7 @@ func is_paused() -> bool:
 	return _paused
 
 
-## Starts the conversation at the cue `title` of `resource`, a `.dialogue` file. While it runs the
-## world is held, input is off and the Gift keys do nothing; when it ends input returns and the story
-## checkpoints. Refused while a fight is on, while Álvar is down and while already talking.
+## Starts a conversation at the cue `title` of `resource`, as `Conversation.talk()` describes.
 func talk(resource: Resource, title: String) -> void:
 	_conversation.talk(resource, title)
 
@@ -261,7 +259,7 @@ func _locale_chosen_before_start() -> bool:
 func _play(from: GameState) -> void:
 	if _title_is_open():
 		_title.close()
-		_hold(false, &"title")
+		_world_hold.set_held(&"title", false)
 	state = from
 	if not ROOMS.has(state.room):
 		var fresh := GameState.new_game()
@@ -323,21 +321,9 @@ func _spawn_party(entry_name: StringName) -> StringName:
 func _open_title() -> void:
 	_title.continue_chosen.connect(reload_checkpoint)
 	_title.new_game_chosen.connect(new_game)
-	_hold(true, &"title")
+	_world_hold.set_held(&"title", true)
 	input.enabled = false
 	_title.open(store.has_save())
-
-
-## Holds the world (units still, fight not advancing) for `reason` while `on`; it moves again once no
-## reason holds it.
-func _hold(on: bool, reason: StringName) -> void:
-	if on:
-		_holds[reason] = true
-	else:
-		_holds.erase(reason)
-	var held: bool = not _holds.is_empty()
-	_units.process_mode = Node.PROCESS_MODE_DISABLED if held else Node.PROCESS_MODE_INHERIT
-	_encounter.paused = held
 
 
 func _title_is_open() -> bool:

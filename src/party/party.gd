@@ -101,7 +101,7 @@ func restore_entry_vitals(state: GameState) -> void:
 ## Makes `unit` the selected member and sets the other living members following it.
 ## Ignored unless `unit` is a living member, and while the leader is down.
 func select(unit: Unit) -> void:
-	if not _leader_alive() or unit == null or not members.has(unit) or not unit.is_alive():
+	if not leader_alive() or unit == null or not members.has(unit) or not unit.is_alive():
 		return
 	selected = unit
 	for member: Unit in members:
@@ -112,7 +112,7 @@ func select(unit: Unit) -> void:
 
 ## Selects the next living member after the selected one, wrapping round. Ignored while the leader is down.
 func select_next() -> void:
-	if not _leader_alive():
+	if not leader_alive():
 		return
 	var at: int = members.find(selected)
 	for step: int in range(1, members.size() + 1):
@@ -128,7 +128,8 @@ func revive_fallen() -> void:
 			member.revive()
 
 
-func _leader_alive() -> bool:
+## Whether the leader is there and alive.
+func leader_alive() -> bool:
 	return leader != null and leader.is_alive()
 
 
