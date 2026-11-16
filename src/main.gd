@@ -20,12 +20,6 @@ signal party_changed
 ## Emitted when the world pause turns on or off.
 signal pause_changed(paused: bool)
 
-## Each party member's scene, by `Unit.member_id`.
-const MEMBERS: Dictionary = {
-	&"alvar": preload("res://scenes/units/alvar.tscn"),
-	&"zahra": preload("res://scenes/units/zahra.tscn"),
-	&"gonzalo": preload("res://scenes/units/gonzalo.tscn"),
-}
 const CRUSADER: PackedScene = preload("res://scenes/units/crusader.tscn")
 const SERGEANT: PackedScene = preload("res://scenes/units/crusader_sergeant.tscn")
 ## Every room, by its `Room.room_id`.
@@ -68,8 +62,6 @@ var opening_enabled: bool = true
 var _calm_for: float = 0.0
 var _cleared: bool = false
 var _paused: bool = false
-## Each member's vitals in `state` as the room was entered, for a restart.
-var _entry_vitals: Dictionary = {}  # StringName member -> Vector2i
 
 @onready var input: PlayerInput = $PlayerInput
 @onready var rig: CameraRig = $CameraRig
@@ -132,9 +124,7 @@ func start_room() -> void:
 	if boot == Boot.SKIRMISH:
 		state = GameState.skirmish()
 	else:
-		for member: StringName in _entry_vitals:
-			var vitals: Vector2i = _entry_vitals[member]
-			state.set_vitals(member, vitals.x, vitals.y)
+		_party.restore_entry_vitals(state)
 	_enter(state.room, state.entry)
 
 
@@ -145,7 +135,7 @@ func enter_room(room_id: StringName, entry: StringName = Room.START) -> void:
 	if not ROOMS.has(room_id):
 		push_warning("There is no room %s; staying in %s" % [room_id, room.room_id])
 		return
-	_record_vitals()
+	_party.record(state)
 	_enter(room_id, entry)
 
 
@@ -246,7 +236,7 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	var members: Array[StringName] = state.joined()
 	for index: int in members.size():
 		var marker: Node3D = entry if index == 0 else entry.get_node(NodePath("Companion%d" % index))
-		_party.add(_spawn_member(members[index], marker))
+		_party.spawn(members[index], marker, state, _units)
 	hud.bind_party(party)
 	hud.hide_fallen()
 	hud.hide_cleared()
@@ -259,48 +249,12 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 
 	state.room = room_id
 	state.entry = StringName(String(entry.name).trim_prefix(Room.ENTRY_PREFIX))
-	_entry_vitals.clear()
-	for member: StringName in members:
-		_entry_vitals[member] = state.vitals(member)
+	_party.remember_entry_vitals(state)
 	input.rig = rig
 	input.enabled = true
 	select(player)
 	rig.snap_to_target()
 	room_started.emit()
-
-
-## Stores each member's health and Blood in `state`; a fallen member's as `Unit.risen_health()`.
-func _record_vitals() -> void:
-	for member: Unit in party:
-		var health: int = member.stats.health
-		if not member.is_alive():
-			health = Unit.risen_health(member.stats)
-		state.set_vitals(member.member_id, health, member.stats.blood)
-
-
-## The party member `member_id` at `marker`, with only the Gifts it knows, in its scene's order, and
-## the vitals `state` holds for it.
-func _spawn_member(member_id: StringName, marker: Node3D) -> Unit:
-	var unit: Unit = (MEMBERS[member_id] as PackedScene).instantiate()
-	var gift_user: GiftUser = unit.get_node(^"Gifts")
-	var known: Array[StringName] = state.known_gifts(member_id)
-	var gifts: Array[Gift] = []
-	for gift: Gift in gift_user.gifts:
-		if known.has(gift.id):
-			gifts.append(gift)
-	gift_user.gifts = gifts
-	var vitals: Vector2i = state.vitals(member_id)
-	if vitals.y >= 0:
-		# Set as the starting Blood, so the unit begins with it and its Fury sees no fall into it.
-		var stats: Stats = unit.stats.duplicate()
-		stats.starting_blood = vitals.y
-		unit.stats = stats
-	_units.add_child(unit)
-	unit.global_transform = marker.global_transform
-	if vitals.x >= 0:
-		var health: int = Unit.risen_health(unit.stats) if vitals.x == 0 else mini(vitals.x, unit.stats.max_health)
-		unit.stats.take_damage(unit.stats.max_health - health)
-	return unit
 
 
 static func _cleared_flag(room_id: StringName) -> StringName:
