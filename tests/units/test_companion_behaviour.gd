@@ -85,3 +85,17 @@ func test_a_companion_does_not_spoil_a_friends_meal() -> void:
 	zahra_brain.enabled = true  # her lance reaches him; his health is 15 of 60
 	await wait_for_signal(gonzalo.fed, 6.0)
 	assert_eq(gonzalo.stats.blood, 65)
+
+func test_a_taunt_comes_before_a_meal() -> void:
+	(zahra.get_node("Brain") as CombatBrain).enabled = false
+	gonzalo.stats.spend_blood(35)  # 25
+	var meal: Unit = arena.spawn(Arena.CRUSADER, Vector3(3, 0, 1.2))
+	meal.take_hit(45)
+	var taunter: Unit = arena.spawn(Arena.CRUSADER, Vector3(3, 0, -2))
+	var taunt := StatusEffect.new()
+	taunt.id = &"taunt"
+	taunt.duration = 5.0
+	taunt.taunt_radius = 8.0
+	taunter.add_effect(taunt)
+	await wait_seconds(0.6)
+	assert_eq(gonzalo.attack_target(), taunter)

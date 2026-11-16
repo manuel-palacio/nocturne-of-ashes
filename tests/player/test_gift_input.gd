@@ -118,3 +118,8 @@ func test_targeting_closes_when_the_unit_is_stunned() -> void:
 	await wait_seconds(0.5)
 	main.input.click_at(_screen(main.player.global_position + Vector3(2, 0, 2)))
 	assert_eq(main.player.current_order(), Unit.Order.MOVE)
+
+func test_starting_the_room_closes_targeting() -> void:
+	main.input.press_gift(1)
+	main.start_room()
+	assert_eq(main.input.targeting_gift(), -1)

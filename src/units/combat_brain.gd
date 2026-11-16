@@ -162,9 +162,10 @@ func _attack(target: Unit) -> void:
 
 
 ## Below `feeds_below` Blood, feeds on the nearest hostile within `aggro_radius` the unit can feed on.
-## Returns whether it gave the order.
+## Never while a hostile's taunt reaches the unit, so taunt and meal cannot take turns. Returns whether
+## the unit took the feed order.
 func _feed() -> bool:
-	if _unit.stats.blood >= feeds_below:
+	if _unit.stats.blood >= feeds_below or _nearest_taunter() != null:
 		return false
 	var nearest: Unit = null
 	var best: float = INF
@@ -175,9 +176,11 @@ func _feed() -> bool:
 			nearest = other
 	if nearest == null:
 		return false
+	_unit.order_feed(nearest)
+	if _unit.current_order() != Unit.Order.FEED:
+		return false
 	_following = false
 	_chosen_target = null
-	_unit.order_feed(nearest)
 	_feeding = true
 	return true
 
