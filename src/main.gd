@@ -46,6 +46,9 @@ var _paused: bool = false
 
 
 func _enter_tree() -> void:
+	# A language given on the command line (as the tests do) wins over the page and the system.
+	if not _locale_chosen_before_start():
+		Language.apply(Language.pick(Language.requested_from_page(), OS.get_locale()))
 	var probe: Node = get_node_or_null(^"/root/Probe")
 	if probe != null:
 		probe.watch(self)
@@ -214,6 +217,13 @@ func _steer_brain(member: Unit) -> void:
 	var wanted: bool = member != selected
 	if brain.enabled != wanted:
 		brain.enabled = wanted
+
+
+## True when the engine's locale is no longer the system's: `--language` (or code) chose it. Godot keeps
+## `--language` out of `OS.get_cmdline_args()`, so the locales are compared. When they match, picking
+## again gives the same language, or English where the system's has no texts.
+func _locale_chosen_before_start() -> bool:
+	return TranslationServer.get_locale() != TranslationServer.standardize_locale(OS.get_locale())
 
 
 func _spawn(scene: PackedScene, marker: Node3D) -> Unit:

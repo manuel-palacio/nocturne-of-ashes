@@ -21,6 +21,7 @@ outline_size = 4
 outline_color = Color(0, 0, 0, 1)
 
 [node name="GiftButton" type="Button"]
+auto_translate_mode = 2
 custom_minimum_size = Vector2(190, 40)
 focus_mode = 0
 mouse_filter = 0

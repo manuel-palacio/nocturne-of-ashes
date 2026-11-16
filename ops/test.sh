@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Runs the GUT suite headless. Godot exits 0 when a test script fails to parse (GUT skips it),
 # so this also fails on script errors and on any tests/**/test_*.gd missing from the run.
+# The locale is forced to English, the source language, so tests read the English texts.
 # With arguments, they replace the suite selection, e.g. ops/test.sh -gtest=res://tests/units/test_stats.gd
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -9,7 +10,7 @@ trap 'rm -f "$log"' EXIT
 
 select=(-gdir=res://tests -ginclude_subdirs)
 [ $# -gt 0 ] && select=("$@")
-godot --headless --path . -s addons/gut/gut_cmdln.gd "${select[@]}" -gexit 2>&1 | tee "$log"
+godot --headless --path . --language en -s addons/gut/gut_cmdln.gd "${select[@]}" -gexit 2>&1 | tee "$log"
 status=${PIPESTATUS[0]}
 
 fail=0

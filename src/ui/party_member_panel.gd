@@ -40,7 +40,7 @@ func _gui_input(event: InputEvent) -> void:
 ## Follows `unit` from now on. A panel is bound once; the HUD makes new panels for a new party.
 func bind(unit: Unit) -> void:
 	_unit = unit
-	_name_label.text = unit.display_name
+	_name_label.text = tr(unit.display_name)
 	_swatch.color = _body_colour(unit)
 	unit.stats.health_changed.connect(_on_health_changed)
 	unit.stats.blood_changed.connect(_on_blood_changed)
@@ -73,11 +73,11 @@ func _show_state() -> void:
 	if not is_instance_valid(_unit):
 		pass
 	elif not _unit.is_alive():
-		state = "Fallen"
+		state = tr("Fallen")
 	elif _unit.is_in_fury():
-		state = "The Fury"
+		state = tr("The Fury")
 	elif _unit.is_feeding():
-		state = "Feeding"
+		state = tr("Feeding")
 	_state_label.text = state
 
 

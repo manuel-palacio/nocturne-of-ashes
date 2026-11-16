@@ -32,7 +32,7 @@ func bind(user: GiftUser, index: int) -> void:
 	_unit = user.get_parent() as Unit
 	_index = index
 	var gift: Gift = user.gift(index)
-	text = "%d %s (%d)" % [index + 1, gift.display_name, gift.blood_cost]
+	text = "%d %s (%d)" % [index + 1, tr(gift.display_name), gift.blood_cost]
 	user.cooldowns_changed.connect(_refresh)
 	_unit.stats.blood_changed.connect(_refresh.unbind(2))
 	for changed: Signal in [_unit.effects_changed, _unit.fury_started, _unit.fury_ended, _unit.feed_broken]:

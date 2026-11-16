@@ -10,6 +10,8 @@ module.exports = defineConfig({
   },
   use: {
     baseURL: 'http://127.0.0.1:8124',
+    // The game picks its language from the browser; the tests read the English texts.
+    locale: 'en-US',
   },
   projects: [
     // Headed: headless Chromium reads every WebGL frame back through the CPU (or renders with

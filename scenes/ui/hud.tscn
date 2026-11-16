@@ -53,6 +53,7 @@ theme_override_constants/separation = 8
 alignment = 1
 
 [node name="PausedLabel" type="Label" parent="Root"]
+auto_translate_mode = 2
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -62,12 +63,12 @@ offset_top = 20.0
 offset_bottom = 60.0
 grow_horizontal = 2
 mouse_filter = 2
-text = "Paused — give your orders"
 label_settings = SubResource("LabelSettings_notice")
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="ClearedLabel" type="Label" parent="Root"]
+auto_translate_mode = 2
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -78,12 +79,12 @@ offset_bottom = -200.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-text = "The vault is quiet"
 label_settings = SubResource("LabelSettings_notice")
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="FallenLabel" type="Label" parent="Root"]
+auto_translate_mode = 2
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -93,7 +94,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-text = "You have fallen — press Enter"
 label_settings = SubResource("LabelSettings_fallen")
 horizontal_alignment = 1
 vertical_alignment = 1

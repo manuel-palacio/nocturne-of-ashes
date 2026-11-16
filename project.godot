@@ -72,6 +72,11 @@ select_next={
 ]
 }
 
+[internationalization]
+
+locale/translations=PackedStringArray("res://assets/i18n/es.po")
+locale/fallback="en"
+
 [layer_names]
 
 3d_physics/layer_1="world"

@@ -1,0 +1,58 @@
+# Spanish texts for Nocturne of Ashes. The message ids are the English source texts, byte for byte.
+msgid ""
+msgstr ""
+"Project-Id-Version: Nocturne of Ashes\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# HUD prompts
+msgid "You have fallen — press Enter"
+msgstr "Has caído — pulsa Intro"
+
+msgid "Paused — give your orders"
+msgstr "En pausa — da tus órdenes"
+
+msgid "The vault is quiet"
+msgstr "La cripta está en silencio"
+
+# Party member states
+msgid "Fallen"
+msgstr "Caído"
+
+msgid "The Fury"
+msgstr "La Furia"
+
+msgid "Feeding"
+msgstr "Alimentándose"
+
+# Unit names
+msgid "Brother Álvar"
+msgstr "Hermano Álvar"
+
+msgid "Crusader"
+msgstr "Cruzado"
+
+msgid "Sergeant"
+msgstr "Sargento"
+
+# Gift names
+msgid "Iron Sinew"
+msgstr "Tendón de Hierro"
+
+msgid "Baleful Eye"
+msgstr "Ojo Funesto"
+
+msgid "Mend Flesh"
+msgstr "Sanar la Carne"
+
+msgid "Blood Lance"
+msgstr "Lanza de Sangre"
+
+msgid "Stone Hide"
+msgstr "Piel de Piedra"
+
+msgid "Hammerfall"
+msgstr "Martillazo"
