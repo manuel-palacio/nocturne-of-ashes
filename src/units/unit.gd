@@ -137,6 +137,11 @@ func order_feed(target: Unit) -> void:
 	_close_in(target)
 
 
+## The unit this one has a feed order on, walking there or drinking; null when none.
+func feed_target() -> Unit:
+	return _feeder.target() if _order == Order.FEED else null
+
+
 ## Whether this living blood-drinker can feed on `target`: a living hostile at or below this unit's
 ## `feed_threshold` of its maximum health, not already held by another feed.
 func can_feed_on(target: Unit) -> bool:

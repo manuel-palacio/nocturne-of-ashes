@@ -112,3 +112,14 @@ func test_zahra_keeps_the_blood_to_mend() -> void:
 	await wait_seconds(0.6)
 	assert_eq(alvar.stats.health, 80)
 	assert_eq(zahra.stats.blood, 10)
+
+func test_a_meal_is_claimed_from_the_feed_order() -> void:
+	# Gonzalo's brain thinks first in a shared frame, so his claim exists before Zahra's next think;
+	# from then on her lance must leave his meal alone through his whole walk in.
+	(gonzalo.get_node("Brain") as Node).process_physics_priority = -1
+	gonzalo.stats.spend_blood(35)  # 25
+	var foe: Unit = arena.spawn(Arena.CRUSADER, Vector3(3, 0, 3))  # in her lance's reach
+	foe.take_hit(45)  # 15 of 60
+	await wait_for_signal(gonzalo.fed, 6.0)
+	assert_eq(gonzalo.stats.blood, 65)
+	assert_eq(zahra.stats.blood, 60, "no lance thrown at his meal")

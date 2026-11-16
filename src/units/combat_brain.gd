@@ -6,8 +6,9 @@ extends Node
 ## did not give alone; keep up its own feed; switch to a much nearer hostile; engage the nearest
 ## hostile within `aggro_radius`; walk after `leader`. A follow walk is the brain's own order, so
 ## taunts, switching and engaging interrupt it. Between thinks, a hit from a living hostile on an idle
-## or following unit is answered with an attack at once. A hostile held by a feed is left alone: never
-## chosen, counted or aimed at, and an attack of the brain's on it is dropped. The brain does nothing
+## or following unit is answered with an attack at once. A hostile taken as a meal is left alone: never
+## chosen, counted or aimed at, and an attack of the brain's on it is dropped. A hostile is taken from
+## the moment another living unit has a feed order on it, through the walk in and the drinking. The brain does nothing
 ## while its unit is drinking, stunned or in the Fury. All distances are flat on XZ.
 
 ## A follow walk is re-aimed once the leader has moved this far from where the walk was aimed.
@@ -83,7 +84,7 @@ func _on_unit_hit(_amount: int, source: Unit) -> void:
 		return
 	if not enabled or not _unit.can_act() or not is_instance_valid(source) or not source.is_alive():
 		return
-	if not _unit.is_hostile_to(source) or Feeder.is_held(source):
+	if not _unit.is_hostile_to(source) or _is_taken(source):
 		return
 	var order: Unit.Order = _unit.current_order()
 	if order == Unit.Order.NONE or (order == Unit.Order.MOVE and _following):
@@ -105,8 +106,8 @@ func _think() -> void:
 		_feeding = false
 	var players_order: bool = order != Unit.Order.NONE and not attacking_own and not following_own and not feeding_own
 
-	if attacking_own and Feeder.is_held(_chosen_target):
-		# Someone is feeding on it; the meal is not the brain's to spoil.
+	if attacking_own and _is_taken(_chosen_target):
+		# Someone has claimed it as a meal; the meal is not the brain's to spoil.
 		_chosen_target = null
 		_unit.stop()
 		return
@@ -229,7 +230,7 @@ static func _ally_gift_cost(gifts: GiftUser) -> int:
 ## that it can reach, or null.
 func _gift_enemy(gift: Gift) -> Unit:
 	var current: Unit = _unit.attack_target()
-	if current != null and not Feeder.is_held(current) and gift.can_target(_unit, current):
+	if current != null and not _is_taken(current) and gift.can_target(_unit, current):
 		return current
 	var nearest: Unit = null
 	var best: float = INF
@@ -290,16 +291,35 @@ func _nearest_hostile() -> Unit:
 	return nearest
 
 
-## The living hostiles not held by a feed: a meal in progress is never chosen, counted or aimed at.
+## The living hostiles not taken as a meal: a meal is never chosen, counted or aimed at.
 func _open_hostiles() -> Array[Unit]:
+	var taken: Array[Unit] = _others_feed_targets()
 	var hostiles: Array[Unit] = []
 	for node: Node in get_tree().get_nodes_in_group(&"units"):
 		var other: Unit = node as Unit
 		if other == null or other == _unit or not other.is_alive() or Feeder.is_held(other):
 			continue
-		if _unit.is_hostile_to(other):
+		if _unit.is_hostile_to(other) and not taken.has(other):
 			hostiles.append(other)
 	return hostiles
+
+
+## Whether `other` is held by a feed or another living unit has a feed order on it.
+func _is_taken(other: Unit) -> bool:
+	return Feeder.is_held(other) or _others_feed_targets().has(other)
+
+
+## The feed targets of every living unit but this brain's own.
+func _others_feed_targets() -> Array[Unit]:
+	var targets: Array[Unit] = []
+	for node: Node in get_tree().get_nodes_in_group(&"units"):
+		var other: Unit = node as Unit
+		if other == null or other == _unit or not other.is_alive():
+			continue
+		var meal: Unit = other.feed_target()
+		if meal != null:
+			targets.append(meal)
+	return targets
 
 
 func _flat_to(other: Unit) -> float:
