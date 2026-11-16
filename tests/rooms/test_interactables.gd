@@ -1,0 +1,90 @@
+extends GutTest
+
+var arena: Arena
+var alvar: Unit
+var thing: Interactable
+
+func before_each() -> void:
+	arena = Arena.new(self)
+	alvar = arena.spawn(Arena.ALVAR, Vector3.ZERO)
+	thing = arena.add_interactable(Vector3(0, 0, 6))
+	await wait_physics_frames(3)
+
+func test_an_interact_order_walks_up_and_uses_it() -> void:
+	watch_signals(thing)
+	watch_signals(alvar)
+	alvar.order_interact(thing)
+	assert_eq(alvar.current_order(), Unit.Order.INTERACT)
+	await wait_for_signal(thing.used, 5.0)
+	assert_signal_emitted_with_parameters(thing, "used", [alvar])
+	assert_signal_emitted_with_parameters(alvar, "interacted", [thing])
+	assert_lt(Arena.flat(alvar.global_position, thing.global_position), 2.2)
+	assert_gt(Arena.flat(alvar.global_position, thing.global_position), 1.0)
+	await wait_physics_frames(2)
+	assert_eq(alvar.current_order(), Unit.Order.NONE)
+
+func test_already_in_reach_it_is_used_at_once() -> void:
+	alvar.global_position = Vector3(0, 0, 4.5)
+	watch_signals(thing)
+	alvar.order_interact(thing)
+	await wait_physics_frames(3)
+	assert_signal_emit_count(thing, "used", 1)
+
+func test_a_new_order_breaks_it_off() -> void:
+	watch_signals(thing)
+	alvar.order_interact(thing)
+	await wait_physics_frames(5)
+	alvar.order_move(Vector3(-4, 0, 0))
+	await wait_seconds(2.5)
+	assert_signal_not_emitted(thing, "used")
+
+func test_a_target_freed_on_the_way_ends_the_order() -> void:
+	alvar.order_interact(thing)
+	await wait_physics_frames(5)
+	thing.free()
+	await wait_physics_frames(5)
+	assert_eq(alvar.current_order(), Unit.Order.NONE)
+
+func test_the_fury_ignores_interact_orders() -> void:
+	alvar.stats.spend_blood(55)
+	await wait_physics_frames(3)
+	alvar.order_interact(thing)
+	assert_ne(alvar.current_order(), Unit.Order.INTERACT)
+
+func test_a_stunned_unit_keeps_the_order_and_finishes_it() -> void:
+	var stun := StatusEffect.new()
+	stun.id = &"stun"
+	stun.duration = 0.5
+	stun.stuns = true
+	alvar.add_effect(stun)
+	watch_signals(thing)
+	alvar.order_interact(thing)
+	await wait_for_signal(thing.used, 6.0)
+	assert_signal_emit_count(thing, "used", 1)
+
+func test_brains_and_the_fury_do_not_see_interactables() -> void:
+	assert_false(thing.is_in_group(&"units"))
+
+func test_the_picker_finds_it_and_a_click_orders_the_interaction() -> void:
+	var rig := CameraRig.new()
+	var cam := Camera3D.new()
+	cam.name = "Camera"
+	rig.add_child(cam)
+	arena.room.add_child(rig)
+	rig.target = alvar
+	rig.snap_to_target()
+	cam.current = true
+	var input := PlayerInput.new()
+	arena.room.add_child(input)
+	input.unit = alvar
+	input.rig = rig
+	await wait_physics_frames(2)
+	var at: Vector2 = cam.unproject_position(thing.global_position + Vector3(0, 0.9, 0))
+	assert_eq(Picker.interactable_at(cam, at), thing)
+	input.click_at(at)
+	assert_eq(alvar.current_order(), Unit.Order.INTERACT)
+
+func test_one_that_refuses_is_not_approached() -> void:
+	var picky := arena.add_interactable(Vector3(-6, 0, 0), func(_u: Unit) -> bool: return false)
+	alvar.order_interact(picky)
+	assert_eq(alvar.current_order(), Unit.Order.NONE)

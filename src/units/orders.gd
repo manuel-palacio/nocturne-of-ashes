@@ -2,14 +2,15 @@ class_name Orders
 extends Node
 ## The orders of its `Unit`: what it was last told to do and by whom, and how it carries that out each
 ## frame, walking through the `Mover`, chasing and striking with its melee, closing in on a feed
-## through the `Feeder`, and raging while its `Fury` holds it. Every order passes one gate, `accepts`,
-## and replaces the one before it in one place, which breaks off whatever the unit was doing. Only the
-## unit talks to this node.
+## through the `Feeder`, walking up to an `Interactable` to use it, and raging while its `Fury` holds
+## it. Every order passes one gate, `accepts`, and replaces the one before it in one place, which
+## breaks off whatever the unit was doing. Only the unit talks to this node.
 
 signal arrived
 signal attack_ended
 signal fed(target: Unit)
 signal feed_broken
+signal interacted(target: Interactable)
 signal fury_started
 signal fury_ended
 
@@ -19,6 +20,7 @@ const _CHASE_RETARGET: float = 0.5
 var _order: Unit.Order = Unit.Order.NONE
 var _issuer: Unit.Issuer = Unit.Issuer.NONE
 var _attack_target: Unit
+var _interact_target: Interactable
 
 @onready var _unit: Unit = get_parent()
 @onready var _mover: Mover = $"../Mover"
@@ -49,6 +51,8 @@ func step() -> void:
 			_pursue()
 		Unit.Order.FEED:
 			_approach_feed()
+		Unit.Order.INTERACT:
+			_approach_interactable()
 	if _mover.steer():
 		_unit.drive(_mover.heading())
 
@@ -110,6 +114,19 @@ func feed(target: Unit, issuer: Unit.Issuer) -> void:
 	_close_in(target)
 
 
+## Walks within `target.reach` of `target` and uses it. Ignored for a freed target and for one that
+## `unit` may not use.
+func interact(target: Interactable, issuer: Unit.Issuer) -> void:
+	if not is_instance_valid(target) or not target.can_be_used_by(_unit):
+		return
+	if not _take(Unit.Order.INTERACT, issuer):
+		return
+	_interact_target = target
+	# A walk that ends out of reach ends the order quietly, so the stall check is not needed.
+	_mover.stall_check = false
+	_mover.walk_to(target.global_position)
+
+
 func stop(issuer: Unit.Issuer) -> void:
 	if accepts(issuer):
 		_break_off()
@@ -134,6 +151,7 @@ func _take(order: Unit.Order, issuer: Unit.Issuer) -> bool:
 func _break_off() -> void:
 	_feeder.cancel()
 	_attack_target = null
+	_interact_target = null
 	_end()
 	_halt()
 
@@ -150,12 +168,15 @@ func _halt() -> void:
 	_unit.drive(Vector3.ZERO)
 
 
-## A finished path ends a move order. A chase path can end short of the target; the chase goes on.
+## A finished path ends a move order, and an interact order whose path ended out of reach. A chase
+## path can end short of the target; the chase goes on.
 func _on_mover_arrived() -> void:
 	_unit.drive(Vector3.ZERO)
 	if _order == Unit.Order.MOVE:
 		_end()
 		arrived.emit()
+	elif _order == Unit.Order.INTERACT and not _in_reach(_interact_target):
+		_break_off()
 
 
 func _pursue() -> void:
@@ -176,6 +197,28 @@ func _approach_feed() -> void:
 		return
 	if _reach(target):
 		_feeder.start_drinking()
+
+
+## Uses the interact target once within its reach, which ends the order; a freed target ends it unused.
+func _approach_interactable() -> void:
+	var target: Interactable = _interact_target
+	if not is_instance_valid(target):
+		_break_off()
+		return
+	if not _in_reach(target):
+		return
+	_break_off()
+	_unit.face(target.global_position)
+	target.use(_unit)
+	interacted.emit(target)
+
+
+## Whether `target` still exists and lies within its reach of the unit, flat.
+func _in_reach(target: Interactable) -> bool:
+	if not is_instance_valid(target):
+		return false
+	var gap: Vector3 = target.global_position - _unit.global_position
+	return Vector2(gap.x, gap.z).length() <= target.reach
 
 
 ## Starts a chase towards `target`. A chase re-aims on its own, and a blocked chaser keeps trying.

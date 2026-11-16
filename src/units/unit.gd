@@ -14,6 +14,8 @@ signal revived(unit: Unit)
 signal fed(target: Unit)
 ## A feed in progress was given up, with no Blood gained.
 signal feed_broken
+## The unit walked up to `target` and used it.
+signal interacted(target: Interactable)
 signal fury_started
 signal fury_ended
 
@@ -36,7 +38,7 @@ signal fury_ended
 @export var fury_damage: float = 1.5
 
 ## What the unit was last told to do; NONE once it is done, stopped or dead.
-enum Order { NONE, MOVE, ATTACK, FEED }
+enum Order { NONE, MOVE, ATTACK, FEED, INTERACT }
 ## Who gave an order: the player, the unit's brain, or the game itself, as the Fury does.
 enum Issuer { NONE, PLAYER, BRAIN, SYSTEM }
 
@@ -68,6 +70,7 @@ func _ready() -> void:
 	_orders.attack_ended.connect(attack_ended.emit)
 	_orders.fed.connect(fed.emit)
 	_orders.feed_broken.connect(feed_broken.emit)
+	_orders.interacted.connect(interacted.emit)
 	_orders.fury_started.connect(fury_started.emit)
 	_orders.fury_ended.connect(fury_ended.emit)
 	_fury.watch(stats)
@@ -128,6 +131,13 @@ func feed_target() -> Unit:
 ## at or below this unit's `feed_threshold` of its maximum health, not already held by another feed.
 func can_feed_on(target: Unit) -> bool:
 	return _orders.can_feed_on(target)
+
+
+## Walks within `target.reach` of `target`, flat, uses it once and ends the order. Ignored for a freed
+## target, for one that refuses this unit, once dead and in the Fury. A path that ends out of reach,
+## or a target freed on the way, ends the order with the target unused.
+func order_interact(target: Interactable, issuer: Issuer = Issuer.PLAYER) -> void:
+	_orders.interact(target, issuer)
 
 
 ## Shows or hides the mark that tells the player this unit is weak enough to feed on.

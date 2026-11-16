@@ -12,6 +12,18 @@ const SERGEANT: PackedScene = preload("res://scenes/units/crusader_sergeant.tscn
 var room: Node3D
 
 
+## An interactable whose `allow` decides who may use it.
+class Picky extends Interactable:
+	var _allow: Callable
+
+	func _init(allow: Callable) -> void:
+		super()
+		_allow = allow
+
+	func can_be_used_by(unit: Unit) -> bool:
+		return _allow.call(unit)
+
+
 func _init(test: GutTest) -> void:
 	room = test.add_child_autofree(ROOM.instantiate())
 
@@ -28,6 +40,22 @@ func spawn(scene: PackedScene, at: Vector3, with_brain: bool = false) -> Unit:
 	if with_brain and brain is CombatBrain:
 		(brain as CombatBrain).enabled = true
 	return unit
+
+
+## Adds an `Interactable` with a 0.7 m × 1.8 m capsule collider, standing on the floor at `at`. When
+## `allow` is valid, it decides who may use it.
+func add_interactable(at: Vector3, allow: Callable = Callable()) -> Interactable:
+	var thing: Interactable = Picky.new(allow) if allow.is_valid() else Interactable.new()
+	var shape := CollisionShape3D.new()
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = 0.35
+	capsule.height = 1.8
+	shape.shape = capsule
+	shape.position = Vector3(0, 0.9, 0)
+	thing.add_child(shape)
+	room.add_child(thing)
+	thing.global_position = at
+	return thing
 
 
 static func flat(a: Vector3, b: Vector3) -> float:
