@@ -82,3 +82,15 @@ func test_death_ends_the_fury_once_and_revival_brings_none() -> void:
 	assert_signal_emit_count(alvar, "fury_ended", 1)
 	alvar.order_move(Vector3(-3, 0, 0))
 	assert_eq(alvar.current_order(), Unit.Order.MOVE)
+
+func test_removing_the_fury_effect_ends_the_fury() -> void:
+	watch_signals(alvar)
+	alvar.stats.spend_blood(55)
+	await wait_physics_frames(5)
+	alvar.remove_effect(&"fury")
+	assert_false(alvar.is_in_fury())
+	assert_signal_emit_count(alvar, "fury_ended", 1)
+	alvar.order_move(Vector3(-3, 0, 0))
+	assert_eq(alvar.current_order(), Unit.Order.MOVE)
+	await wait_physics_frames(3)
+	assert_signal_emit_count(alvar, "fury_ended", 1)

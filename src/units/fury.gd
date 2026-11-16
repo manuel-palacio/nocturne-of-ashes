@@ -1,7 +1,8 @@
 class_name Fury
 extends Node
 ## The Fury of its `Unit`: starts when a blood-drinker's Blood is spent from at or above its
-## `fury_threshold` to below it, and lasts `fury_time`, with the unit carrying the `fury` effect.
+## `fury_threshold` to below it, and lasts while the unit carries the `fury` effect, which runs for
+## `fury_time`. However the effect goes, by running out, removal or clearing, the Fury ends with it.
 ## The unit drives the attacks and asks this node for the nearest victim.
 
 signal started
@@ -10,25 +11,18 @@ signal ended
 const EFFECT_ID: StringName = &"fury"
 
 var _active: bool = false
-var _time_left: float = 0.0
 ## Blood as of the latest change seen, to tell a fall across the threshold from a start below it.
 var _last_blood: int = 0
 
 @onready var _unit: Unit = get_parent()
 
 
-func _physics_process(delta: float) -> void:
-	if not _active:
-		return
-	_time_left -= delta
-	if _time_left <= 0.0:
-		end()
-
-
-## Follows the Blood in `stats` from its current value on. The unit calls this once its stats are set up.
+## Follows the Blood in `stats` from its current value on, and the unit's effects. The unit calls this
+## once its stats are set up.
 func watch(stats: Stats) -> void:
 	_last_blood = stats.blood
 	stats.blood_changed.connect(_on_blood_changed)
+	_unit.effects_changed.connect(_on_effects_changed)
 
 
 func is_active() -> bool:
@@ -69,12 +63,17 @@ func _on_blood_changed(current: int, _maximum: int) -> void:
 		_begin()
 
 
+func _on_effects_changed() -> void:
+	if _active and not _unit.has_effect(EFFECT_ID):
+		end()
+
+
 func _begin() -> void:
-	_active = true
-	_time_left = _unit.fury_time
 	var rage := StatusEffect.new()
 	rage.id = EFFECT_ID
 	rage.duration = _unit.fury_time
 	rage.damage_dealt_multiplier = _unit.fury_damage
+	# Active only once the effect is on, so the change it signals is not taken for its removal.
 	_unit.add_effect(rage)
+	_active = true
 	started.emit()
