@@ -1,0 +1,21 @@
+~ start
+Smith: The forge is cold tonight.
+Smith: What will you do with the prisoner?
+- Spare him
+	do change_conscience(1)
+	do set_flag("spared")
+	Smith: Mercy. Rare here.
+- Drain him
+	do change_conscience(-2)
+	do give_blood(40)
+	Smith: So be it.
+- Say the secret word [if has_flag("knows_word") /]
+	Smith: You should not know that.
+=> END
+
+~ again
+if conscience() >= 8
+	Smith: You walk lightly, friend.
+else
+	Smith: I have seen that look before.
+=> END

@@ -1,11 +1,13 @@
 class_name Hud
 extends CanvasLayer
-## Shows a panel per party member, the selected member's Gifts, and the prompts for a pause, a cleared
-## room and Álvar's fall. Clicks on panels and Gift buttons go out through its signals.
+## Shows a panel per party member, the selected member's Gifts, the conversation on show (in its
+## `DialogueBox`), and the prompts for a pause, a cleared room and Álvar's fall. Clicks on panels and
+## Gift buttons go out through its signals.
 ##
 ## Texts: every control whose text is set here or in a panel or button has automatic translation off
 ## in its scene and gets its text from `tr()` in code, so reading `text` gives what is shown. When the
-## language changes the HUD sets its prompts again and rebuilds its panels and Gift buttons.
+## language changes the HUD sets its prompts again and rebuilds its panels and Gift buttons. The
+## dialogue box shows conversations as written; it has no texts of its own.
 
 ## A member's panel was clicked.
 signal member_pressed(unit: Unit)
@@ -27,6 +29,7 @@ var _targeting_index: int = -1
 @onready var _fallen_label: Label = %FallenLabel
 @onready var _paused_label: Label = %PausedLabel
 @onready var _cleared_label: Label = %ClearedLabel
+@onready var _dialogue_box: DialogueBox = %DialogueBox
 
 
 func _ready() -> void:
@@ -50,6 +53,11 @@ func bind_party(party: Array[Unit]) -> void:
 		panel.bind(member)
 		panel.pressed.connect(member_pressed.emit)
 		_panels.append(panel)
+
+
+## Shows the conversations `runner` runs in the dialogue box.
+func bind_dialogue(runner: DialogueRunner) -> void:
+	_dialogue_box.bind(runner)
 
 
 ## Marks `unit`'s panel and fills the Gift bar with its Gifts.
