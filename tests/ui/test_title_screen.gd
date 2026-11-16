@@ -77,3 +77,20 @@ func test_a_checkpoint_while_the_title_is_open_keeps_the_save() -> void:
 	assert_signal_not_emitted(main, "checkpoint_saved")
 	assert_eq(main.store.load_state().conscience, 3)
 	assert_eq(main.store.load_state().room, &"vault")
+
+func test_pause_does_nothing_while_the_title_is_open() -> void:
+	await _boot_with_title(null)
+	Input.action_press("pause")
+	await wait_physics_frames(2)
+	Input.action_release("pause")
+	await wait_physics_frames(2)
+	assert_false(main.is_paused())
+	assert_true(_title().is_open())
+
+func test_a_reload_closes_the_title_and_turns_input_on() -> void:
+	await _boot_with_title(GameState.skirmish())
+	main.reload_checkpoint()
+	await wait_physics_frames(3)
+	assert_false(_title().is_open())
+	assert_true(main.input.enabled)
+	assert_eq(main.room.room_id, &"vault")

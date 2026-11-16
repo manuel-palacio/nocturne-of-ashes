@@ -149,3 +149,17 @@ func test_new_game_forgets_the_checkpoint_in_memory() -> void:
 	await wait_physics_frames(3)
 	assert_eq(main.room.room_id, &"haven")
 	assert_eq(main.party.size(), 1)
+
+func test_a_failed_write_warns_once_and_play_goes_on() -> void:
+	var state := GameState.skirmish()
+	await _boot(state)
+	main.store.clear()
+	main.store.path = _unwritable_path()
+	watch_signals(main)
+	main.checkpoint()
+	assert_push_warning_count(1)  # the message is checked in the fall-from-memory test
+	assert_signal_not_emitted(main, "checkpoint_saved")
+	var from: Vector3 = main.player.global_position
+	main.player.order_move(from + Vector3(4, 0, 0))
+	await wait_for_signal(main.player.arrived, 4.0)
+	assert_lt(Arena.flat(main.player.global_position, from + Vector3(4, 0, 0)), 0.5)
