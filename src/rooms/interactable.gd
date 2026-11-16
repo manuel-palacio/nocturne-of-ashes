@@ -2,7 +2,8 @@ class_name Interactable
 extends StaticBody3D
 ## Something in a room that is clicked but is not a combatant. A unit ordered to it walks within
 ## `reach` and uses it. It needs a collision shape as a child to be clicked, sits on the "interact"
-## layer (4) only and is not in the `&"units"` group, so brains and the Fury never see it.
+## layer (4) only, whatever a scene sets, and is not in the `&"units"` group, so brains and the Fury
+## never see it.
 
 signal used(by: Unit)
 
@@ -12,10 +13,12 @@ signal used(by: Unit)
 @export var reach: float = 2.0
 
 
-## Subclasses that define `_init` call `super()`, which puts the body on its layer.
-func _init() -> void:
-	collision_layer = 0b1000
-	collision_mask = 0
+# Set on entering the tree through `_notification`, which runs for every class in the hierarchy,
+# so no subclass can lose it by skipping `super()`. Scripts never receive POSTINITIALIZE.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_ENTER_TREE:
+		collision_layer = 0b1000
+		collision_mask = 0
 
 
 ## Whether `unit` may use it; always true here, narrowed by subclasses.

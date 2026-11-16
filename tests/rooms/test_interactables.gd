@@ -118,6 +118,36 @@ func test_one_that_refuses_at_the_moment_of_use_gives_no_interacted() -> void:
 	assert_signal_not_emitted(alvar, "interacted")
 	assert_eq(alvar.current_order(), Unit.Order.NONE)
 
+func test_a_subclass_that_skips_super_stays_on_the_interact_layer() -> void:
+	var odd := NoSuper.new()
+	var shape := CollisionShape3D.new()
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = 0.35
+	capsule.height = 1.8
+	shape.shape = capsule
+	shape.position = Vector3(0, 0.9, 0)
+	odd.add_child(shape)
+	arena.room.add_child(odd)
+	odd.global_position = Vector3(-3, 0, 3)
+	assert_eq(odd.collision_layer, 0b1000)
+	assert_eq(odd.collision_mask, 0)
+	var cam: Camera3D = await _camera_on_alvar()
+	var at: Vector2 = cam.unproject_position(odd.global_position + Vector3(0, 0.9, 0))
+	assert_eq(Picker.interactable_at(cam, at), odd)
+
+
+func _camera_on_alvar() -> Camera3D:
+	var rig := CameraRig.new()
+	var cam := Camera3D.new()
+	cam.name = "Camera"
+	rig.add_child(cam)
+	arena.room.add_child(rig)
+	rig.target = alvar
+	rig.snap_to_target()
+	cam.current = true
+	await wait_physics_frames(2)
+	return cam
+
 
 ## Allows anyone, but its use always fails, as a door that locks at the last moment.
 class Grudging extends Interactable:
@@ -126,3 +156,9 @@ class Grudging extends Interactable:
 	func use(_by: Unit) -> bool:
 		tries += 1
 		return false
+
+
+## Defines its own `_init` without calling `super()`.
+class NoSuper extends Interactable:
+	func _init() -> void:
+		label = "odd"

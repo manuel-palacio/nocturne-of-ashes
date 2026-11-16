@@ -17,7 +17,6 @@ class Picky extends Interactable:
 	var _allow: Callable
 
 	func _init(allow: Callable) -> void:
-		super()
 		_allow = allow
 
 	func can_be_used_by(unit: Unit) -> bool:
