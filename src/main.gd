@@ -52,6 +52,8 @@ var calm_time: float:
 ## The room the party is in.
 var room: Room
 ## What outlives a room. Set before entering the tree, or made at `_ready()`: the skirmish's, or a new game.
+## The skirmish's `start_room()` replaces it with a fresh object, so anything that listens to it must
+## read `main.state` again on `room_started`.
 var state: GameState
 ## Where the story is saved; null in a skirmish. Set before entering the tree, or made at `_ready()`.
 var store: SaveStore
@@ -127,6 +129,8 @@ func start_room() -> void:
 ## Takes the party to `room_id`, arriving at its entry `entry` (or at its start, with a warning, when
 ## it has none), with each member's health and Blood as they leave; a fallen member arrives risen at
 ## `Unit.risen_health()`. An unknown room is refused with a warning.
+## It removes physics bodies from the tree at once, so from a physics callback such as `body_entered`
+## call it deferred.
 func enter_room(room_id: StringName, entry: StringName = Room.START) -> void:
 	if not ROOMS.has(room_id):
 		push_warning("There is no room %s; staying in %s" % [room_id, room.room_id])
@@ -182,36 +186,56 @@ func _locale_chosen_before_start() -> bool:
 	return TranslationServer.get_locale() != TranslationServer.standardize_locale(OS.get_locale())
 
 
-## Clears the last room's units, loads `room_id` and spawns the party at `entry_name` and the room's
-## enemies, with Álvar selected and nothing paused or targeted.
+## Clears the last room's units, loads `room_id`, spawns the party at `entry_name` and starts the room's
+## fight, with Álvar selected and nothing paused or targeted.
 func _enter(room_id: StringName, entry_name: StringName) -> void:
 	set_paused(false)
 	input.cancel_targeting()
+	_clear_units()
+	_load_room(room_id)
+	var arrived_at: StringName = _spawn_party(entry_name)
+	_encounter.begin(room, state, _units)
+	state.room = room_id
+	state.entry = arrived_at
+	_party.remember_entry_vitals(state)
+	_hand_control_to_alvar()
+	room_started.emit()
+
+
+func _clear_units() -> void:
 	for unit: Node in _units.get_children():
 		# Out of the tree at once, so no new unit finds an old one in the "units" group.
 		_units.remove_child(unit)
 		unit.queue_free()
 	_party.clear()
-	_load_room(room_id)
 
+
+## Spawns the members who have joined at the room's entry `entry_name` and shows them in the HUD.
+## Returns the name of the entry they arrived at. Álvar is spawned, with an error, if `state` lacks him.
+func _spawn_party(entry_name: StringName) -> StringName:
 	var entry: Marker3D = room.entry(entry_name)
 	var members: Array[StringName] = state.joined()
+	if not members.has(GameState.LEADER):
+		push_error("The game state's party has no %s; spawning him anyway" % GameState.LEADER)
+		members.push_front(GameState.LEADER)
 	for index: int in members.size():
-		var marker: Node3D = entry if index == 0 else entry.get_node(NodePath("Companion%d" % index))
+		var marker: Node3D = room
+		if entry != null:
+			marker = entry if index == 0 else room.companion_marker(entry, index)
 		_party.spawn(members[index], marker, state, _units)
 	hud.bind_party(party)
+	if entry == null:
+		return Room.START
+	return StringName(String(entry.name).trim_prefix(Room.ENTRY_PREFIX))
+
+
+func _hand_control_to_alvar() -> void:
 	hud.hide_fallen()
 	hud.hide_cleared()
-	_encounter.begin(room, state, _units)
-
-	state.room = room_id
-	state.entry = StringName(String(entry.name).trim_prefix(Room.ENTRY_PREFIX))
-	_party.remember_entry_vitals(state)
 	input.rig = rig
 	input.enabled = true
 	select(player)
 	rig.snap_to_target()
-	room_started.emit()
 
 
 ## Puts the room `room_id` in place of the current one, first among the children.
