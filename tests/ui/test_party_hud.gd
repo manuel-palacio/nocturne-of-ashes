@@ -148,3 +148,22 @@ func test_a_clicked_gift_button_takes_no_focus_so_space_still_pauses() -> void:
 	await wait_physics_frames(2)
 	assert_true(main.is_paused())
 	assert_eq(main.player.stats.blood, blood, "Space used no Gift")
+
+func test_an_allys_panel_takes_an_ally_gift_while_targeting() -> void:
+	var zahra: Unit = main.party[1]
+	var gonzalo: Unit = main.party[2]
+	main.select(zahra)
+	gonzalo.take_hit(100)  # 60 of 160
+	main.input.press_gift(0)  # Mend Flesh
+	assert_eq(main.input.targeting_gift(), 0)
+	_panel(2).pressed.emit(gonzalo)
+	assert_eq(gonzalo.stats.health, 100, "healed")
+	assert_eq(main.selected, zahra, "still selected")
+	assert_eq(main.input.targeting_gift(), -1, "targeting closed")
+
+func test_an_allys_panel_selects_while_an_enemy_gift_is_targeting() -> void:
+	main.input.press_gift(1)  # Baleful Eye
+	assert_eq(main.input.targeting_gift(), 1)
+	_panel(1).pressed.emit(main.party[1])
+	assert_eq(main.selected, main.party[1])
+	assert_eq(main.input.targeting_gift(), -1)

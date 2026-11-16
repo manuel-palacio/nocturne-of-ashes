@@ -3,7 +3,7 @@ extends Node
 ## Turns mouse clicks and keys into orders for the controlled unit, Gift uses, selection requests, and
 ## moves for the camera rig. It never calls `Main`; selection goes out through its signals.
 
-## A click landed on a living friend of the controlled unit.
+## A click landed on a living friend of the controlled unit, or a party member was pressed.
 signal select_requested(unit: Unit)
 ## The `select_next` action was pressed.
 signal select_next_requested
@@ -117,11 +117,23 @@ func click_at(screen_position: Vector2) -> void:
 		unit.order_move(on_ground)
 
 
+## A party member was pressed outside the world, as on its HUD panel: while targeting a Gift that can
+## be used on `member`, uses it on them and keeps the selection; otherwise asks to select them.
+func press_member(member: Unit) -> void:
+	_close_stale_targeting()
+	if enabled and _targeting >= 0 and _use_targeted_on(member):
+		return
+	select_requested.emit(member)
+
+
 ## Uses the Gift being targeted on `target` and closes targeting, if the Gift can be used on it.
-func _use_targeted_on(target: Unit) -> void:
+## Returns whether it was used.
+func _use_targeted_on(target: Unit) -> bool:
 	var gifts: GiftUser = _gifts()
 	if target != null and gifts != null and gifts.use(_targeting, target):
 		cancel_targeting()
+		return true
+	return false
 
 
 ## Closes targeting once its Gift is no longer ready: the unit was stunned, fell, entered the Fury or

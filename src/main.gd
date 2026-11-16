@@ -55,7 +55,7 @@ func _ready() -> void:
 	input.select_requested.connect(select)
 	input.select_next_requested.connect(select_next)
 	input.targeting_changed.connect(hud.show_targeting)
-	hud.member_pressed.connect(select)
+	hud.member_pressed.connect(input.press_member)
 	hud.gift_chosen.connect(input.press_gift)
 	selection_changed.connect(hud.show_selected)
 	pause_changed.connect(hud.set_paused)
