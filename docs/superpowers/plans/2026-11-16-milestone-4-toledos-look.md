@@ -72,9 +72,9 @@ e2e/look.spec.js                   screenshots and budget checks
 **What it is.** One rigged, animated human, coloured by an 8 × 1 pixel palette image: every triangle belongs to one body region and looks up that region's square. A character's look is then a palette. The approach and the region logic are proven in the owner's other Godot game; write this tool fresh for medieval dress, do not copy that project's files.
 
 **Interfaces:**
-- `tools/make_character.py <path to the library's Godot .glb>` writes `human.glb` and every palette; `--palettes-only` rewrites just the palettes. Run with `uv run --with pygltflib --with numpy --with pillow python3 tools/make_character.py …`. The library file is downloaded by hand from Quaternius (CC0) and is not committed; the README says where from.
+- `tools/make_character.py <path to the library's Godot .glb>` writes `human.glb` and every palette; `--palettes-only` rewrites just the palettes. Run with `uv run --with pygltflib --with numpy --with pillow python3 tools/make_character.py …`. The library file is downloaded by hand from Quaternius (CC0) and is not committed; the README says where from. (It is the "Universal Animation Library", standard edition: its Godot file is `AnimationLibrary_Godot_Standard.glb`, with 46 clips.)
 - Regions (palette squares, left to right): `skin`, `hair`, `tunic` (torso and upper arms), `sleeves` (forearms), `skirt` (hips to knee: the hang of a habit, surcoat or robe), `hose` (lower legs), `boots`, `trim` (belt and collar).
-- Clips kept, renamed to these exact names (the tool maps library clips to them and fails loudly if one is missing): `idle`, `walk`, `run`, `attack`, `hit`, `death`, `cast`, `interact`, `stagger`. Looping clips: `idle`, `walk`, `run`, `stagger`. If the library has no clip that suits `cast` or `stagger`, choose the nearest and say which in the report; `feed` comes in Task 2.
+- Clips kept, renamed to these exact names (the tool maps library clips to them and fails loudly if one is missing): `idle` (the library's `Idle_Loop`), `walk` (`Walk_Loop`), `run` (`Jog_Fwd_Loop`), `attack` (`Sword_Attack`), `hit` (`Hit_Chest`), `death` (`Death01`), `cast` (`Spell_Simple_Shoot`), `interact` (`Interact`), `stagger` (a loop made from `Hit_Head`, or the nearest fit), `talk` (`Idle_Talking_Loop`), `sit` (`Sitting_Idle_Loop`). Looping clips: `idle`, `walk`, `run`, `stagger`, `talk`, `sit`. The library has no feeding clip; `feed` comes in Task 2.
 - Palettes (hex colours are the builder's, within these descriptions):
 
 | Palette | Who | Look |
@@ -97,7 +97,7 @@ e2e/look.spec.js                   screenshots and budget checks
 extends GutTest
 
 const HUMAN := preload("res://assets/characters/human/human.glb")
-const CLIPS: Array[StringName] = [&"idle", &"walk", &"run", &"attack", &"hit", &"death", &"cast", &"interact", &"stagger"]
+const CLIPS: Array[StringName] = [&"idle", &"walk", &"run", &"attack", &"hit", &"death", &"cast", &"interact", &"stagger", &"talk", &"sit"]
 const PALETTES: Array[String] = ["alvar", "zahra", "gonzalo", "crusader", "sergeant", "malakor", "smith", "captive"]
 
 var human: Node3D
@@ -121,7 +121,7 @@ func test_it_has_exactly_the_clips_we_use() -> void:
 func test_looping_clips_loop_and_the_others_do_not() -> void:
 	for clip: StringName in CLIPS:
 		var loops: bool = _player().get_animation(clip).loop_mode != Animation.LOOP_NONE
-		assert_eq(loops, clip in [&"idle", &"walk", &"run", &"stagger"], clip)
+		assert_eq(loops, clip in [&"idle", &"walk", &"run", &"stagger", &"talk", &"sit"], clip)
 
 func test_it_is_one_mesh_with_one_surface_under_the_triangle_budget() -> void:
 	assert_eq(human.find_children("*", "MeshInstance3D", true, false).size(), 1)
@@ -175,7 +175,7 @@ func test_no_two_palettes_are_the_same() -> void:
     5. a one-shot in progress: `attack` when its melee strikes (`MeleeAttack.hit`), `cast` when it uses a Gift (`GiftUser.gift_used`), `hit` when it is hit (`was_hit`) unless an attack or cast is showing; each for its clip's length, at most 0.7 s
     6. moving faster than 0.1 m/s flat → `run` when its `speed_multiplier()` is above 1, else `walk`, the clip's speed scaled so the feet match the ground speed
     7. otherwise `idle`
-  - Blends between clips over 0.15 s. The clip `feed` is a ninth clip added to `human.glb`: the library's nearest fit, or one made by `tools/blender/feed_clip.py` (leaning in over a held victim), added to the tool's kept list and to the asset test.
+  - A character who is speaking in a conversation shows `talk`; the captive shows `sit`. Blends between clips over 0.15 s. The clip `feed` is one more clip added to `human.glb`: the library's nearest fit, or one made by `tools/blender/feed_clip.py` (leaning in over a held victim), added to the tool's kept list and to the asset test.
   - In the Fury the model is tinted red (a shader parameter or material colour on the visual only).
   - Animation runs in the unit's subtree, so the world pause and conversations freeze it.
 - `Unit` turns to face where it walks (at most 10 radians a second; attacking still faces the target). The old fallen presentation (laying the capsule down) goes: the death clip is the fall. A fallen unit still leaves every collision layer.
