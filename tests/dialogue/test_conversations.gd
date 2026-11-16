@@ -226,3 +226,13 @@ func test_party_panels_and_gift_buttons_do_nothing_while_talking() -> void:
 	assert_eq(main.selected, main.player)
 	assert_false(main.player.has_effect(&"iron_sinew"))
 	assert_true(main.is_talking())
+
+func test_someone_hidden_by_a_flag_has_no_collider_and_is_not_picked() -> void:
+	var cam: Camera3D = main.rig.camera()
+	var at: Vector2 = cam.unproject_position(smith.global_position + Vector3(0, 0.9, 0))
+	assert_eq(Picker.interactable_at(cam, at), smith)
+	smith.hidden_if = &"smith_gone"
+	main.state.set_flag(&"smith_gone")
+	await wait_physics_frames(2)
+	assert_true((smith.find_child("CollisionShape3D") as CollisionShape3D).disabled)
+	assert_null(Picker.interactable_at(cam, at))
