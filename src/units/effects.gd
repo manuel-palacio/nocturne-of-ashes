@@ -31,6 +31,14 @@ func has(id: StringName) -> bool:
 	return _active.any(func(e: StatusEffect) -> bool: return e.id == id)
 
 
+## The ids of the active effects, oldest first.
+func ids() -> Array[StringName]:
+	var result: Array[StringName] = []
+	for effect: StatusEffect in _active:
+		result.append(effect.id)
+	return result
+
+
 func clear() -> void:
 	if _active.is_empty():
 		return

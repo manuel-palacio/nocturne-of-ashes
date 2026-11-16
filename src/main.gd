@@ -42,6 +42,12 @@ var _paused: bool = false
 @onready var _units: Node3D = $Units
 
 
+func _enter_tree() -> void:
+	var probe: Node = get_node_or_null(^"/root/Probe")
+	if probe != null:
+		probe.watch(self)
+
+
 func _ready() -> void:
 	input.select_requested.connect(select)
 	input.select_next_requested.connect(select_next)
@@ -113,6 +119,11 @@ func set_paused(on: bool) -> void:
 
 func is_paused() -> bool:
 	return _paused
+
+
+## True from the fall of this round's last enemy until the next round starts.
+func is_cleared() -> bool:
+	return _cleared
 
 
 ## Gives camera and input to `unit` and sets the other living members following it.

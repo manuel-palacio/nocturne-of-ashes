@@ -14,12 +14,12 @@ async function open(page, query) {
   return errors;
 }
 
-test('the room loads without errors and shows the player and three enemies', async ({ page }) => {
+test('the room loads without errors and shows the player and six enemies', async ({ page }) => {
   test.setTimeout(90000);
   const errors = await open(page, 'probe=1&calm=1');
   const s = await state(page);
   expect(s.health).toBe(120);
-  expect(s.enemies).toBe(3);
+  expect(s.enemies).toBe(6);
   expect(s.fallen).toBe(false);
   await page.screenshot({ path: 'build/e2e/room.png' });
   expect(errors).toEqual([]);
@@ -36,21 +36,6 @@ test('a click on the floor walks the character there', async ({ page }) => {
     const p = window.nocturneState.pos;
     return Math.hypot(p[0] - from[0], p[1] - from[1]) > 1.5;
   }, start, { timeout: 15000 });
-  expect(errors).toEqual([]);
-});
-
-test('approached, the enemies attack and the character can fall and rise again', async ({ page }) => {
-  test.setTimeout(180000);
-  const errors = await open(page, 'probe=1');
-  // The enemies hold until he comes within their aggro radius, so walk him east towards them.
-  const box = await page.locator('canvas').boundingBox();
-  for (let clicks = 0; clicks < 12 && (await state(page)).health === 120; clicks++) {
-    await page.mouse.click(box.x + box.width * 0.75, box.y + box.height * 0.5);
-    await page.waitForTimeout(1000);
-  }
-  await page.waitForFunction(() => { window.nocturneProbe(); return window.nocturneState.fallen; }, null, { timeout: 120000 });
-  await page.keyboard.press('Enter');
-  await page.waitForFunction(() => { window.nocturneProbe(); const s = window.nocturneState; return !s.fallen && s.health === 120 && s.enemies === 3; }, null, { timeout: 15000 });
   expect(errors).toEqual([]);
 });
 

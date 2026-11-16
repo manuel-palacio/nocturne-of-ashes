@@ -327,6 +327,11 @@ func has_effect(id: StringName) -> bool:
 	return _effects.has(id)
 
 
+## The ids of the active effects, oldest first.
+func effect_ids() -> Array[StringName]:
+	return _effects.ids()
+
+
 func clear_effects() -> void:
 	_effects.clear()
 
