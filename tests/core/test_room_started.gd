@@ -31,4 +31,4 @@ func test_room_started_comes_after_the_units_are_spawned() -> void:
 	var seen: Array[int] = []
 	main.room_started.connect(func() -> void: seen.append(main.enemies_alive()))
 	main.start_room()
-	assert_eq(seen, [3])
+	assert_eq(seen, [6])

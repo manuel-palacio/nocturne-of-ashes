@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/units/unit_base.tscn" id="1_base"]
+[ext_resource type="Script" path="res://src/units/stats.gd" id="2_stats"]
+[ext_resource type="Script" path="res://src/units/combat_brain.gd" id="3_brain"]
+
+[sub_resource type="Resource" id="Resource_stats"]
+script = ExtResource("2_stats")
+max_health = 160
+starting_blood = 60
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_slategrey"]
+albedo_color = Color(0.4, 0.45, 0.52, 1)
+
+[node name="Gonzalo" instance=ExtResource("1_base")]
+stats = SubResource("Resource_stats")
+faction = &"player"
+move_speed = 3.4
+display_name = "Gonzalo"
+
+[node name="Body" parent="." index="1"]
+surface_material_override/0 = SubResource("StandardMaterial3D_slategrey")
+
+[node name="Melee" parent="." index="4"]
+damage = 18
+cooldown = 1.3
+
+[node name="Brain" type="Node" parent="." index="5"]
+script = ExtResource("3_brain")
+enabled = false

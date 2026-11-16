@@ -14,8 +14,11 @@ func before_each() -> void:
 	for enemy: Unit in main.enemies:
 		enemy.get_node("Brain").free()
 	foe = main.enemies[0]
-	main.enemies[1].global_position = Vector3(-10, 0, -6)
-	main.enemies[2].global_position = Vector3(-10, 0, 6)
+	var corners: Array[Vector3] = [
+		Vector3(-10, 0, -6), Vector3(-10, 0, 6), Vector3(-11, 0, -6), Vector3(-11, 0, 6), Vector3(-11, 0, -4.5),
+	]
+	for i: int in range(1, main.enemies.size()):
+		main.enemies[i].global_position = corners[i - 1]
 	foe.global_position = Vector3(-10, 0, -3)
 
 func _flat_distance(a: Vector3, b: Vector3) -> float:

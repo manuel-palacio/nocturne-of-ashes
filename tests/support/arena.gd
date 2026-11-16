@@ -4,6 +4,8 @@ extends RefCounted
 
 const ROOM: PackedScene = preload("res://tests/fixtures/flat_room.tscn")
 const ALVAR: PackedScene = preload("res://scenes/units/alvar.tscn")
+const ZAHRA: PackedScene = preload("res://scenes/units/zahra.tscn")
+const GONZALO: PackedScene = preload("res://scenes/units/gonzalo.tscn")
 const CRUSADER: PackedScene = preload("res://scenes/units/crusader.tscn")
 
 var room: Node3D
