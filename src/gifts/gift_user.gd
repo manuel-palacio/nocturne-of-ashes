@@ -67,6 +67,17 @@ func use(index: int, target: Unit = null) -> bool:
 	return true
 
 
+## Replaces the Gifts with `value`, carrying over by Gift id the cooldown of each Gift it had before;
+## a Gift new to it starts ready. Unlike setting `gifts`, which ends every cooldown.
+func replace_gifts(value: Array[Gift]) -> void:
+	var left: Dictionary = {}  # StringName id -> float
+	for i: int in gifts.size():
+		left[gifts[i].id] = _cooldowns[i]
+	gifts = value
+	for i: int in gifts.size():
+		_cooldowns[i] = left.get(gifts[i].id, 0.0)
+
+
 ## Ends every cooldown at once; emits `cooldowns_changed` only if one was running.
 func reset_cooldowns() -> void:
 	for left: float in _cooldowns:

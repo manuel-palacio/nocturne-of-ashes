@@ -1,6 +1,6 @@
 class_name Hud
 extends CanvasLayer
-## Shows a panel per party member, the selected member's Gifts, the conversation on show (in its
+## Shows a panel per party member, the selected member's Gifts, Conscience in a story, the conversation on show (in its
 ## `DialogueBox`), and the prompts for a pause, a cleared room and Álvar's fall. Clicks on panels and
 ## Gift buttons go out through its signals.
 ##
@@ -23,12 +23,15 @@ var _gift_buttons: Array[GiftButton] = []
 var _party: Array[Unit] = []
 var _selected: Unit
 var _targeting_index: int = -1
+## The story state whose Conscience is shown; null in a skirmish.
+var _state: GameState
 
 @onready var _party_column: VBoxContainer = %PartyColumn
 @onready var _gift_bar: HBoxContainer = %GiftBar
 @onready var _fallen_label: Label = %FallenLabel
 @onready var _paused_label: Label = %PausedLabel
 @onready var _cleared_label: Label = %ClearedLabel
+@onready var _conscience_label: Label = %ConscienceLabel
 @onready var _dialogue_box: DialogueBox = %DialogueBox
 
 
@@ -53,6 +56,18 @@ func bind_party(party: Array[Unit]) -> void:
 		panel.bind(member)
 		panel.pressed.connect(member_pressed.emit)
 		_panels.append(panel)
+
+
+## Shows the Conscience of `state` and follows its changes, dropping the state shown before; hides it
+## when `state` is null, as in a skirmish. Called at each room start, as `Main` may hold a new state then.
+func bind_state(state: GameState) -> void:
+	if _state != null and _state.conscience_changed.is_connected(_on_conscience_changed):
+		_state.conscience_changed.disconnect(_on_conscience_changed)
+	_state = state
+	_conscience_label.visible = state != null
+	if state != null:
+		state.conscience_changed.connect(_on_conscience_changed)
+	_show_conscience()
 
 
 ## Shows the conversations `runner` runs in the dialogue box.
@@ -128,6 +143,16 @@ func _show_texts() -> void:
 	_fallen_label.text = tr("You have fallen — press Enter")
 	_paused_label.text = tr("Paused — give your orders")
 	_cleared_label.text = tr("The vault is quiet")
+	_show_conscience()
+
+
+func _show_conscience() -> void:
+	if _state != null:
+		_conscience_label.text = "%s %d/%d" % [tr("Conscience"), _state.conscience, GameState.CONSCIENCE_MAX]
+
+
+func _on_conscience_changed(_value: int) -> void:
+	_show_conscience()
 
 
 ## Makes the panels and Gift buttons again, in the current language, in the state they were in.

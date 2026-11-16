@@ -18,6 +18,9 @@ msgstr "En pausa — da tus órdenes"
 msgid "The vault is quiet"
 msgstr "La cripta está en silencio"
 
+msgid "Conscience"
+msgstr "Conciencia"
+
 # Party member states
 msgid "Fallen"
 msgstr "Caído"

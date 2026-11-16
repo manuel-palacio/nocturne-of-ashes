@@ -3,7 +3,9 @@ extends Node
 ## The party: its members (one to three), the leader Álvar, whose fall ends the round, and the selected
 ## member. The selected member's brain is off and the other living members follow it. Raises the
 ## fallen when asked. Builds members from a `GameState` (their Gifts and vitals), writes their vitals
-## back, and keeps their vitals as a room was entered for a restart. It knows nothing of rooms or enemies.
+## back, and keeps their vitals as a room was entered for a restart. While a room is live it follows the
+## state: a Gift learned is added to its member at once, and a member who joins is spawned in the room
+## (the room only says where). It knows nothing of enemies.
 
 ## A living member became the selected one.
 signal selection_changed(unit: Unit)
@@ -11,6 +13,10 @@ signal selection_changed(unit: Unit)
 signal member_fell(unit: Unit)
 ## A fallen member rose.
 signal member_rose(unit: Unit)
+## A member joined mid-room and was spawned and added.
+signal member_added(unit: Unit)
+## A member's Gifts changed because it learned one.
+signal gifts_changed(unit: Unit)
 
 ## Each member's scene, by `Unit.member_id`.
 const SCENES: Dictionary = {
@@ -27,6 +33,13 @@ var selected: Unit
 
 ## Each member's vitals in the state as the room was entered, for a restart.
 var _entry_vitals: Dictionary = {}  # StringName member -> Vector2i
+## Every Gift of each member's scene, in its order, by `Unit.member_id`: what known Gifts are taken from.
+var _scene_gifts: Dictionary = {}  # StringName member -> Array[Gift]
+## The state, room, entry and units' parent of the live room, set by `begin_room()`.
+var _state: GameState
+var _room: Room
+var _entry: Marker3D
+var _parent: Node
 
 
 ## Forgets every member; the caller frees their nodes.
@@ -36,6 +49,7 @@ func clear() -> void:
 			member.died.disconnect(_on_member_died)
 			member.revived.disconnect(_on_member_revived)
 	members.clear()
+	_scene_gifts.clear()
 	leader = null
 	selected = null
 
@@ -54,12 +68,8 @@ func add(member: Unit) -> void:
 func spawn(member_id: StringName, marker: Node3D, state: GameState, parent: Node) -> Unit:
 	var unit: Unit = (SCENES[member_id] as PackedScene).instantiate()
 	var gift_user: GiftUser = unit.get_node(^"Gifts")
-	var known: Array[StringName] = state.known_gifts(member_id)
-	var gifts: Array[Gift] = []
-	for gift: Gift in gift_user.gifts:
-		if known.has(gift.id):
-			gifts.append(gift)
-	gift_user.gifts = gifts
+	_scene_gifts[member_id] = gift_user.gifts.duplicate()
+	gift_user.gifts = _known_gifts(member_id, state)
 	var vitals: Vector2i = state.vitals(member_id)
 	if vitals.y >= 0:
 		# Set as the starting Blood, so the unit begins with it and its Fury sees no fall into it.
@@ -73,6 +83,22 @@ func spawn(member_id: StringName, marker: Node3D, state: GameState, parent: Node
 		unit.stats.take_damage(unit.stats.max_health - health)
 	add(unit)
 	return unit
+
+
+## Follows `state` while the party is in `room`, having arrived at `entry` (null when the room has
+## none) with its units under `parent`: from now on a Gift learned in `state` is added to its member,
+## and a member who joins is spawned. Drops the state followed before. Called at each room start, once
+## the party is spawned, as `Main` may hold a new state object then.
+func begin_room(state: GameState, room: Room, entry: Marker3D, parent: Node) -> void:
+	if _state != null and _state.member_joined.is_connected(_on_member_joined):
+		_state.member_joined.disconnect(_on_member_joined)
+		_state.gift_learned.disconnect(_on_gift_learned)
+	_state = state
+	_room = room
+	_entry = entry
+	_parent = parent
+	state.member_joined.connect(_on_member_joined)
+	state.gift_learned.connect(_on_gift_learned)
 
 
 ## Stores each member's health and Blood in `state`; a fallen member's health as `Unit.risen_health()`.
@@ -148,6 +174,55 @@ func _on_member_died(unit: Unit) -> void:
 	member_fell.emit(unit)
 	if unit != leader and unit == selected:
 		select(leader)
+
+
+## The Gifts of `member_id`'s scene that `state` says it knows, in the scene's order.
+func _known_gifts(member_id: StringName, state: GameState) -> Array[Gift]:
+	var known: Array[StringName] = state.known_gifts(member_id)
+	var gifts: Array[Gift] = []
+	for gift: Gift in _scene_gifts[member_id]:
+		if known.has(gift.id):
+			gifts.append(gift)
+	return gifts
+
+
+func _member(member_id: StringName) -> Unit:
+	for member: Unit in members:
+		if member.member_id == member_id:
+			return member
+	return null
+
+
+## Spawns the member who joined beside their character in the room, or at the entry's next free
+## companion marker, in `GameState.MEMBERS` order among the members, following the selected one.
+func _on_member_joined(member_id: StringName) -> void:
+	if _member(member_id) != null or not is_instance_valid(_room):
+		return
+	var marker: Node3D = _room
+	if _entry != null:
+		marker = _room.companion_marker(_entry, clampi(members.size(), 1, 2))
+	var unit: Unit = spawn(member_id, marker, _state, _parent)
+	unit.global_position = _room.arrival_point(unit.display_name, marker)
+	# `spawn()` appended it; it goes where `MEMBERS` puts it among those present.
+	members.erase(unit)
+	var rank: int = GameState.MEMBERS.find(member_id)
+	var at: int = 0
+	while at < members.size() and GameState.MEMBERS.find(members[at].member_id) < rank:
+		at += 1
+	members.insert(at, unit)
+	# A restart of the room brings them back as they joined.
+	_entry_vitals[member_id] = _state.vitals(member_id)
+	if selected != null:
+		_steer_brain(unit)
+	member_added.emit(unit)
+
+
+func _on_gift_learned(member_id: StringName, _gift: StringName) -> void:
+	var unit: Unit = _member(member_id)
+	if unit == null:
+		return
+	(unit.get_node(^"Gifts") as GiftUser).replace_gifts(_known_gifts(member_id, _state))
+	gifts_changed.emit(unit)
 
 
 func _on_member_revived(unit: Unit) -> void:

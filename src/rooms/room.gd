@@ -8,6 +8,8 @@ extends Node3D
 const ENTRY_PREFIX: String = "Entry_"
 const START: StringName = &"start"
 const ENEMY_PREFIX: String = "EnemySpawn"
+## How far from their character someone who joins mid-room appears, in metres.
+const BESIDE_NPC: float = 2.0
 
 @export var room_id: StringName
 ## The enemy markers that get a sergeant instead of a crusader.
@@ -38,6 +40,23 @@ func companion_marker(at_entry: Marker3D, index: int) -> Node3D:
 				% [at_entry.name, room_id, index])
 		return at_entry
 	return found
+
+
+## Where someone named `display_name` who joins the party mid-room stands: `BESIDE_NPC` metres from the
+## character whose `Npc.label` is `display_name`, toward the room's centre (its origin), on the navmesh;
+## at `fallback` when the room has no such character.
+func arrival_point(display_name: String, fallback: Node3D) -> Vector3:
+	for npc: Npc in npcs():
+		if npc.label != display_name:
+			continue
+		var from: Vector3 = npc.global_position
+		var toward := Vector3(global_position.x - from.x, 0.0, global_position.z - from.z)
+		var spot: Vector3 = from + toward.normalized() * minf(BESIDE_NPC, toward.length())
+		var map: RID = get_world_3d().navigation_map
+		if NavigationServer3D.map_get_iteration_id(map) == 0:
+			return spot
+		return NavigationServer3D.map_get_closest_point(map, spot)
+	return fallback.global_position
 
 
 ## The characters to talk to that are children of the room, in scene order.

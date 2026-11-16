@@ -104,6 +104,8 @@ func _ready() -> void:
 	_party.selection_changed.connect(_on_selection_changed)
 	_party.member_fell.connect(_on_member_died)
 	_party.member_rose.connect(_on_member_revived)
+	_party.member_added.connect(_on_member_added)
+	_party.gifts_changed.connect(_on_gifts_changed)
 	input.targeting_changed.connect(hud.show_targeting)
 	hud.member_pressed.connect(input.press_member)
 	hud.gift_chosen.connect(input.press_gift)
@@ -282,6 +284,7 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	var arrived_at: StringName = _spawn_party(entry_name)
 	_encounter.begin(room, state, _units)
 	_conversation.begin_room(room, state)
+	hud.bind_state(state if boot == Boot.STORY else null)
 	state.room = room_id
 	state.entry = arrived_at
 	_party.remember_entry_vitals(state)
@@ -310,6 +313,7 @@ func _spawn_party(entry_name: StringName) -> StringName:
 		if entry != null:
 			marker = entry if index == 0 else room.companion_marker(entry, index)
 		_party.spawn(members[index], marker, state, _units)
+	_party.begin_room(state, room, entry, _units)
 	hud.bind_party(party)
 	if entry == null:
 		return Room.START
@@ -368,3 +372,17 @@ func _on_member_died(unit: Unit) -> void:
 
 func _on_member_revived(_unit: Unit) -> void:
 	party_changed.emit()
+
+
+## A member who joined mid-room gets a panel; the selection stays as it was.
+func _on_member_added(_unit: Unit) -> void:
+	hud.bind_party(party)
+	if selected != null:
+		hud.show_selected(selected)
+
+
+## The Gift bar shows the selected member's Gifts as they now are; targeting closes, as indices move.
+func _on_gifts_changed(unit: Unit) -> void:
+	if unit == selected:
+		input.cancel_targeting()
+		hud.show_selected(unit)

@@ -122,3 +122,15 @@ func test_a_caster_in_the_fury_cannot_use_gifts() -> void:
 	assert_eq(alvar.stats.blood, 45)
 	alvar.remove_effect(&"fury")
 	assert_true(gifts.can_use(0, foe))
+
+func test_replacing_the_gifts_keeps_the_cooldowns_of_gifts_kept_by_id() -> void:
+	var other := Marker.new()
+	other.id = &"other"
+	other.cooldown = 4.0
+	gifts.use(0, foe)
+	var left: float = gifts.cooldown_left(0)
+	gifts.replace_gifts([other, marker])
+	assert_eq(gifts.count(), 2)
+	assert_eq(gifts.cooldown_left(0), 0.0)
+	assert_eq(gifts.cooldown_left(1), left)
+	assert_false(gifts.can_use(1, foe))
