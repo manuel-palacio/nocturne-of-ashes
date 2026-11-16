@@ -79,3 +79,13 @@ func test_a_joined_companion_is_saved_and_returns_after_reload() -> void:
 	main.reload_checkpoint()
 	await wait_physics_frames(3)
 	assert_eq(main.party.size(), 2)
+
+func test_a_join_closes_targeting() -> void:
+	main.state.learn(&"alvar", &"baleful_eye")
+	await wait_physics_frames(2)
+	main.input.press_gift(0)
+	assert_eq(main.input.targeting_gift(), 0)
+	main.state.join(&"zahra")
+	await wait_physics_frames(2)
+	assert_eq(main.input.targeting_gift(), -1)
+	assert_false(main.hud.gift_buttons()[0].is_targeting())

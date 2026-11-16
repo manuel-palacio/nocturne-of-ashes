@@ -43,15 +43,18 @@ func companion_marker(at_entry: Marker3D, index: int) -> Node3D:
 
 
 ## Where someone named `display_name` who joins the party mid-room stands: `BESIDE_NPC` metres from the
-## character whose `Npc.label` is `display_name`, toward the room's centre (its origin), on the navmesh;
-## at `fallback` when the room has no such character.
+## shown character whose `Npc.label` is `display_name`, toward the room's centre (its origin), or toward
+## +Z when the character stands at the centre, on the navmesh; at `fallback` when no shown character
+## has that label.
 func arrival_point(display_name: String, fallback: Node3D) -> Vector3:
 	for npc: Npc in npcs():
-		if npc.label != display_name:
+		# Both are the untranslated source text; never compare what `tr()` gives.
+		if not npc.visible or npc.label != display_name:
 			continue
 		var from: Vector3 = npc.global_position
 		var toward := Vector3(global_position.x - from.x, 0.0, global_position.z - from.z)
-		var spot: Vector3 = from + toward.normalized() * minf(BESIDE_NPC, toward.length())
+		var direction: Vector3 = toward.normalized() if toward.length() > 0.01 else Vector3.BACK
+		var spot: Vector3 = from + direction * BESIDE_NPC
 		var map: RID = get_world_3d().navigation_map
 		if NavigationServer3D.map_get_iteration_id(map) == 0:
 			return spot

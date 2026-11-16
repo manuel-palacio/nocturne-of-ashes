@@ -212,6 +212,7 @@ func _on_member_joined(member_id: StringName) -> void:
 	members.insert(at, unit)
 	# A restart of the room brings them back as they joined.
 	_entry_vitals[member_id] = _state.vitals(member_id)
+	# While the leader is down this follows a fallen leader, as the others do; the round ends on a reload.
 	if selected != null:
 		_steer_brain(unit)
 	member_added.emit(unit)

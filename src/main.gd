@@ -374,8 +374,10 @@ func _on_member_revived(_unit: Unit) -> void:
 	party_changed.emit()
 
 
-## A member who joined mid-room gets a panel; the selection stays as it was.
+## A member who joined mid-room gets a panel; the selection stays as it was. Targeting closes, as the
+## HUD's rebuilt Gift bar no longer marks it.
 func _on_member_added(_unit: Unit) -> void:
+	input.cancel_targeting()
 	hud.bind_party(party)
 	if selected != null:
 		hud.show_selected(selected)
