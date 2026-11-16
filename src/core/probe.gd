@@ -36,7 +36,7 @@ func _on_room_started() -> void:
 		return
 	for enemy: Unit in _main.enemies:
 		for child: Node in enemy.get_children():
-			if child is EnemyBrain:
+			if child is CombatBrain:
 				enemy.remove_child(child)
 				child.queue_free()
 

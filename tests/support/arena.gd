@@ -13,7 +13,7 @@ func _init(test: GutTest) -> void:
 	room = test.add_child_autofree(ROOM.instantiate())
 
 
-## Adds a unit at `at`. Its Brain, if it has one, is removed unless `with_brain` is true.
+## Adds a unit at `at`. Its Brain, if it has one, is removed unless `with_brain` is true, when it is enabled.
 func spawn(scene: PackedScene, at: Vector3, with_brain: bool = false) -> Unit:
 	var unit: Unit = scene.instantiate()
 	var brain: Node = unit.get_node_or_null(^"Brain")
@@ -22,6 +22,8 @@ func spawn(scene: PackedScene, at: Vector3, with_brain: bool = false) -> Unit:
 		brain.free()
 	room.add_child(unit)
 	unit.global_position = at
+	if with_brain and brain is CombatBrain:
+		(brain as CombatBrain).enabled = true
 	return unit
 
 
