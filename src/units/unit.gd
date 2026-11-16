@@ -63,8 +63,13 @@ func _ready() -> void:
 	stats.reset()
 	stats.died.connect(_on_stats_died)
 	_effects.changed.connect(effects_changed.emit)
-	for relayed: StringName in [&"arrived", &"attack_ended", &"fed", &"feed_broken", &"fury_started", &"fury_ended"]:
-		_orders.connect(relayed, Signal(self, relayed).emit)  # the unit emits what its orders report
+	# The unit emits what its orders report.
+	_orders.arrived.connect(arrived.emit)
+	_orders.attack_ended.connect(attack_ended.emit)
+	_orders.fed.connect(fed.emit)
+	_orders.feed_broken.connect(feed_broken.emit)
+	_orders.fury_started.connect(fury_started.emit)
+	_orders.fury_ended.connect(fury_ended.emit)
 	_fury.watch(stats)
 	_standing = _body.transform
 	# Lying on its side, lowered so its lowest point touches the floor at the unit's feet.
@@ -153,15 +158,15 @@ func stop() -> void:
 	_orders.stop(Issuer.PLAYER)
 
 
-## Walks this frame in the flat unit `direction` at `walk_speed()`; `Vector3.ZERO` stands still. Only
-## the horizontal velocity is set, so a fall in progress carries on.
-func walk(direction: Vector3) -> void:
+## For `Orders` only: walks this frame in the flat unit `direction` at `walk_speed()`; `Vector3.ZERO`
+## stands still. Only the horizontal velocity is set, so a fall in progress carries on.
+func drive(direction: Vector3) -> void:
 	var step: Vector3 = direction * walk_speed()
 	velocity.x = step.x
 	velocity.z = step.z
 
 
-## Turns to face `point`, flat on XZ; a point at the unit's feet leaves the facing as it is.
+## For `Orders` only: turns to face `point`, flat on XZ; a point at the unit's feet leaves the facing as it is.
 func face(point: Vector3) -> void:
 	var facing: Vector3 = point - global_position
 	if Vector2(facing.x, facing.z).length() > 0.01:

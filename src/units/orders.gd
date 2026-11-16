@@ -40,7 +40,7 @@ func _ready() -> void:
 func step() -> void:
 	# A stunned unit keeps its order but neither chases, strikes nor walks; its Mover skips the frame.
 	if _unit.is_stunned():
-		_unit.walk(Vector3.ZERO)
+		_unit.drive(Vector3.ZERO)
 		return
 	if _unit.is_in_fury():
 		_rage()
@@ -50,7 +50,7 @@ func step() -> void:
 		Unit.Order.FEED:
 			_approach_feed()
 	if _mover.steer():
-		_unit.walk(_mover.heading())
+		_unit.drive(_mover.heading())
 
 
 func current() -> Unit.Order:
@@ -59,7 +59,7 @@ func current() -> Unit.Order:
 
 ## Who gave the current order; NONE when there is none.
 func issuer() -> Unit.Issuer:
-	return _issuer if _order != Unit.Order.NONE else Unit.Issuer.NONE
+	return _issuer
 
 
 func attack_target() -> Unit:
@@ -134,21 +134,27 @@ func _take(order: Unit.Order, issuer: Unit.Issuer) -> bool:
 func _break_off() -> void:
 	_feeder.cancel()
 	_attack_target = null
-	_order = Unit.Order.NONE
+	_end()
 	_halt()
+
+
+## Leaves the unit with no order and no issuer.
+func _end() -> void:
+	_order = Unit.Order.NONE
+	_issuer = Unit.Issuer.NONE
 
 
 ## Stops walking and stands still.
 func _halt() -> void:
 	_mover.halt()
-	_unit.walk(Vector3.ZERO)
+	_unit.drive(Vector3.ZERO)
 
 
 ## A finished path ends a move order. A chase path can end short of the target; the chase goes on.
 func _on_mover_arrived() -> void:
-	_unit.walk(Vector3.ZERO)
+	_unit.drive(Vector3.ZERO)
 	if _order == Unit.Order.MOVE:
-		_order = Unit.Order.NONE
+		_end()
 		arrived.emit()
 
 
@@ -194,13 +200,13 @@ func _reach(target: Unit) -> bool:
 
 
 func _on_feed_finished(target: Unit) -> void:
-	_order = Unit.Order.NONE
+	_end()
 	fed.emit(target)
 
 
 ## A broken feed leaves the unit idle; a new order that broke it is set right after.
 func _on_feed_broken() -> void:
-	_order = Unit.Order.NONE
+	_end()
 	_halt()
 	feed_broken.emit()
 
