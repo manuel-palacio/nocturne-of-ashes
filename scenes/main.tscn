@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://src/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/player/camera_rig.gd" id="3_rig"]
@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="5_hud"]
 [ext_resource type="Script" path="res://src/party/party.gd" id="6_party"]
 [ext_resource type="Script" path="res://src/rooms/encounter.gd" id="7_encounter"]
+[ext_resource type="Script" path="res://src/dialogue/dialogue_runner.gd" id="8_runner"]
+[ext_resource type="Script" path="res://src/dialogue/conversation.gd" id="9_conversation"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -17,6 +19,12 @@ script = ExtResource("6_party")
 
 [node name="Encounter" type="Node" parent="."]
 script = ExtResource("7_encounter")
+
+[node name="DialogueRunner" type="Node" parent="."]
+script = ExtResource("8_runner")
+
+[node name="Conversation" type="Node" parent="."]
+script = ExtResource("9_conversation")
 
 [node name="CameraRig" type="Node3D" parent="."]
 script = ExtResource("3_rig")

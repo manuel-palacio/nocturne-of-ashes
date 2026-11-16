@@ -2,7 +2,7 @@ class_name Main
 extends Node3D
 ## The game's shell: boots from a `GameState`, loads rooms, has the `Party` spawn the members who have
 ## joined and the `Encounter` run the room's fight, wires camera, input and HUD, hands control to the
-## party's selected member, and pauses the world.
+## party's selected member, pauses the world, and has the `Conversation` node run conversations.
 ##
 ## The skirmish (`main.tscn`) always plays the vault with the whole party at full strength and restarts
 ## it after Álvar's fall. The story (`game.tscn`) plays from a `GameState`, saves it at checkpoints and
@@ -56,7 +56,8 @@ var calm_time: float:
 var room: Room
 ## What outlives a room. Set before entering the tree, or made at `_ready()`: the skirmish's, or a new game.
 ## The skirmish's `start_room()`, `reload_checkpoint()` and `new_game()` replace it with another object,
-## so anything that listens to it must read `main.state` again on `room_started`.
+## so anything that listens to it must read `main.state` again on `room_started`, as the `Conversation`
+## node does for `GameState.flag_changed`.
 var state: GameState
 ## Where the story is saved; null in a skirmish. Set before entering the tree, or made at `_ready()`.
 var store: SaveStore
@@ -67,15 +68,20 @@ var show_title: bool = true
 var opening_enabled: bool = true
 
 var _paused: bool = false
+## Why the world is held: any of `&"pause"`, `&"talk"` and `&"title"`, each released on its own.
+var _holds: Dictionary = {}  # StringName -> true
 ## The state at the last checkpoint, as `GameState.to_dict()`, for a reload when the store has none.
 var _last_checkpoint: Dictionary = {}
 
 @onready var input: PlayerInput = $PlayerInput
 @onready var rig: CameraRig = $CameraRig
 @onready var hud: Hud = $Hud
+## Runs the conversations; driven through `talk()`.
+@onready var dialogue: DialogueRunner = $DialogueRunner
 @onready var _units: Node3D = $Units
 @onready var _party: Party = $Party
 @onready var _encounter: Encounter = $Encounter
+@onready var _conversation: Conversation = $Conversation
 ## Only the story scene has one.
 @onready var _title: TitleScreen = get_node_or_null(^"TitleLayer/TitleScreen")
 
@@ -106,6 +112,10 @@ func _ready() -> void:
 	room_cleared.connect(hud.show_cleared)
 	# A cleared room stays cleared even if Álvar falls right after.
 	room_cleared.connect(checkpoint)
+	_conversation.setup(dialogue, input, _party, _encounter, _hold.bind(&"talk"))
+	hud.bind_dialogue(dialogue)
+	# The end of a conversation is a checkpoint; a stopped one is not.
+	_conversation.ended.connect(checkpoint)
 	if boot == Boot.STORY and store == null:
 		store = SaveStore.new()
 	if state == null:
@@ -118,7 +128,8 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	if _title_is_open():
+	# While talking, the dialogue box has the keys.
+	if _title_is_open() or is_talking():
 		return
 	# Polled rather than read from events, so presses made with Input.action_press count too.
 	if not player.is_alive() and Input.is_action_just_pressed(&"confirm"):
@@ -194,13 +205,23 @@ func set_paused(on: bool) -> void:
 	if on == _paused or (on and (player == null or not player.is_alive())):
 		return
 	_paused = on
-	_units.process_mode = Node.PROCESS_MODE_DISABLED if on else Node.PROCESS_MODE_INHERIT
-	_encounter.paused = on
+	_hold(on, &"pause")
 	pause_changed.emit(on)
 
 
 func is_paused() -> bool:
 	return _paused
+
+
+## Starts the conversation at the cue `title` of `resource`, a `.dialogue` file. While it runs the
+## world is held, input is off and the Gift keys do nothing; when it ends input returns and the story
+## checkpoints. Refused while a fight is on, while Álvar is down and while already talking.
+func talk(resource: Resource, title: String) -> void:
+	_conversation.talk(resource, title)
+
+
+func is_talking() -> bool:
+	return _conversation.is_talking()
 
 
 ## True from the fall of the room's last enemy, or from entering a cleared room, until the next round.
@@ -240,7 +261,7 @@ func _locale_chosen_before_start() -> bool:
 func _play(from: GameState) -> void:
 	if _title_is_open():
 		_title.close()
-		_units.process_mode = Node.PROCESS_MODE_INHERIT
+		_hold(false, &"title")
 	state = from
 	if not ROOMS.has(state.room):
 		var fresh := GameState.new_game()
@@ -251,15 +272,18 @@ func _play(from: GameState) -> void:
 	checkpoint()
 
 
-## Clears the last room's units, loads `room_id`, spawns the party at `entry_name` and starts the room's
-## fight, with Álvar selected and nothing paused or targeted.
+## Stops any conversation, clears the last room's units, loads `room_id`, spawns the party at
+## `entry_name` and starts the room's fight and characters, with Álvar selected and nothing paused or
+## targeted.
 func _enter(room_id: StringName, entry_name: StringName) -> void:
+	_conversation.stop()
 	set_paused(false)
 	input.cancel_targeting()
 	_clear_units()
 	_load_room(room_id)
 	var arrived_at: StringName = _spawn_party(entry_name)
 	_encounter.begin(room, state, _units)
+	_conversation.begin_room(room, state)
 	state.room = room_id
 	state.entry = arrived_at
 	_party.remember_entry_vitals(state)
@@ -299,9 +323,21 @@ func _spawn_party(entry_name: StringName) -> StringName:
 func _open_title() -> void:
 	_title.continue_chosen.connect(reload_checkpoint)
 	_title.new_game_chosen.connect(new_game)
-	_units.process_mode = Node.PROCESS_MODE_DISABLED
+	_hold(true, &"title")
 	input.enabled = false
 	_title.open(store.has_save())
+
+
+## Holds the world (units still, fight not advancing) for `reason` while `on`; it moves again once no
+## reason holds it.
+func _hold(on: bool, reason: StringName) -> void:
+	if on:
+		_holds[reason] = true
+	else:
+		_holds.erase(reason)
+	var held: bool = not _holds.is_empty()
+	_units.process_mode = Node.PROCESS_MODE_DISABLED if held else Node.PROCESS_MODE_INHERIT
+	_encounter.paused = held
 
 
 func _title_is_open() -> bool:
