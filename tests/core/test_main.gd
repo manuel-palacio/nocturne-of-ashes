@@ -43,7 +43,7 @@ func test_confirm_while_alive_does_not_restart() -> void:
 func test_every_spawn_point_is_on_the_navmesh() -> void:
 	var map := main.get_world_3d().navigation_map
 	for marker_name in [
-		"PlayerSpawn", "CompanionSpawn1", "CompanionSpawn2",
+		"Entry_start", "Companion1", "Companion2",
 		"EnemySpawn1", "EnemySpawn2", "EnemySpawn3", "EnemySpawn4", "EnemySpawn5", "EnemySpawn6",
 	]:
 		var at: Vector3 = main.find_child(marker_name).global_position

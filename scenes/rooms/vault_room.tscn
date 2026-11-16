@@ -1,5 +1,7 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://src/rooms/room.gd" id="1_room"]
+
 [sub_resource type="NavigationMesh" id="NavigationMesh_nm287"]
 vertices = PackedVector3Array(-7, 0.3, -4.25, -5.75, 0.3, -4.5, -5.75, 0.3, -7.25, -11.25, 0.3, -2, -6.5, 0.3, -2.25, -7, 0.3, -2.5, -11.25, 0.3, -7.25, -5, 0.3, -4.5, 5, 0.3, -4.25, 6.25, 0.3, -4.5, 6.25, 0.3, -7.25, 1.25, 0.3, -3.5, 5, 0.3, -3.25, 1, 0.3, -4.5, -4.75, 0.3, -3.5, -1, 0.3, -3.25, -0.75, 0.3, -4.5, 7.25, 0.3, -4.25, 11.5, 0.3, -7.25, 6, 0.3, -2.25, 6, 0.3, 2.5, 6.75, 0.3, 2.5, 7.25, 0.3, -2.75, 11.5, 0.3, 2.25, -1, 0.3, -2.5, -5.25, 0.3, -2.25, -5, 0.3, 2.5, -4.75, 0.3, 3.5, -1, 0.3, 3.5, -0.75, 0.3, 2.5, 0, 0.3, -2.25, 0.25, 0.3, 2.5, -6, 0.3, -2.25, -5.75, 0.3, 2.5, 1.25, 0.3, 3.5, 5, 0.3, 3.5, 5, 0.3, 2.75, 1, 0.3, 2.5, 5, 0.3, -2.5, 0.75, 0.3, -2.25, -6, 0.3, 7.5, -6, 0.3, 4.75, -7, 0.3, 4.5, -11.25, 0.3, 7.5, -7, 0.3, 2.75, 7.25, 0.3, 4.25, 6, 0.3, 4.75, 6, 0.3, 7.5, 7.25, 0.3, 2.75, 11.5, 0.3, 7.5, -5.25, 0.3, 4.75, 5, 0.3, 4.5, -0.75, 0.3, 4.75, 0.75, 0.3, 4.75)
 polygons = [PackedInt32Array(2, 1, 0), PackedInt32Array(5, 4, 3), PackedInt32Array(0, 5, 3), PackedInt32Array(2, 0, 6), PackedInt32Array(6, 0, 3), PackedInt32Array(7, 1, 2), PackedInt32Array(10, 9, 8), PackedInt32Array(8, 12, 11), PackedInt32Array(11, 13, 8), PackedInt32Array(8, 13, 10), PackedInt32Array(14, 7, 15), PackedInt32Array(15, 7, 16), PackedInt32Array(16, 2, 13), PackedInt32Array(13, 2, 10), PackedInt32Array(16, 7, 2), PackedInt32Array(9, 10, 17), PackedInt32Array(17, 10, 18), PackedInt32Array(20, 19, 21), PackedInt32Array(21, 19, 22), PackedInt32Array(22, 17, 18), PackedInt32Array(21, 22, 23), PackedInt32Array(23, 22, 18), PackedInt32Array(15, 24, 14), PackedInt32Array(14, 24, 25), PackedInt32Array(28, 27, 26), PackedInt32Array(28, 26, 29), PackedInt32Array(29, 26, 25), PackedInt32Array(29, 25, 24), PackedInt32Array(29, 24, 30), PackedInt32Array(30, 31, 29), PackedInt32Array(26, 33, 25), PackedInt32Array(25, 33, 32), PackedInt32Array(35, 34, 36), PackedInt32Array(36, 34, 37), PackedInt32Array(12, 38, 11), PackedInt32Array(11, 38, 39), PackedInt32Array(37, 31, 39), PackedInt32Array(39, 31, 30), PackedInt32Array(36, 37, 20), PackedInt32Array(20, 37, 19), PackedInt32Array(19, 37, 38), PackedInt32Array(38, 37, 39), PackedInt32Array(41, 40, 42), PackedInt32Array(42, 40, 43), PackedInt32Array(32, 33, 4), PackedInt32Array(4, 33, 44), PackedInt32Array(4, 44, 3), PackedInt32Array(42, 43, 44), PackedInt32Array(44, 43, 3), PackedInt32Array(47, 46, 45), PackedInt32Array(48, 21, 23), PackedInt32Array(45, 48, 23), PackedInt32Array(47, 45, 49), PackedInt32Array(49, 45, 23), PackedInt32Array(40, 41, 50), PackedInt32Array(51, 46, 47), PackedInt32Array(34, 35, 51), PackedInt32Array(50, 27, 40), PackedInt32Array(40, 27, 52), PackedInt32Array(52, 27, 28), PackedInt32Array(52, 53, 40), PackedInt32Array(40, 53, 47), PackedInt32Array(34, 51, 53), PackedInt32Array(53, 51, 47)]
@@ -199,6 +201,9 @@ ambient_light_color = Color(0.16, 0.18, 0.26, 1)
 tonemap_mode = 2
 
 [node name="VaultRoom" type="Node3D" unique_id=1926692727]
+script = ExtResource("1_room")
+room_id = &"vault"
+sergeant_spawns = Array[StringName]([&"EnemySpawn3", &"EnemySpawn6"])
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=21525076]
 navigation_mesh = SubResource("NavigationMesh_nm287")
@@ -392,14 +397,23 @@ autoplay = &"flicker"
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=794636359]
 environment = SubResource("Environment_nnbwr")
 
-[node name="PlayerSpawn" type="Marker3D" parent="." unique_id=613580563]
+[node name="Entry_start" type="Marker3D" parent="." unique_id=613580563]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.3, 0)
 
-[node name="CompanionSpawn1" type="Marker3D" parent="." unique_id=1124713877]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.3, 1.5)
+[node name="Companion1" type="Marker3D" parent="Entry_start" unique_id=1124713877]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.5)
 
-[node name="CompanionSpawn2" type="Marker3D" parent="." unique_id=1320500152]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.3, -1.5)
+[node name="Companion2" type="Marker3D" parent="Entry_start" unique_id=1320500152]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5)
+
+[node name="Entry_from_haven" type="Marker3D" parent="." unique_id=1873402216]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.3, 0)
+
+[node name="Companion1" type="Marker3D" parent="Entry_from_haven" unique_id=402771953]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.5)
+
+[node name="Companion2" type="Marker3D" parent="Entry_from_haven" unique_id=1588130077]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5)
 
 [node name="EnemySpawn1" type="Marker3D" parent="." unique_id=446674365]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.3, 0)

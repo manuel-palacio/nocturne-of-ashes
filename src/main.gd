@@ -1,7 +1,7 @@
 class_name Main
 extends Node3D
-## Runs the vault room: spawns the party and the crusaders, a sergeant among each group, wires camera,
-## input and HUD, hands control to the selected party member, raises fallen companions once a fight is
+## Loads a room and runs it: spawns the party and the crusaders, a sergeant among each group, wires
+## camera, input and HUD, hands control to the selected party member, raises fallen companions once a fight is
 ## over, marks the enemies the selected member can feed on, and restarts after Álvar's fall.
 
 ## Emitted at the end of `start_room()`, once the new round's units are in place.
@@ -20,11 +20,13 @@ const ZAHRA: PackedScene = preload("res://scenes/units/zahra.tscn")
 const GONZALO: PackedScene = preload("res://scenes/units/gonzalo.tscn")
 const CRUSADER: PackedScene = preload("res://scenes/units/crusader.tscn")
 const SERGEANT: PackedScene = preload("res://scenes/units/crusader_sergeant.tscn")
+## Every room, by its `Room.room_id`.
+const ROOMS: Dictionary = {
+	&"vault": preload("res://scenes/rooms/vault_room.tscn"),
+}
 
 ## Seconds without a fight before fallen companions rise.
 @export var calm_time: float = 3.0
-## The enemy spawn markers that get a sergeant instead of a crusader, one per group.
-@export var sergeant_spawns: Array[StringName] = [&"EnemySpawn3", &"EnemySpawn6"]
 
 ## Álvar, Zahra and Gonzalo, in that order.
 var party: Array[Unit] = []
@@ -32,6 +34,8 @@ var party: Array[Unit] = []
 var player: Unit
 var selected: Unit
 var enemies: Array[Unit] = []
+## The room the party is in.
+var room: Room
 
 ## Seconds since a fight was last on or a party member last fell.
 var _calm_for: float = 0.0
@@ -41,7 +45,6 @@ var _paused: bool = false
 @onready var input: PlayerInput = $PlayerInput
 @onready var rig: CameraRig = $CameraRig
 @onready var hud: Hud = $Hud
-@onready var _room: Node3D = $VaultRoom
 @onready var _units: Node3D = $Units
 
 
@@ -63,6 +66,7 @@ func _ready() -> void:
 	selection_changed.connect(hud.show_selected)
 	pause_changed.connect(hud.set_paused)
 	room_cleared.connect(hud.show_cleared)
+	_load_room(&"vault")
 	start_room()
 
 
@@ -95,8 +99,9 @@ func start_room() -> void:
 	_calm_for = 0.0
 	_cleared = false
 
-	for spawn: Array in [[ALVAR, ^"PlayerSpawn"], [ZAHRA, ^"CompanionSpawn1"], [GONZALO, ^"CompanionSpawn2"]]:
-		var member: Unit = _spawn(spawn[0], _room.get_node(spawn[1]))
+	var entry: Marker3D = room.entry(Room.START)
+	for spawn: Array in [[ALVAR, entry], [ZAHRA, entry.get_node(^"Companion1")], [GONZALO, entry.get_node(^"Companion2")]]:
+		var member: Unit = _spawn(spawn[0], spawn[1])
 		member.died.connect(_on_member_died)
 		member.revived.connect(_on_member_revived)
 		party.append(member)
@@ -104,10 +109,9 @@ func start_room() -> void:
 	hud.bind_party(party)
 	hud.hide_fallen()
 	hud.hide_cleared()
-	for marker: Node in _room.get_children():
-		if marker is Marker3D and marker.name.begins_with("EnemySpawn"):
-			var scene: PackedScene = SERGEANT if sergeant_spawns.has(StringName(marker.name)) else CRUSADER
-			enemies.append(_spawn(scene, marker))
+	for marker: Marker3D in room.enemy_markers():
+		var scene: PackedScene = SERGEANT if room.sergeant_spawns.has(StringName(marker.name)) else CRUSADER
+		enemies.append(_spawn(scene, marker))
 
 	input.rig = rig
 	input.enabled = true
@@ -224,6 +228,19 @@ func _steer_brain(member: Unit) -> void:
 ## again gives the same language, or English where the system's has no texts.
 func _locale_chosen_before_start() -> bool:
 	return TranslationServer.get_locale() != TranslationServer.standardize_locale(OS.get_locale())
+
+
+## Puts the room `room_id` in place of the current one, first among the children.
+func _load_room(room_id: StringName) -> void:
+	if room != null:
+		# Out of the tree at once, so its navigation region leaves the map before the new one joins.
+		remove_child(room)
+		room.queue_free()
+	room = (ROOMS[room_id] as PackedScene).instantiate()
+	add_child(room)
+	move_child(room, 0)
+	# Owned like the rest of the scene, so `find_child` reaches its markers.
+	room.owner = self
 
 
 func _spawn(scene: PackedScene, marker: Node3D) -> Unit:
