@@ -92,7 +92,8 @@ func cancel_targeting() -> void:
 ## targeting whose Gift is no longer ready is closed first, and the click counts as a plain one.
 ## Otherwise asks to select a living friend under the point; feeds on a living hostile there when the
 ## unit can and is short of Blood, else attacks it; else walks up to an interactable under it and uses
-## it; else walks to the ground under it. A click on the controlled unit itself does nothing.
+## it, or only walks there when the unit may not use it; else walks to the ground under it. A click on
+## the controlled unit itself does nothing.
 func click_at(screen_position: Vector2) -> void:
 	if not enabled or unit == null or not unit.is_alive():
 		return
@@ -114,7 +115,10 @@ func click_at(screen_position: Vector2) -> void:
 		return
 	var thing: Interactable = Picker.interactable_at(cam, screen_position)
 	if thing != null:
-		unit.order_interact(thing)
+		if thing.can_be_used_by(unit):
+			unit.order_interact(thing)
+		else:
+			unit.order_move(thing.global_position)
 		return
 	var on_ground: Variant = Picker.ground_at(cam, screen_position)
 	if on_ground != null:

@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://src/rooms/room.gd" id="1_room"]
+[ext_resource type="PackedScene" path="res://scenes/rooms/door.tscn" id="2_door"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_nm287"]
 vertices = PackedVector3Array(-7, 0.3, -4.25, -5.75, 0.3, -4.5, -5.75, 0.3, -7.25, -11.25, 0.3, -2, -6.5, 0.3, -2.25, -7, 0.3, -2.5, -11.25, 0.3, -7.25, -5, 0.3, -4.5, 5, 0.3, -4.25, 6.25, 0.3, -4.5, 6.25, 0.3, -7.25, 1.25, 0.3, -3.5, 5, 0.3, -3.25, 1, 0.3, -4.5, -4.75, 0.3, -3.5, -1, 0.3, -3.25, -0.75, 0.3, -4.5, 7.25, 0.3, -4.25, 11.5, 0.3, -7.25, 6, 0.3, -2.25, 6, 0.3, 2.5, 6.75, 0.3, 2.5, 7.25, 0.3, -2.75, 11.5, 0.3, 2.25, -1, 0.3, -2.5, -5.25, 0.3, -2.25, -5, 0.3, 2.5, -4.75, 0.3, 3.5, -1, 0.3, 3.5, -0.75, 0.3, 2.5, 0, 0.3, -2.25, 0.25, 0.3, 2.5, -6, 0.3, -2.25, -5.75, 0.3, 2.5, 1.25, 0.3, 3.5, 5, 0.3, 3.5, 5, 0.3, 2.75, 1, 0.3, 2.5, 5, 0.3, -2.5, 0.75, 0.3, -2.25, -6, 0.3, 7.5, -6, 0.3, 4.75, -7, 0.3, 4.5, -11.25, 0.3, 7.5, -7, 0.3, 2.75, 7.25, 0.3, 4.25, 6, 0.3, 4.75, 6, 0.3, 7.5, 7.25, 0.3, 2.75, 11.5, 0.3, 7.5, -5.25, 0.3, 4.75, 5, 0.3, 4.5, -0.75, 0.3, 4.75, 0.75, 0.3, 4.75)
@@ -432,3 +433,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.3, -2)
 
 [node name="EnemySpawn6" type="Marker3D" parent="." unique_id=175699437]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.3, 2)
+
+[node name="WestDoor" parent="." instance=ExtResource("2_door")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -11.85, 0, 3)
+to_room = &"haven"
+to_entry = &"from_vault"
+
+[node name="LastLock" parent="." instance=ExtResource("2_door")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 11.85, 0, -5)
+to_room = &""
+locked_text = "The last lock does not yield. Not yet."

@@ -1,8 +1,8 @@
 class_name Hud
 extends CanvasLayer
 ## Shows a panel per party member, the selected member's Gifts, Conscience in a story, the conversation on show (in its
-## `DialogueBox`), and the prompts for a pause, a cleared room and Álvar's fall. Clicks on panels and
-## Gift buttons go out through its signals.
+## `DialogueBox`), the prompts for a pause, a cleared room and Álvar's fall, and a passing notice.
+## Clicks on panels and Gift buttons go out through its signals.
 ##
 ## Texts: every control whose text is set here or in a panel or button has automatic translation off
 ## in its scene and gets its text from `tr()` in code, so reading `text` gives what is shown. When the
@@ -17,6 +17,9 @@ signal gift_chosen(index: int)
 const PANEL: PackedScene = preload("res://scenes/ui/party_member_panel.tscn")
 const GIFT_BUTTON: PackedScene = preload("res://scenes/ui/gift_button.tscn")
 
+## Seconds a notice stays on show, in real time: neither the pause nor a conversation holds the HUD.
+@export var notice_time: float = 2.5
+
 var _panels: Array[PartyMemberPanel] = []
 var _gift_buttons: Array[GiftButton] = []
 ## What the panels and Gift buttons show, kept to rebuild them in another language.
@@ -25,6 +28,10 @@ var _selected: Unit
 var _targeting_index: int = -1
 ## The story state whose Conscience is shown; null in a skirmish.
 var _state: GameState
+## The notice on show, as the untranslated source text; empty when none.
+var _notice: String = ""
+## Seconds until the notice goes.
+var _notice_left: float = 0.0
 
 @onready var _party_column: VBoxContainer = %PartyColumn
 @onready var _gift_bar: HBoxContainer = %GiftBar
@@ -32,6 +39,7 @@ var _state: GameState
 @onready var _paused_label: Label = %PausedLabel
 @onready var _cleared_label: Label = %ClearedLabel
 @onready var _conscience_label: Label = %ConscienceLabel
+@onready var _notice_label: Label = %NoticeLabel
 @onready var _dialogue_box: DialogueBox = %DialogueBox
 
 
@@ -40,6 +48,15 @@ func _ready() -> void:
 	hide_fallen()
 	hide_cleared()
 	set_paused(false)
+	hide_notice()
+
+
+func _process(delta: float) -> void:
+	if _notice.is_empty():
+		return
+	_notice_left -= delta
+	if _notice_left <= 0.0:
+		hide_notice()
 
 
 ## Replaces every panel with one per member of `party`, in order, and empties the Gift bar until a
@@ -132,6 +149,25 @@ func hide_cleared() -> void:
 	_cleared_label.visible = false
 
 
+## Shows `text`, an English source text, in the middle of the screen for `notice_time` seconds, in
+## place of any notice on show.
+func show_notice(text: String) -> void:
+	_notice = text
+	_notice_left = notice_time
+	_notice_label.text = tr(text)
+	_notice_label.visible = true
+
+
+func hide_notice() -> void:
+	_notice = ""
+	_notice_label.visible = false
+
+
+## The notice on show, as the source text it was given; empty when none.
+func notice() -> String:
+	return _notice
+
+
 func _notification(what: int) -> void:
 	# Also sent on entering the tree, before the nodes are ready.
 	if what == NOTIFICATION_TRANSLATION_CHANGED and is_node_ready():
@@ -143,6 +179,8 @@ func _show_texts() -> void:
 	_fallen_label.text = tr("You have fallen — press Enter")
 	_paused_label.text = tr("Paused — give your orders")
 	_cleared_label.text = tr("The vault is quiet")
+	# Never `tr("")`, which gives the translation's header.
+	_notice_label.text = tr(_notice) if not _notice.is_empty() else ""
 	_show_conscience()
 
 

@@ -2,7 +2,8 @@ class_name Main
 extends Node3D
 ## The game's shell: boots from a `GameState`, loads rooms, has the `Party` spawn the members who have
 ## joined and the `Encounter` run the room's fight, wires camera, input and HUD, hands control to the
-## party's selected member, pauses the world, and has the `Conversation` node run conversations.
+## party's selected member, pauses the world, has the `Conversation` node run conversations and, in a
+## story, the `Travel` node answer the doors.
 ##
 ## The skirmish (`main.tscn`) always plays the vault with the whole party at full strength and restarts
 ## it after Álvar's fall. The story (`game.tscn`) plays from a `GameState`, saves it at checkpoints and
@@ -81,6 +82,7 @@ var _last_checkpoint: Dictionary = {}
 @onready var _encounter: Encounter = $Encounter
 @onready var _conversation: Conversation = $Conversation
 @onready var _world_hold: WorldHold = $WorldHold
+@onready var _travel: Travel = $Travel
 ## Only the story scene has one.
 @onready var _title: TitleScreen = get_node_or_null(^"TitleLayer/TitleScreen")
 
@@ -118,6 +120,7 @@ func _ready() -> void:
 	hud.bind_dialogue(dialogue)
 	# The end of a conversation is a checkpoint; a stopped one is not.
 	_conversation.ended.connect(checkpoint)
+	_travel.setup(input, _party, _encounter, hud, enter_room)
 	if boot == Boot.STORY and store == null:
 		store = SaveStore.new()
 	if state == null:
@@ -284,6 +287,8 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	var arrived_at: StringName = _spawn_party(entry_name)
 	_encounter.begin(room, state, _units)
 	_conversation.begin_room(room, state)
+	if boot == Boot.STORY:
+		_travel.begin_room(room, state)
 	hud.bind_state(state if boot == Boot.STORY else null)
 	state.room = room_id
 	state.entry = arrived_at
@@ -337,6 +342,7 @@ func _title_is_open() -> bool:
 func _hand_control_to_alvar() -> void:
 	hud.hide_fallen()
 	hud.hide_cleared()
+	hud.hide_notice()
 	input.enabled = true
 	select(player)
 	rig.snap_to_target()

@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://src/rooms/room.gd" id="1_rrw2c"]
+[ext_resource type="PackedScene" path="res://scenes/rooms/door.tscn" id="2_door"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_klwib"]
 vertices = PackedVector3Array(-8.25, 0.3, -5.25, -8.25, 0.3, 5.5, 8.5, 0.3, 5.5, 8.5, 0.3, -5.25)
@@ -164,3 +165,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.5)
 
 [node name="Companion2" type="Marker3D" parent="Entry_from_vault" unique_id=1504934942]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5)
+
+[node name="StairDoor" parent="." instance=ExtResource("2_door")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 8.85, 0, 2.5)
+to_room = &"vault"
+to_entry = &"from_haven"
+needs_flags = Array[StringName]([&"order_given"])
+locked_text = "The stair is barred until Malakor says otherwise"
