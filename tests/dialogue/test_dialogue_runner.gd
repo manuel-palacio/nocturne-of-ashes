@@ -2,6 +2,7 @@
 extends GutTest
 
 const TALK := preload("res://tests/fixtures/test_talk.dialogue")
+const SLOW := preload("res://tests/fixtures/test_slow_talk.dialogue")
 
 var runner: DialogueRunner
 var state: GameState
@@ -108,3 +109,26 @@ func test_stop_ends_without_running_more() -> void:
 	assert_false(runner.is_running())
 	assert_signal_emit_count(runner, "finished", 1)
 	assert_eq(state.conscience, 7)
+
+func test_revoked_hooks_change_nothing() -> void:
+	hooks.revoke()
+	hooks.change_conscience(-3)
+	hooks.set_flag("late")
+	hooks.join("zahra")
+	hooks.learn("alvar", "iron_sinew")
+	assert_eq(state.conscience, 7)
+	assert_false(state.has_flag(&"late"))
+	assert_false(state.has_joined(&"zahra"))
+	assert_false(state.knows(&"alvar", &"iron_sinew"))
+	assert_eq(hooks.conscience(), 0)
+	assert_false(hooks.has_joined("alvar"))
+
+func test_what_a_stopped_conversation_still_runs_changes_nothing() -> void:
+	runner.start(SLOW, "start", hooks)
+	await wait_physics_frames(2)
+	runner.advance()   # the add-on now waits before setting a flag
+	await wait_physics_frames(2)
+	runner.stop()
+	await wait_seconds(0.5)
+	assert_false(state.has_flag(&"late"))
+	assert_eq(lines.size(), 1)

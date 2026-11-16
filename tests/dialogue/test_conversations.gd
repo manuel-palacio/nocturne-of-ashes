@@ -176,3 +176,28 @@ func test_a_missing_cue_ends_the_conversation_unsaved() -> void:
 	assert_push_error("has no cue no_such_cue")
 	await _assert_play_goes_on()
 	assert_signal_not_emitted(main, "checkpoint_saved")
+
+func test_two_people_used_at_once_give_one_conversation_and_one_use() -> void:
+	var other: Npc = NPC.instantiate()
+	other.dialogue = TALK
+	other.title = "again"
+	main.room.add_child(other)
+	other.global_position = main.player.global_position + Vector3(-3, 0, 0)
+	await wait_physics_frames(2)
+	watch_signals(smith)
+	watch_signals(other)
+	assert_true(smith.use(main.player))
+	assert_false(other.use(main.player))
+	assert_signal_emit_count(smith, "used", 1)
+	assert_signal_not_emitted(other, "used")
+	assert_signal_not_emitted(other, "talk_requested")
+	await wait_physics_frames(2)
+	assert_string_contains(_box().find_child("TextLabel").text, "The forge is cold tonight.")
+
+func test_a_use_refused_by_a_fall_does_not_count() -> void:
+	watch_signals(smith)
+	main.player.take_hit(999)
+	await wait_physics_frames(2)
+	assert_false(smith.use(main.player))
+	assert_signal_not_emitted(smith, "used")
+	assert_false(main.is_talking())

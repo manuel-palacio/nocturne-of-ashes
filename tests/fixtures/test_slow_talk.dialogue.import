@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://bkk8qv0gnr0sr"
+path="res://.godot/imported/test_slow_talk.dialogue-b3f1bdaebab3e803c3aaaf94c495d310.tres"
+
+[deps]
+
+source_file="res://tests/fixtures/test_slow_talk.dialogue"
+dest_files=["res://.godot/imported/test_slow_talk.dialogue-b3f1bdaebab3e803c3aaaf94c495d310.tres"]
+
+[params]
+
+defaults=true

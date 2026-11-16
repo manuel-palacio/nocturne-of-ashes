@@ -5,7 +5,9 @@ extends Node
 ##
 ## A conversation reaches the game only through the `StoryHooks` it is started with: the add-on is
 ## told not to look in the current scene, singletons, classes or autoloads, and not to load files.
-## Lines and choices are given as written.
+## Lines and choices are given as written. Each conversation gets its own copy of the hooks it is
+## started with, revoked when it ends, so nothing left running in the add-on can change the game
+## afterwards, while the hooks given can start another conversation.
 ##
 ## A conversation that goes wrong never holds the game: an error logged while a line is being found
 ## (a refused or missing call, a call with the wrong arguments) ends it at once, and so does waiting
@@ -68,7 +70,7 @@ func start(resource: Resource, title: String, hooks: StoryHooks) -> void:
 		return
 	_confine_the_add_on()
 	_resource = resource as DialogueResource
-	_hooks = hooks
+	_hooks = hooks.copy()
 	_running = true
 	_ended_in_error = false
 	if _resource == null or not _resource.cues.has(title):
@@ -106,7 +108,7 @@ func ended_in_error() -> bool:
 	return _ended_in_error
 
 
-## Ends the conversation and emits `finished`.
+## Ends the conversation, revoking its hooks, and emits `finished`.
 func _end(in_error: bool) -> void:
 	if not _running:
 		return
@@ -117,6 +119,7 @@ func _end(in_error: bool) -> void:
 	_line = null
 	_choices = []
 	_resource = null
+	_hooks.revoke()
 	_hooks = null
 	finished.emit()
 

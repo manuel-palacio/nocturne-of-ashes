@@ -1,0 +1,6 @@
+~ start
+Smith: Wait a moment.
+do wait(0.2)
+do set_flag("late")
+Smith: There.
+=> END

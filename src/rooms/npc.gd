@@ -1,7 +1,7 @@
 class_name Npc
 extends Interactable
 ## Someone in a room to talk to: a unit walks up to them and uses them, which asks for their
-## conversation. Story flags can show or hide them; a hidden one has its collider disabled, so it is
+## conversation. A use that `talk_allowed` refuses does not count: nothing is emitted. Story flags can show or hide them; a hidden one has its collider disabled, so it is
 ## neither clicked nor used.
 
 ## A unit used them: the conversation `dialogue` at the cue `title` should start.
@@ -16,6 +16,10 @@ signal talk_requested(npc: Npc, by: Unit)
 ## When set, they are hidden while this story flag is set.
 @export var hidden_if: StringName = &""
 @export var colour: Color = Color(0.55, 0.5, 0.45)
+
+## Asked, with no arguments, at each use; when set and it answers false, the use is refused. Set by
+## whoever answers `talk_requested`, so a talk that would be refused is not a use.
+var talk_allowed: Callable = Callable()
 
 @onready var _body: MeshInstance3D = $Body
 
@@ -32,6 +36,8 @@ func can_be_used_by(_unit: Unit) -> bool:
 
 
 func use(by: Unit) -> bool:
+	if talk_allowed.is_valid() and not talk_allowed.call():
+		return false
 	if not super(by):
 		return false
 	talk_requested.emit(self, by)
