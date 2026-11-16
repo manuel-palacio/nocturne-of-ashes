@@ -23,8 +23,10 @@ const ALL_GIFTS: Dictionary = {
 }
 ## Health and Blood of a member with nothing stored: full health, starting Blood.
 const NO_VITALS := Vector2i(-1, -1)
-## The largest magnitude a float can hold as an exact whole number.
-const _EXACT_FLOAT_LIMIT: float = 9007199254740992.0
+## The largest health or Blood stored; whoever applies vitals clamps them to the unit's real maximum.
+const VITALS_MAX: int = 10000
+## The member who is always in the party.
+const LEADER: StringName = &"alvar"
 
 var conscience: int = CONSCIENCE_START
 var room: StringName
@@ -40,7 +42,7 @@ static func new_game() -> GameState:
 	var state := GameState.new()
 	state.room = &"haven"
 	state.entry = &"start"
-	state._joined[&"alvar"] = true
+	state._joined[LEADER] = true
 	for member: StringName in [&"zahra", &"gonzalo"]:
 		for gift: StringName in ALL_GIFTS[member]:
 			state._add_gift(member, gift)
@@ -120,11 +122,12 @@ func known_gifts(member: StringName) -> Array[StringName]:
 	return result
 
 
-## Stores `member`'s health and Blood; -1 stands for full health or starting Blood.
+## Stores `member`'s health and Blood, each clamped to -1…`VITALS_MAX`; -1 stands for full health or
+## starting Blood.
 func set_vitals(member: StringName, health: int, blood: int) -> void:
 	if not MEMBERS.has(member):
 		return
-	_vitals[member] = Vector2i(maxi(health, -1), maxi(blood, -1))
+	_vitals[member] = Vector2i(clampi(health, -1, VITALS_MAX), clampi(blood, -1, VITALS_MAX))
 
 
 ## `member`'s health and Blood; `NO_VITALS` when none are stored.
@@ -164,22 +167,26 @@ func to_dict() -> Dictionary:
 
 ## The state `data` describes, or null when `data` is not a dictionary from `to_dict()` of this
 ## `VERSION` with fields of the right types. Numbers may come as floats, names as strings (as JSON
-## gives them); out-of-range numbers are clamped; unknown members and Gifts are dropped; extra keys
-## are ignored.
+## gives them). A whole number out of its field's range is clamped; a fractional, non-finite or
+## non-numeric one makes the data unusable, as does an empty `room` or `entry`. Unknown members and
+## Gifts are dropped without looking at their values; `LEADER` is always joined; extra keys are
+## ignored. `room` is not checked against the rooms that exist: the caller must, and fall back to a
+## new game's room when it does not.
 static func from_dict(data: Variant) -> GameState:
 	if not data is Dictionary:
 		return null
 	var d: Dictionary = data
-	if _as_int(d.get("version")) != VERSION:
+	var version_value: Variant = d.get("version")
+	if not _is_whole(version_value) or version_value != VERSION:
 		return null
-	var conscience_value: Variant = _as_int(d.get("conscience"))
+	var conscience_value: Variant = d.get("conscience")
 	var room_value: Variant = d.get("room")
 	var entry_value: Variant = d.get("entry")
 	var flags_value: Variant = d.get("flags")
 	var joined_value: Variant = d.get("joined")
 	var gifts_value: Variant = d.get("gifts")
 	var vitals_value: Variant = d.get("vitals")
-	if conscience_value == null or not _is_name(room_value) or not _is_name(entry_value):
+	if not _is_whole(conscience_value) or not _is_place(room_value) or not _is_place(entry_value):
 		return null
 	if not _is_name_list(flags_value) or not _is_name_list(joined_value):
 		return null
@@ -187,30 +194,34 @@ static func from_dict(data: Variant) -> GameState:
 		return null
 
 	var state := GameState.new()
-	state.conscience = clampi(conscience_value, 0, CONSCIENCE_MAX)
+	state.conscience = _clamped_int(conscience_value, 0, CONSCIENCE_MAX)
 	state.room = StringName(room_value)
 	state.entry = StringName(entry_value)
 	for key: Variant in flags_value:
 		state._flags[StringName(key)] = true
+	state._joined[LEADER] = true
 	for member: Variant in joined_value:
 		if MEMBERS.has(StringName(member)):
 			state._joined[StringName(member)] = true
 	for member: Variant in gifts_value:
+		if not _is_member(member):
+			continue
 		var list: Variant = gifts_value[member]
-		if not _is_name(member) or not _is_name_list(list):
+		if not _is_name_list(list):
 			return null
 		for gift: Variant in list:
 			if _is_gift_of(StringName(member), StringName(gift)):
 				state._add_gift(StringName(member), StringName(gift))
 	for member: Variant in vitals_value:
+		if not _is_member(member):
+			continue
 		var pair: Variant = vitals_value[member]
-		if not _is_name(member) or not pair is Array or (pair as Array).size() != 2:
+		if not pair is Array or (pair as Array).size() != 2:
 			return null
-		var health: Variant = _as_int(pair[0])
-		var blood: Variant = _as_int(pair[1])
-		if health == null or blood == null:
+		if not _is_whole(pair[0]) or not _is_whole(pair[1]):
 			return null
-		state.set_vitals(StringName(member), health, blood)
+		state.set_vitals(StringName(member),
+				_clamped_int(pair[0], -1, VITALS_MAX), _clamped_int(pair[1], -1, VITALS_MAX))
 	return state
 
 
@@ -224,15 +235,31 @@ static func _is_gift_of(member: StringName, gift: StringName) -> bool:
 	return (ALL_GIFTS.get(member, []) as Array).has(gift)
 
 
-## `value` as an int when it is a whole number (JSON gives floats such as 7.0), else null.
-static func _as_int(value: Variant) -> Variant:
+## Whether `value` is a whole number: an int, or a finite float with nothing after the point (JSON
+## gives every number as a float). Booleans are not numbers.
+static func _is_whole(value: Variant) -> bool:
 	if value is int:
-		return value
+		return true
 	if value is float:
 		var number: float = value
-		if is_finite(number) and number == floorf(number) and absf(number) <= _EXACT_FLOAT_LIMIT:
-			return int(number)
-	return null
+		return is_finite(number) and number == floorf(number)
+	return false
+
+
+## The whole number `value` clamped to `low`…`high`, clamped while still a float so that huge values
+## cannot overflow.
+static func _clamped_int(value: Variant, low: int, high: int) -> int:
+	if value is int:
+		return clampi(value, low, high)
+	return int(clampf(value, low, high))
+
+
+static func _is_member(value: Variant) -> bool:
+	return _is_name(value) and MEMBERS.has(StringName(value))
+
+
+static func _is_place(value: Variant) -> bool:
+	return _is_name(value) and not String(value).is_empty()
 
 
 static func _is_name(value: Variant) -> bool:

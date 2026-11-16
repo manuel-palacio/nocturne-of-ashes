@@ -108,3 +108,55 @@ func test_extra_keys_are_ignored_and_values_are_sanitised() -> void:
 	var back := GameState.from_dict(data)
 	assert_not_null(back)
 	assert_eq(back.conscience, 10)
+
+func _with(key: String, value: Variant) -> Dictionary:
+	var data: Dictionary = state.to_dict()
+	data[key] = value
+	return data
+
+func test_whole_floats_are_integers_and_fractions_are_unusable() -> void:
+	var back := GameState.from_dict(_with("conscience", 7.0))
+	assert_not_null(back)
+	assert_eq(back.conscience, 7)
+	assert_null(GameState.from_dict(_with("conscience", 7.5)))
+	assert_null(GameState.from_dict(_with("conscience", INF)))
+	assert_null(GameState.from_dict(_with("conscience", NAN)))
+
+func test_a_boolean_where_a_number_belongs_is_unusable() -> void:
+	assert_null(GameState.from_dict(_with("conscience", true)))
+	assert_null(GameState.from_dict(_with("version", true)))
+
+func test_huge_whole_numbers_are_clamped() -> void:
+	assert_eq(GameState.from_dict(_with("conscience", 1e300)).conscience, 10)
+	assert_eq(GameState.from_dict(_with("conscience", -1e300)).conscience, 0)
+
+func test_vitals_are_clamped() -> void:
+	state.set_vitals(&"alvar", 5000000000000, -50)
+	assert_eq(state.vitals(&"alvar"), Vector2i(10000, -1))
+	state.set_vitals(&"zahra", 2147483648, 4294967295)
+	assert_eq(state.vitals(&"zahra"), Vector2i(10000, 10000))
+	var back := GameState.from_dict(_with("vitals", {"alvar": [5e12, -50.0]}))
+	assert_eq(back.vitals(&"alvar"), Vector2i(10000, -1))
+
+func test_vitals_must_be_pairs_of_numbers_for_real_members_only() -> void:
+	assert_null(GameState.from_dict(_with("vitals", {"alvar": "full"})))
+	assert_null(GameState.from_dict(_with("vitals", {"alvar": [1]})))
+	assert_null(GameState.from_dict(_with("vitals", {"alvar": [1, "two"]})))
+	var back := GameState.from_dict(_with("vitals", {"malakor": "full", "zahra": [3, 4]}))
+	assert_not_null(back)
+	assert_eq(back.vitals(&"zahra"), Vector2i(3, 4))
+
+func test_gifts_must_be_lists_of_names_for_real_members_only() -> void:
+	assert_null(GameState.from_dict(_with("gifts", {"zahra": "all"})))
+	var back := GameState.from_dict(_with("gifts", {"malakor": 3, "zahra": ["blood_lance", "fly"]}))
+	assert_not_null(back)
+	assert_eq(back.known_gifts(&"zahra"), [&"blood_lance"] as Array[StringName])
+
+func test_alvar_is_always_joined() -> void:
+	var back := GameState.from_dict(_with("joined", []))
+	assert_not_null(back)
+	assert_eq(back.joined(), [&"alvar"] as Array[StringName])
+
+func test_an_empty_room_or_entry_is_unusable() -> void:
+	assert_null(GameState.from_dict(_with("room", "")))
+	assert_null(GameState.from_dict(_with("entry", "")))
