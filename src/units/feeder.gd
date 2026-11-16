@@ -73,12 +73,12 @@ func start_drinking() -> void:
 	_target.add_effect(hold)
 
 
-## Breaks the feed in progress, if any: the target is let go and `broken` is emitted.
 ## Whether `unit` is held by a feed in progress.
 static func is_held(unit: Unit) -> bool:
 	return unit.has_effect(FED_ON)
 
 
+## Breaks the feed in progress, if any: the target is let go and `broken` is emitted.
 func cancel() -> void:
 	if not _active:
 		return
