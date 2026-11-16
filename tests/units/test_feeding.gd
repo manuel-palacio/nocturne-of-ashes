@@ -113,3 +113,61 @@ func test_the_feeder_dying_breaks_the_feed_once_and_revives_without_one() -> voi
 	assert_eq(alvar.stats.blood, 60)
 	assert_signal_emit_count(alvar, "feed_broken", 1)
 	assert_signal_not_emitted(alvar, "fed")
+
+func test_a_target_already_held_by_a_feed_cannot_be_fed_on_by_another() -> void:
+	foe.take_hit(45)
+	alvar.order_feed(foe)
+	await wait_seconds(0.5)
+	var zahra: Unit = arena.spawn(Arena.ZAHRA, Vector3(0, 0, 2.4))
+	await wait_physics_frames(3)
+	assert_false(zahra.can_feed_on(foe))
+	zahra.order_feed(foe)
+	assert_eq(zahra.current_order(), Unit.Order.NONE)
+	assert_true(alvar.is_feeding())
+
+## Two feeders reaching the same target at once: exactly one drinks, the other's feed is broken.
+func _two_feeders_on_one_target() -> Array[Unit]:
+	var zahra: Unit = arena.spawn(Arena.ZAHRA, Vector3(0, 0, 2.4))
+	await wait_physics_frames(3)
+	foe.take_hit(45)
+	watch_signals(alvar)
+	watch_signals(zahra)
+	alvar.order_feed(foe)
+	zahra.order_feed(foe)
+	await wait_seconds(0.5)
+	var feeding: Array[Unit] = []
+	var other: Array[Unit] = []
+	for unit: Unit in [alvar, zahra]:
+		if unit.is_feeding():
+			feeding.append(unit)
+		else:
+			other.append(unit)
+	assert_eq(feeding.size(), 1)
+	if feeding.size() != 1:
+		return []
+	assert_signal_emitted(other[0], "feed_broken")
+	assert_eq(other[0].current_order(), Unit.Order.NONE)
+	return [feeding[0], other[0]]
+
+func test_two_feeders_at_once_leave_one_feeding_and_a_break_frees_the_target() -> void:
+	var pair: Array[Unit] = await _two_feeders_on_one_target()
+	if pair.is_empty():
+		return
+	pair[0].order_move(Vector3(-3, 0, 0))
+	await wait_physics_frames(3)
+	assert_false(pair[0].is_feeding())
+	assert_false(pair[1].is_feeding())
+	assert_false(foe.is_stunned())
+	await wait_seconds(2.0)
+	assert_true(foe.is_alive())
+
+func test_two_feeders_at_once_leave_one_feeding_until_it_completes() -> void:
+	var pair: Array[Unit] = await _two_feeders_on_one_target()
+	if pair.is_empty():
+		return
+	await wait_seconds(2.0)
+	assert_false(foe.is_alive())
+	assert_false(pair[1].is_feeding())
+	assert_signal_emitted(pair[0], "fed")
+	assert_signal_not_emitted(pair[1], "fed")
+	assert_eq(pair[1].stats.blood, 60)

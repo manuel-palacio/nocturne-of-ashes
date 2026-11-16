@@ -137,11 +137,13 @@ func order_feed(target: Unit) -> void:
 
 
 ## Whether this living blood-drinker can feed on `target`: a living hostile at or below this unit's
-## `feed_threshold` of its maximum health.
+## `feed_threshold` of its maximum health, not already held by another feed.
 func can_feed_on(target: Unit) -> bool:
 	if not is_alive() or not drinks_blood or is_in_fury() or not is_instance_valid(target) or not target.is_alive():
 		return false
-	return is_hostile_to(target) and float(target.stats.health) / target.stats.max_health <= feed_threshold
+	if not is_hostile_to(target) or Feeder.is_held(target):
+		return false
+	return float(target.stats.health) / target.stats.max_health <= feed_threshold
 
 
 ## True while drinking from the target, after the walk there: the unit neither walks nor strikes.

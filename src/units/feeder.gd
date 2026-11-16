@@ -2,7 +2,8 @@ class_name Feeder
 extends Node
 ## Feeding for its `Unit`: holds the target and the drinking time. The unit walks into reach and calls
 ## `start_drinking()`; the feed then completes after the unit's `feed_time`, or is broken when the
-## feeder is stunned or the target dies or leaves the tree. The unit breaks it on any new order.
+## feeder is stunned, the target dies or leaves the tree, or the target's hold is gone. The unit breaks
+## it on any new order. A target held by one feed cannot be drunk from by another.
 
 ## The feed completed: `target` died of it and the unit gained its Blood.
 signal finished(target: Unit)
@@ -28,6 +29,10 @@ func _physics_process(delta: float) -> void:
 	if not is_instance_valid(_target) or not _target.is_alive() or _unit.is_stunned():
 		cancel()
 		return
+	# The hold is what keeps the target in reach; without it the feed cannot go on.
+	if _drinking and not _target.has_effect(FED_ON):
+		cancel()
+		return
 	if _drinking:
 		_time_left -= delta
 		if _time_left <= 0.0:
@@ -51,9 +56,13 @@ func is_drinking() -> bool:
 	return _active and _drinking
 
 
-## Starts drinking from the target, which is held stunned until the feed ends.
+## Starts drinking from the target, which is held stunned until the feed ends. A target already held
+## by another feed breaks this one.
 func start_drinking() -> void:
 	if target() == null or _drinking:
+		return
+	if is_held(_target):
+		cancel()
 		return
 	_drinking = true
 	_time_left = _unit.feed_time
@@ -65,6 +74,11 @@ func start_drinking() -> void:
 
 
 ## Breaks the feed in progress, if any: the target is let go and `broken` is emitted.
+## Whether `unit` is held by a feed in progress.
+static func is_held(unit: Unit) -> bool:
+	return unit.has_effect(FED_ON)
+
+
 func cancel() -> void:
 	if not _active:
 		return
@@ -83,7 +97,8 @@ func _complete() -> void:
 
 
 func _release() -> void:
-	if is_instance_valid(_target):
+	# Only a feed that is drinking put the hold on; one still walking in must not lift another's.
+	if _drinking and is_instance_valid(_target):
 		_target.remove_effect(FED_ON)
 	_target = null
 	_active = false
