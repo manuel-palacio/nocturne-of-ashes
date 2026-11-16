@@ -19,6 +19,7 @@ albedo_color = Color(0.1, 0.55, 0.55, 1)
 [node name="Zahra" instance=ExtResource("1_base")]
 stats = SubResource("Resource_stats")
 faction = &"player"
+member_id = &"zahra"
 display_name = "Zahra"
 drinks_blood = true
 

@@ -1,8 +1,8 @@
 class_name Main
 extends Node3D
 ## Loads a room and runs it: spawns the party and the crusaders, a sergeant among each group, wires
-## camera, input and HUD, hands control to the selected party member, raises fallen companions once a fight is
-## over, marks the enemies the selected member can feed on, and restarts after Álvar's fall.
+## camera, input and HUD, hands control to the party's selected member, raises fallen companions once a
+## fight is over, marks the enemies the selected member can feed on, and restarts after Álvar's fall.
 
 ## Emitted at the end of `start_room()`, once the new round's units are in place.
 signal room_started
@@ -28,11 +28,17 @@ const ROOMS: Dictionary = {
 ## Seconds without a fight before fallen companions rise.
 @export var calm_time: float = 3.0
 
-## Álvar, Zahra and Gonzalo, in that order.
-var party: Array[Unit] = []
+## Álvar, Zahra and Gonzalo, in that order: the members of the `Party` node.
+var party: Array[Unit]:
+	get:
+		return _party.members
 ## Always `party[0]`, Álvar, whose fall ends the round.
-var player: Unit
-var selected: Unit
+var player: Unit:
+	get:
+		return _party.leader
+var selected: Unit:
+	get:
+		return _party.selected
 var enemies: Array[Unit] = []
 ## The room the party is in.
 var room: Room
@@ -46,6 +52,7 @@ var _paused: bool = false
 @onready var rig: CameraRig = $CameraRig
 @onready var hud: Hud = $Hud
 @onready var _units: Node3D = $Units
+@onready var _party: Party = $Party
 
 
 func _enter_tree() -> void:
@@ -60,6 +67,9 @@ func _enter_tree() -> void:
 func _ready() -> void:
 	input.select_requested.connect(select)
 	input.select_next_requested.connect(select_next)
+	_party.selection_changed.connect(_on_selection_changed)
+	_party.member_fell.connect(_on_member_died)
+	_party.member_rose.connect(_on_member_revived)
 	input.targeting_changed.connect(hud.show_targeting)
 	hud.member_pressed.connect(input.press_member)
 	hud.gift_chosen.connect(input.press_gift)
@@ -93,19 +103,14 @@ func start_room() -> void:
 		# Out of the tree at once, so no new unit finds an old one in the "units" group.
 		_units.remove_child(unit)
 		unit.queue_free()
-	party.clear()
+	_party.clear()
 	enemies.clear()
-	selected = null
 	_calm_for = 0.0
 	_cleared = false
 
 	var entry: Marker3D = room.entry(Room.START)
 	for spawn: Array in [[ALVAR, entry], [ZAHRA, entry.get_node(^"Companion1")], [GONZALO, entry.get_node(^"Companion2")]]:
-		var member: Unit = _spawn(spawn[0], spawn[1])
-		member.died.connect(_on_member_died)
-		member.revived.connect(_on_member_revived)
-		party.append(member)
-	player = party[0]
+		_party.add(_spawn(spawn[0], spawn[1]))
 	hud.bind_party(party)
 	hud.hide_fallen()
 	hud.hide_cleared()
@@ -142,28 +147,12 @@ func is_cleared() -> bool:
 ## Gives camera and input to `unit` and sets the other living members following it.
 ## Ignored unless `unit` is a living party member, and while Álvar is down.
 func select(unit: Unit) -> void:
-	if not player.is_alive() or unit == null or not party.has(unit) or not unit.is_alive():
-		return
-	selected = unit
-	rig.target = unit
-	input.unit = unit
-	for member: Unit in party:
-		if member.is_alive():
-			_steer_brain(member)
-	_update_feed_marks()
-	selection_changed.emit(unit)
+	_party.select(unit)
 
 
 ## Selects the next living party member after the selected one, wrapping round. Ignored while Álvar is down.
 func select_next() -> void:
-	if not player.is_alive():
-		return
-	var at: int = party.find(selected)
-	for step: int in range(1, party.size() + 1):
-		var candidate: Unit = party[(at + step) % party.size()]
-		if candidate.is_alive():
-			select(candidate)
-			return
+	_party.select_next()
 
 
 ## True while any living enemy is attacking someone.
@@ -190,13 +179,13 @@ func _advance_fight_flow(delta: float) -> void:
 	if not _cleared and enemies_alive() == 0:
 		_cleared = true
 		room_cleared.emit()
-		_revive_fallen()
+		_party.revive_fallen()
 	if fight_is_on():
 		_calm_for = 0.0
 		return
 	_calm_for += delta
 	if _calm_for >= calm_time:
-		_revive_fallen()
+		_party.revive_fallen()
 
 
 ## Marks exactly the living enemies the selected member can feed on, whatever its Blood; none while
@@ -205,22 +194,6 @@ func _update_feed_marks() -> void:
 	var feeder: Unit = selected if player != null and player.is_alive() else null
 	for enemy: Unit in enemies:
 		enemy.set_feed_mark(feeder != null and feeder.can_feed_on(enemy))
-
-
-func _revive_fallen() -> void:
-	for member: Unit in party:
-		if not member.is_alive():
-			member.revive()
-
-
-## The selected member's brain is off; every other member's follows the selected one.
-## The setter forgets the brain's chosen target, so `enabled` is only written when it changes.
-func _steer_brain(member: Unit) -> void:
-	var brain: CombatBrain = member.get_node(^"Brain")
-	brain.leader = selected
-	var wanted: bool = member != selected
-	if brain.enabled != wanted:
-		brain.enabled = wanted
 
 
 ## True when the engine's locale is no longer the system's: `--language` (or code) chose it. Godot keeps
@@ -250,6 +223,14 @@ func _spawn(scene: PackedScene, marker: Node3D) -> Unit:
 	return unit
 
 
+func _on_selection_changed(unit: Unit) -> void:
+	rig.target = unit
+	input.unit = unit
+	_update_feed_marks()
+	selection_changed.emit(unit)
+
+
+## The party hands selection back to Álvar itself when a selected companion falls.
 func _on_member_died(unit: Unit) -> void:
 	_calm_for = 0.0
 	party_changed.emit()
@@ -258,10 +239,7 @@ func _on_member_died(unit: Unit) -> void:
 		input.enabled = false
 		_update_feed_marks()
 		hud.show_fallen()
-	elif unit == selected:
-		select(player)
 
 
-func _on_member_revived(unit: Unit) -> void:
-	_steer_brain(unit)
+func _on_member_revived(_unit: Unit) -> void:
 	party_changed.emit()

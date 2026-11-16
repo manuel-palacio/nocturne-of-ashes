@@ -21,6 +21,8 @@ signal fury_ended
 @export var faction: StringName = &"player"
 @export var move_speed: float = 4.0
 @export var display_name: String = ""
+## Which party member this is (`&"alvar"`, `&"zahra"`, `&"gonzalo"`); empty for everyone else.
+@export var member_id: StringName = &""
 ## Whether the unit can feed on enemies for Blood.
 @export var drinks_blood: bool = false
 ## A target can be fed on at or below this fraction of its maximum health.
