@@ -37,8 +37,9 @@ func _process(delta: float) -> void:
 		rig.rotate_by(turn * rig.rotate_speed * delta)
 
 
-## Asks to select a living friend under the point, attacks a living hostile there, else walks to the
-## ground under it. A click on the controlled unit itself does nothing.
+## Asks to select a living friend under the point; feeds on a living hostile there when the unit can
+## and is short of Blood, else attacks it; else walks to the ground under it. A click on the controlled
+## unit itself does nothing.
 func click_at(screen_position: Vector2) -> void:
 	if not enabled or unit == null or not unit.is_alive():
 		return
@@ -47,7 +48,9 @@ func click_at(screen_position: Vector2) -> void:
 	if other == unit:
 		return
 	if other != null and other.is_alive():
-		if unit.is_hostile_to(other):
+		if unit.can_feed_on(other) and unit.stats.blood < unit.stats.max_blood:
+			unit.order_feed(other)
+		elif unit.is_hostile_to(other):
 			unit.order_attack(other)
 		else:
 			select_requested.emit(other)

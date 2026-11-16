@@ -1,7 +1,8 @@
 class_name Unit
 extends CharacterBody3D
 ## The body every character uses: carries out its orders, walking through its `Mover`, takes hits,
-## carries timed status effects, dies with its stats and can be revived.
+## carries timed status effects, dies with its stats and can be revived. A blood-drinking unit feeds
+## on weakened enemies through its `Feeder`.
 
 signal died(unit: Unit)
 signal arrived
@@ -9,14 +10,24 @@ signal attack_ended
 signal was_hit(amount: int, source: Unit)
 signal effects_changed
 signal revived(unit: Unit)
+## A feed completed: `target` died of it and this unit gained Blood.
+signal fed(target: Unit)
+## A feed in progress was given up, with no Blood gained.
+signal feed_broken
 
 @export var stats: Stats
 @export var faction: StringName = &"player"
 @export var move_speed: float = 4.0
 @export var display_name: String = ""
+## Whether the unit can feed on enemies for Blood.
+@export var drinks_blood: bool = false
+## A target can be fed on at or below this fraction of its maximum health.
+@export var feed_threshold: float = 0.35
+@export var feed_time: float = 2.0
+@export var feed_gain: int = 40
 
 ## What the unit was last told to do; NONE once it is done, stopped or dead.
-enum Order { NONE, MOVE, ATTACK }
+enum Order { NONE, MOVE, ATTACK, FEED }
 
 ## While chasing, the walk is re-aimed once the target has moved this far from where it was headed.
 const _CHASE_RETARGET: float = 0.5
@@ -31,6 +42,7 @@ var _fallen: Transform3D
 @onready var _body: MeshInstance3D = $Body
 @onready var _melee: MeleeAttack = get_node_or_null(^"Melee")
 @onready var _effects: Effects = $Effects
+@onready var _feeder: Feeder = $Feeder
 
 
 func _ready() -> void:
@@ -42,6 +54,8 @@ func _ready() -> void:
 	_mover.arrived.connect(_on_mover_arrived)
 	_mover.stalled.connect(stop)
 	_effects.changed.connect(effects_changed.emit)
+	_feeder.finished.connect(_on_feed_finished)
+	_feeder.broken.connect(_on_feed_broken)
 	_standing = _body.transform
 	# Lying on its side, lowered so its lowest point touches the floor at the unit's feet.
 	var lying: Basis = Basis(Vector3.RIGHT, PI / 2.0)
@@ -56,6 +70,8 @@ func _physics_process(delta: float) -> void:
 	else:
 		if _order == Order.ATTACK:
 			_pursue()
+		elif _order == Order.FEED:
+			_approach_feed()
 		if _mover.steer():
 			var step: Vector3 = _mover.heading() * walk_speed()
 			velocity.x = step.x
@@ -76,6 +92,7 @@ func current_order() -> Order:
 func order_move(target: Vector3) -> void:
 	if not is_alive():
 		return
+	_feeder.cancel()
 	_attack_target = null
 	_order = Order.MOVE
 	# A plain walk that makes no progress is dropped with a warning.
@@ -87,19 +104,43 @@ func order_move(target: Vector3) -> void:
 func order_attack(target: Unit) -> void:
 	if not is_alive() or _melee == null or target == null or not target.is_alive() or not is_hostile_to(target):
 		return
+	_feeder.cancel()
 	_attack_target = target
 	_order = Order.ATTACK
-	# A chase re-aims on its own, and a blocked chaser keeps trying.
-	_mover.stall_check = false
-	_mover.walk_to(target.global_position)
+	_close_in(target)
 
 
 func attack_target() -> Unit:
 	return _attack_target if is_instance_valid(_attack_target) else null
 
 
-## Halts and drops any order.
+## Closes to melee range of `target`, then feeds on it for `feed_time`, holding it stunned. Ignored
+## unless `can_feed_on(target)`.
+func order_feed(target: Unit) -> void:
+	if _melee == null or not can_feed_on(target):
+		return
+	_feeder.begin(target)
+	_attack_target = null
+	_order = Order.FEED
+	_close_in(target)
+
+
+## Whether this living blood-drinker can feed on `target`: a living hostile at or below this unit's
+## `feed_threshold` of its maximum health.
+func can_feed_on(target: Unit) -> bool:
+	if not is_alive() or not drinks_blood or not is_instance_valid(target) or not target.is_alive():
+		return false
+	return is_hostile_to(target) and float(target.stats.health) / target.stats.max_health <= feed_threshold
+
+
+## True while drinking from the target, after the walk there: the unit neither walks nor strikes.
+func is_feeding() -> bool:
+	return _feeder.is_drinking()
+
+
+## Halts and drops any order; a feed in progress is broken.
 func stop() -> void:
+	_feeder.cancel()
 	_attack_target = null
 	_order = Order.NONE
 	_halt()
@@ -130,19 +171,54 @@ func _pursue() -> void:
 		stop()
 		attack_ended.emit()
 		return
-	var target_at: Vector3 = _attack_target.global_position
-	if not _melee.in_range(_attack_target):
+	if not _reach(_attack_target):
+		return
+	if _melee.ready_to_swing():
+		_melee.try_hit(_attack_target)
+
+
+## Walks to the feed's target and starts drinking once in reach. A lost target is the Feeder's to handle.
+func _approach_feed() -> void:
+	var target: Unit = _feeder.target()
+	if target == null or _feeder.is_drinking():
+		return
+	if _reach(target):
+		_feeder.start_drinking()
+
+
+## Starts a chase towards `target`. A chase re-aims on its own, and a blocked chaser keeps trying.
+func _close_in(target: Unit) -> void:
+	_mover.stall_check = false
+	_mover.walk_to(target.global_position)
+
+
+## One frame of a chase: re-aims while `target` is out of melee range and returns false; in range,
+## halts facing it and returns true.
+func _reach(target: Unit) -> bool:
+	var target_at: Vector3 = target.global_position
+	if not _melee.in_range(target):
 		var drift: Vector3 = target_at - _mover.destination()
 		# Re-aim only when the target has moved, so a path ending short of it does not re-path each frame.
 		if Vector2(drift.x, drift.z).length() > _CHASE_RETARGET:
 			_mover.walk_to(target_at)
-		return
+		return false
 	_halt()
 	var facing: Vector3 = target_at - global_position
 	if Vector2(facing.x, facing.z).length() > 0.01:
 		rotation.y = atan2(-facing.x, -facing.z)
-	if _melee.ready_to_swing():
-		_melee.try_hit(_attack_target)
+	return true
+
+
+func _on_feed_finished(target: Unit) -> void:
+	_order = Order.NONE
+	fed.emit(target)
+
+
+## A broken feed leaves the unit idle; a new order that broke it is set right after.
+func _on_feed_broken() -> void:
+	_order = Order.NONE
+	_halt()
+	feed_broken.emit()
 
 
 ## Metres per second while walking, with the effects applied.

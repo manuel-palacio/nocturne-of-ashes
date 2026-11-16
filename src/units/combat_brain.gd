@@ -3,7 +3,8 @@ extends Node
 ## Fights and follows for its `Unit`, enemy or companion. Each think, the first rule that applies wins:
 ## obey a taunt; leave an order the brain did not give alone; switch to a much nearer hostile; engage
 ## the nearest hostile within `aggro_radius`; walk after `leader`. A follow walk is the brain's own
-## order, so taunts, switching and engaging interrupt it. All distances are flat on XZ.
+## order, so taunts, switching and engaging interrupt it. It does nothing while its unit is feeding.
+## All distances are flat on XZ.
 
 ## A follow walk is re-aimed once the leader has moved this far from where the walk was aimed.
 const _FOLLOW_RETARGET: float = 1.0
@@ -43,7 +44,7 @@ func _physics_process(delta: float) -> void:
 	if _since_thought < think_interval:
 		return
 	_since_thought = 0.0
-	if enabled and _unit.is_alive() and not _unit.is_stunned():
+	if enabled and _unit.is_alive() and not _unit.is_stunned() and not _unit.is_feeding():
 		_think()
 
 

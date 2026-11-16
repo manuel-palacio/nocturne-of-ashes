@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://src/units/unit.gd" id="1_unit"]
 [ext_resource type="Script" path="res://src/units/mover.gd" id="2_mover"]
 [ext_resource type="Script" path="res://src/units/melee_attack.gd" id="3_melee"]
 [ext_resource type="Script" path="res://src/units/effects.gd" id="4_effects"]
+[ext_resource type="Script" path="res://src/units/feeder.gd" id="5_feeder"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
@@ -38,3 +39,6 @@ script = ExtResource("3_melee")
 
 [node name="Effects" type="Node" parent="."]
 script = ExtResource("4_effects")
+
+[node name="Feeder" type="Node" parent="."]
+script = ExtResource("5_feeder")
