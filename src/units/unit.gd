@@ -35,6 +35,8 @@ signal fury_ended
 
 ## What the unit was last told to do; NONE once it is done, stopped or dead.
 enum Order { NONE, MOVE, ATTACK, FEED }
+## Who gave an order: the player, the unit's brain, or the game itself, as the Fury does.
+enum Issuer { NONE, PLAYER, BRAIN, SYSTEM }
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _standing: Transform3D
@@ -56,12 +58,8 @@ func _ready() -> void:
 	stats.reset()
 	stats.died.connect(_on_stats_died)
 	_effects.changed.connect(effects_changed.emit)
-	_orders.arrived.connect(arrived.emit)
-	_orders.attack_ended.connect(attack_ended.emit)
-	_orders.fed.connect(fed.emit)
-	_orders.feed_broken.connect(feed_broken.emit)
-	_orders.fury_started.connect(fury_started.emit)
-	_orders.fury_ended.connect(fury_ended.emit)
+	for relayed: StringName in [&"arrived", &"attack_ended", &"fed", &"feed_broken", &"fury_started", &"fury_ended"]:
+		_orders.connect(relayed, Signal(self, relayed).emit)  # the unit emits what its orders report
 	_fury.watch(stats)
 	_standing = _body.transform
 	# Lying on its side, lowered so its lowest point touches the floor at the unit's feet.
@@ -83,18 +81,22 @@ func current_order() -> Order:
 	return _orders.current()
 
 
+## Who gave the current order; NONE when there is none, SYSTEM for what the Fury makes the unit do.
+func order_issuer() -> Issuer:
+	return _orders.issuer()
+
+
 ## Walks to the reachable navmesh point nearest to `target`. Ignored once dead and in the Fury.
 ## An order given before the navigation map has synced is held until it has.
-func order_move(target: Vector3) -> void:
-	_orders.move(target)
+func order_move(target: Vector3, issuer: Issuer = Issuer.PLAYER) -> void:
+	_orders.move(target, issuer)
 
 
 ## Chases `target` into melee range and strikes it until it dies. Ignored for friends and the dead,
 ## and in the Fury.
-func order_attack(target: Unit) -> void:
-	if target == null or not target.is_alive() or not is_hostile_to(target):
-		return
-	_orders.attack(target)
+func order_attack(target: Unit, issuer: Issuer = Issuer.PLAYER) -> void:
+	if target != null and target.is_alive() and is_hostile_to(target):
+		_orders.attack(target, issuer)
 
 
 func attack_target() -> Unit:
@@ -103,9 +105,8 @@ func attack_target() -> Unit:
 
 ## Closes to melee range of `target`, then feeds on it for `feed_time`, holding it stunned. Ignored
 ## unless `can_feed_on(target)`, which is never the case in the Fury.
-func order_feed(target: Unit) -> void:
-	if can_feed_on(target):
-		_orders.feed(target)
+func order_feed(target: Unit, issuer: Issuer = Issuer.PLAYER) -> void:
+	_orders.feed(target, issuer)
 
 
 ## The unit this one has a feed order on, walking there or drinking; null when none.
@@ -113,14 +114,10 @@ func feed_target() -> Unit:
 	return _orders.feed_target()
 
 
-## Whether this living blood-drinker can feed on `target`: a living hostile at or below this unit's
-## `feed_threshold` of its maximum health, not already held by another feed.
+## Whether this blood-drinker, free to take the player's orders, can feed on `target`: a living hostile
+## at or below this unit's `feed_threshold` of its maximum health, not already held by another feed.
 func can_feed_on(target: Unit) -> bool:
-	if not is_alive() or not drinks_blood or is_in_fury() or not is_instance_valid(target) or not target.is_alive():
-		return false
-	if not is_hostile_to(target) or Feeder.is_held(target):
-		return false
-	return float(target.stats.health) / target.stats.max_health <= feed_threshold
+	return _orders.can_feed_on(target)
 
 
 ## Shows or hides the mark that tells the player this unit is weak enough to feed on.
@@ -146,22 +143,17 @@ func can_act() -> bool:
 	return is_alive() and not is_stunned() and not is_feeding() and not is_in_fury()
 
 
-## Halts and drops any order; a feed in progress is broken. Ignored in the Fury.
+## Halts and drops any order; a feed in progress is broken. The player's: ignored in the Fury.
 func stop() -> void:
-	_orders.stop()
+	_orders.stop(Issuer.PLAYER)
 
 
-## Walks this frame in the flat unit `direction`, at `walk_speed()`.
+## Walks this frame in the flat unit `direction` at `walk_speed()`; `Vector3.ZERO` stands still. Only
+## the horizontal velocity is set, so a fall in progress carries on.
 func walk(direction: Vector3) -> void:
 	var step: Vector3 = direction * walk_speed()
 	velocity.x = step.x
 	velocity.z = step.z
-
-
-## Drops the horizontal velocity; a fall in progress carries on.
-func stand_still() -> void:
-	velocity.x = 0.0
-	velocity.z = 0.0
 
 
 ## Turns to face `point`, flat on XZ; a point at the unit's feet leaves the facing as it is.
@@ -197,7 +189,7 @@ func revive(health_fraction: float = 0.3) -> void:
 	# Deferred like the change on death, so a death and revival in one frame end on layer 2.
 	set_deferred(&"collision_layer", 2)
 	clear_effects()
-	stop()
+	_orders.clear()
 	revived.emit(self)
 
 
@@ -258,7 +250,7 @@ func is_hostile_to(other: Unit) -> bool:
 
 func _on_stats_died() -> void:
 	_fury.end()
-	stop()
+	_orders.clear()
 	clear_effects()
 	# Off every layer, so clicks and rays pass through the body, which still rests on the floor.
 	set_deferred(&"collision_layer", 0)

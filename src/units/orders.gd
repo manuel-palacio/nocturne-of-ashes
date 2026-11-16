@@ -1,8 +1,10 @@
 class_name Orders
 extends Node
-## The orders of its `Unit`: what it was last told to do and how it carries that out each frame,
-## walking through the `Mover`, chasing and striking with its melee, closing in on a feed through the
-## `Feeder`, and raging while its `Fury` holds it. Only the unit talks to this node.
+## The orders of its `Unit`: what it was last told to do and by whom, and how it carries that out each
+## frame, walking through the `Mover`, chasing and striking with its melee, closing in on a feed
+## through the `Feeder`, and raging while its `Fury` holds it. Every order passes one gate, `accepts`,
+## and replaces the one before it in one place, which breaks off whatever the unit was doing. Only the
+## unit talks to this node.
 
 signal arrived
 signal attack_ended
@@ -15,6 +17,7 @@ signal fury_ended
 const _CHASE_RETARGET: float = 0.5
 
 var _order: Unit.Order = Unit.Order.NONE
+var _issuer: Unit.Issuer = Unit.Issuer.NONE
 var _attack_target: Unit
 
 @onready var _unit: Unit = get_parent()
@@ -26,7 +29,7 @@ var _attack_target: Unit
 
 func _ready() -> void:
 	_mover.arrived.connect(_on_mover_arrived)
-	_mover.stalled.connect(stop)
+	_mover.stalled.connect(_break_off)
 	_feeder.finished.connect(_on_feed_finished)
 	_feeder.broken.connect(_on_feed_broken)
 	_fury.started.connect(_on_fury_started)
@@ -37,20 +40,26 @@ func _ready() -> void:
 func step() -> void:
 	# A stunned unit keeps its order but neither chases, strikes nor walks; its Mover skips the frame.
 	if _unit.is_stunned():
-		_unit.stand_still()
+		_unit.walk(Vector3.ZERO)
 		return
 	if _unit.is_in_fury():
 		_rage()
-	if _order == Unit.Order.ATTACK:
-		_pursue()
-	elif _order == Unit.Order.FEED:
-		_approach_feed()
+	match _order:
+		Unit.Order.ATTACK:
+			_pursue()
+		Unit.Order.FEED:
+			_approach_feed()
 	if _mover.steer():
 		_unit.walk(_mover.heading())
 
 
 func current() -> Unit.Order:
 	return _order
+
+
+## Who gave the current order; NONE when there is none.
+func issuer() -> Unit.Issuer:
+	return _issuer if _order != Unit.Order.NONE else Unit.Issuer.NONE
 
 
 func attack_target() -> Unit:
@@ -61,40 +70,69 @@ func feed_target() -> Unit:
 	return _feeder.target() if _order == Unit.Order.FEED else null
 
 
-func move(target: Vector3) -> void:
-	if not _unit.is_alive() or _unit.is_in_fury():
+## Whether `issuer` may give the unit an order now: never once it is dead, and in the Fury only the
+## Fury itself, as `SYSTEM`.
+func accepts(issuer: Unit.Issuer) -> bool:
+	return _unit.is_alive() and (issuer == Unit.Issuer.SYSTEM or not _unit.is_in_fury())
+
+
+func move(target: Vector3, issuer: Unit.Issuer) -> void:
+	if not _take(Unit.Order.MOVE, issuer):
 		return
-	_feeder.cancel()
-	_attack_target = null
-	_order = Unit.Order.MOVE
 	# A plain walk that makes no progress is dropped with a warning.
 	_mover.stall_check = true
 	_mover.walk_to(target)
 
 
-func attack(target: Unit) -> void:
-	if not _unit.is_alive() or _unit.is_in_fury():
+## Attacks `target` whatever its faction: the checks on the target are the caller's.
+func attack(target: Unit, issuer: Unit.Issuer) -> void:
+	if _melee == null or not _take(Unit.Order.ATTACK, issuer):
 		return
-	_chase(target)
-
-
-func feed(target: Unit) -> void:
-	if _melee == null:
-		return
-	_feeder.begin(target)
-	_attack_target = null
-	_order = Unit.Order.FEED
+	_attack_target = target
 	_close_in(target)
 
 
-func stop() -> void:
-	if _unit.is_in_fury():
+## Whether the unit, free to take the player's orders, can feed on `target`: it drinks blood, and
+## `target` is a living hostile at or below the unit's `feed_threshold` of its maximum health, not
+## already held by another feed.
+func can_feed_on(target: Unit) -> bool:
+	if not _unit.drinks_blood or not accepts(Unit.Issuer.PLAYER) or not is_instance_valid(target):
+		return false
+	if not target.is_alive() or not _unit.is_hostile_to(target) or Feeder.is_held(target):
+		return false
+	return float(target.stats.health) / target.stats.max_health <= _unit.feed_threshold
+
+
+func feed(target: Unit, issuer: Unit.Issuer) -> void:
+	if _melee == null or not can_feed_on(target) or not _take(Unit.Order.FEED, issuer):
 		return
+	_feeder.begin(target)
+	_close_in(target)
+
+
+func stop(issuer: Unit.Issuer) -> void:
+	if accepts(issuer):
+		_break_off()
+
+
+## Drops any order without asking the gate, as death does.
+func clear() -> void:
+	_break_off()
+
+
+## Passes `issuer` through the gate and, if it may, replaces the current order with `order`.
+func _take(order: Unit.Order, issuer: Unit.Issuer) -> bool:
+	if not accepts(issuer):
+		return false
+	_break_off()
+	_order = order
+	_issuer = issuer
+	return true
+
+
+## Ends whatever the unit was doing: a feed in progress is broken, and it stands still with no order.
+func _break_off() -> void:
 	_feeder.cancel()
-	_drop_order()
-
-
-func _drop_order() -> void:
 	_attack_target = null
 	_order = Unit.Order.NONE
 	_halt()
@@ -103,12 +141,12 @@ func _drop_order() -> void:
 ## Stops walking and stands still.
 func _halt() -> void:
 	_mover.halt()
-	_unit.stand_still()
+	_unit.walk(Vector3.ZERO)
 
 
 ## A finished path ends a move order. A chase path can end short of the target; the chase goes on.
 func _on_mover_arrived() -> void:
-	_unit.stand_still()
+	_unit.walk(Vector3.ZERO)
 	if _order == Unit.Order.MOVE:
 		_order = Unit.Order.NONE
 		arrived.emit()
@@ -116,7 +154,7 @@ func _on_mover_arrived() -> void:
 
 func _pursue() -> void:
 	if not is_instance_valid(_attack_target) or not _attack_target.is_alive():
-		stop()
+		_break_off()
 		attack_ended.emit()
 		return
 	if not _reach(_attack_target):
@@ -132,16 +170,6 @@ func _approach_feed() -> void:
 		return
 	if _reach(target):
 		_feeder.start_drinking()
-
-
-## Attacks `target` whatever its faction: the checks are the caller's. Breaks a feed in progress.
-func _chase(target: Unit) -> void:
-	if _melee == null:
-		return
-	_feeder.cancel()
-	_attack_target = target
-	_order = Unit.Order.ATTACK
-	_close_in(target)
 
 
 ## Starts a chase towards `target`. A chase re-aims on its own, and a blocked chaser keeps trying.
@@ -185,18 +213,17 @@ func _rage() -> void:
 		return
 	victim = _fury.nearest_victim()
 	if victim == null:
-		_drop_order()
+		_break_off()
 	else:
-		_chase(victim)
+		attack(victim, Unit.Issuer.SYSTEM)
 
 
 func _on_fury_started() -> void:
-	_feeder.cancel()
-	_drop_order()
+	_break_off()
 	fury_started.emit()
 	_rage()
 
 
 func _on_fury_ended() -> void:
-	_drop_order()
+	_break_off()
 	fury_ended.emit()

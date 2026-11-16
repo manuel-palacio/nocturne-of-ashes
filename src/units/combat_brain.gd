@@ -4,8 +4,9 @@ extends Node
 ## feeds or uses one Gift, unless the unit is carrying out the player's order or its own feed; if it
 ## did, the think ends. Then the first rule that applies wins: obey a taunt; leave an order the brain
 ## did not give alone; keep up its own feed; switch to a much nearer hostile; engage the nearest
-## hostile within `aggro_radius`; walk after `leader`. A follow walk is the brain's own order, so
-## taunts, switching and engaging interrupt it. Between thinks, a hit from a living hostile on an idle
+## hostile within `aggro_radius`; walk after `leader`. Every order the brain gives carries
+## `Unit.Issuer.BRAIN`, which is how it tells its own orders from the player's; a follow walk is its
+## own order, so taunts, switching and engaging interrupt it. Between thinks, a hit from a living hostile on an idle
 ## or following unit is answered with an attack at once. A hostile taken as a meal is left alone: never
 ## chosen, counted or aimed at, and an attack of the brain's on it is dropped. A hostile is taken from
 ## the moment another living unit has a feed order on it, through the walk in and the drinking. The brain does nothing
@@ -30,26 +31,16 @@ const _FOLLOW_RETARGET: float = 1.0
 @export var self_gift_enemies: int = 2
 @export var self_gift_radius: float = 4.0
 ## When false the brain does nothing. Turning it off stops a follow walk it started; a fight goes on.
-## Any attack running when it is switched either way counts as the player's, left alone until it ends.
+## An order stays the brain's, or the player's, however often the brain is switched.
 @export var enabled: bool = true:
 	set(value):
 		enabled = value
-		_chosen_target = null
-		_feeding = false
-		if not enabled:
-			if _following and _unit != null and _unit.current_order() == Unit.Order.MOVE:
-				_unit.stop()
-			_following = false
+		if not enabled and _unit != null and _is_following():
+			_unit.stop()
 
 var leader: Unit
 
 var _since_thought: float = 0.0
-## The attack target the brain last chose, to tell its own attack orders from the player's.
-var _chosen_target: Unit
-## Whether the unit's current move order is a follow walk the brain started.
-var _following: bool = false
-## Whether the unit's current feed order is one the brain gave.
-var _feeding: bool = false
 ## Where the leader stood when the current follow walk was aimed.
 var _leader_was_at: Vector3
 ## A hostile that hit the unit while the world was paused, answered once the brain runs again.
@@ -86,29 +77,19 @@ func _on_unit_hit(_amount: int, source: Unit) -> void:
 		return
 	if not _unit.is_hostile_to(source) or _is_taken(source):
 		return
-	var order: Unit.Order = _unit.current_order()
-	if order == Unit.Order.NONE or (order == Unit.Order.MOVE and _following):
+	if _unit.current_order() == Unit.Order.NONE or _is_following():
 		_attack(source)
 
 
 func _think() -> void:
 	var order: Unit.Order = _unit.current_order()
-	var attacking_own: bool = (
-		order == Unit.Order.ATTACK and _chosen_target != null and _unit.attack_target() == _chosen_target
-	)
-	var following_own: bool = order == Unit.Order.MOVE and _following
-	var feeding_own: bool = order == Unit.Order.FEED and _feeding
-	if not attacking_own:
-		_chosen_target = null
-	if not following_own:
-		_following = false
-	if not feeding_own:
-		_feeding = false
-	var players_order: bool = order != Unit.Order.NONE and not attacking_own and not following_own and not feeding_own
+	var own: bool = _unit.order_issuer() == Unit.Issuer.BRAIN
+	var attacking_own: bool = own and order == Unit.Order.ATTACK and _unit.attack_target() != null
+	var feeding_own: bool = own and order == Unit.Order.FEED
+	var players_order: bool = order != Unit.Order.NONE and not own
 
-	if attacking_own and _is_taken(_chosen_target):
+	if attacking_own and _is_taken(_unit.attack_target()):
 		# Someone has claimed it as a meal; the meal is not the brain's to spoil.
-		_chosen_target = null
 		_unit.stop()
 		return
 	# While on its own feed the unit uses no Gift, which would most likely land on the meal.
@@ -136,30 +117,33 @@ func _think() -> void:
 
 ## Switches to the nearest hostile when it is nearer than the current target by more than `switch_margin`.
 func _reconsider() -> void:
+	var current: Unit = _unit.attack_target()
 	var nearest: Unit = _nearest_hostile()
-	if nearest != null and nearest != _chosen_target and _flat_to(nearest) + switch_margin < _flat_to(_chosen_target):
+	if nearest != null and nearest != current and _flat_to(nearest) + switch_margin < _flat_to(current):
 		_attack(nearest)
 
 
 func _follow() -> void:
 	if leader == null or not is_instance_valid(leader) or not leader.is_alive():
 		return
-	if _following and _flat(leader.global_position, _leader_was_at) <= _FOLLOW_RETARGET:
+	var following: bool = _is_following()
+	if following and _flat(leader.global_position, _leader_was_at) <= _FOLLOW_RETARGET:
 		return
-	if not _following and _flat_to(leader) <= follow_distance + 1.0:
+	if not following and _flat_to(leader) <= follow_distance + 1.0:
 		return
 	var away: Vector3 = _unit.global_position - leader.global_position
 	away.y = 0.0
 	_leader_was_at = leader.global_position
-	_unit.order_move(leader.global_position + away.normalized() * follow_distance)
-	_following = true
+	_unit.order_move(leader.global_position + away.normalized() * follow_distance, Unit.Issuer.BRAIN)
+
+
+## Whether the unit is on a follow walk: the only walk the brain orders.
+func _is_following() -> bool:
+	return _unit.current_order() == Unit.Order.MOVE and _unit.order_issuer() == Unit.Issuer.BRAIN
 
 
 func _attack(target: Unit) -> void:
-	_following = false
-	_feeding = false
-	_chosen_target = target
-	_unit.order_attack(target)
+	_unit.order_attack(target, Unit.Issuer.BRAIN)
 
 
 ## Below `feeds_below` Blood, feeds on the nearest hostile within `aggro_radius` the unit can feed on.
@@ -177,13 +161,8 @@ func _feed() -> bool:
 			nearest = other
 	if nearest == null:
 		return false
-	_unit.order_feed(nearest)
-	if _unit.current_order() != Unit.Order.FEED:
-		return false
-	_following = false
-	_chosen_target = null
-	_feeding = true
-	return true
+	_unit.order_feed(nearest, Unit.Issuer.BRAIN)
+	return _unit.current_order() == Unit.Order.FEED
 
 
 ## Uses the first Gift, in slot order, that is ready, leaves the unit's Blood at or above its
