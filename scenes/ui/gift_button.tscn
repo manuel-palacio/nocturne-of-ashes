@@ -1,0 +1,43 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/ui/gift_button.gd" id="1_button"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_targeting"]
+content_margin_left = 10.0
+content_margin_top = 4.0
+content_margin_right = 10.0
+content_margin_bottom = 4.0
+bg_color = Color(0.3, 0.12, 0.06, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.95, 0.75, 0.3, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_cooldown"]
+font_size = 18
+font_color = Color(0.95, 0.85, 0.7, 1)
+outline_size = 4
+outline_color = Color(0, 0, 0, 1)
+
+[node name="GiftButton" type="Button"]
+custom_minimum_size = Vector2(190, 40)
+focus_mode = 0
+mouse_filter = 0
+alignment = 0
+script = ExtResource("1_button")
+targeting_style = SubResource("StyleBoxFlat_targeting")
+
+[node name="CooldownLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+label_settings = SubResource("LabelSettings_cooldown")
+horizontal_alignment = 2
+vertical_alignment = 1

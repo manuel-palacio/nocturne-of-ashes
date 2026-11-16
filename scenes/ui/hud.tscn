@@ -1,22 +1,17 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://src/ui/hud.gd" id="1_hud"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_back"]
-bg_color = Color(0.08, 0.05, 0.05, 0.85)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.35, 0.28, 0.22, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fill"]
-bg_color = Color(0.62, 0.08, 0.08, 1)
 
 [sub_resource type="LabelSettings" id="LabelSettings_fallen"]
 font_size = 36
 font_color = Color(0.85, 0.75, 0.6, 1)
 outline_size = 6
+outline_color = Color(0, 0, 0, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_notice"]
+font_size = 26
+font_color = Color(0.85, 0.75, 0.6, 1)
+outline_size = 5
 outline_color = Color(0, 0, 0, 1)
 
 [node name="Hud" type="CanvasLayer"]
@@ -31,28 +26,62 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Status" type="VBoxContainer" parent="Root"]
+[node name="PartyColumn" type="VBoxContainer" parent="Root"]
+unique_name_in_owner = true
 layout_mode = 0
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 256.0
-offset_bottom = 64.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 232.0
+offset_bottom = 12.0
 mouse_filter = 2
+theme_override_constants/separation = 6
 
-[node name="NameLabel" type="Label" parent="Root/Status"]
+[node name="GiftBar" type="HBoxContainer" parent="Root"]
 unique_name_in_owner = true
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_top = -56.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
 mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 1
 
-[node name="HealthBar" type="ProgressBar" parent="Root/Status"]
+[node name="PausedLabel" type="Label" parent="Root"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 14)
-layout_mode = 2
+visible = false
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 20.0
+offset_bottom = 60.0
+grow_horizontal = 2
 mouse_filter = 2
-theme_override_styles/background = SubResource("StyleBoxFlat_back")
-theme_override_styles/fill = SubResource("StyleBoxFlat_fill")
-step = 1.0
-show_percentage = false
+text = "Paused — give your orders"
+label_settings = SubResource("LabelSettings_notice")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ClearedLabel" type="Label" parent="Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -200.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+text = "The vault is quiet"
+label_settings = SubResource("LabelSettings_notice")
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="FallenLabel" type="Label" parent="Root"]
 unique_name_in_owner = true

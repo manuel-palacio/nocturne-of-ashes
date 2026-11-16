@@ -1,0 +1,100 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://src/ui/party_member_panel.gd" id="1_panel"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_normal"]
+content_margin_left = 6.0
+content_margin_top = 4.0
+content_margin_right = 6.0
+content_margin_bottom = 4.0
+bg_color = Color(0.08, 0.05, 0.05, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.28, 0.22, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_selected"]
+content_margin_left = 6.0
+content_margin_top = 4.0
+content_margin_right = 6.0
+content_margin_bottom = 4.0
+bg_color = Color(0.16, 0.1, 0.07, 0.9)
+border_width_left = 3
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.95, 0.75, 0.3, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_back"]
+bg_color = Color(0.03, 0.02, 0.02, 0.9)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health"]
+bg_color = Color(0.7, 0.14, 0.1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_blood"]
+bg_color = Color(0.5, 0.1, 0.5, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_state"]
+font_size = 12
+font_color = Color(0.95, 0.7, 0.35, 1)
+
+[node name="PartyMemberPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(220, 0)
+focus_mode = 0
+mouse_filter = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_normal")
+script = ExtResource("1_panel")
+normal_style = SubResource("StyleBoxFlat_normal")
+selected_style = SubResource("StyleBoxFlat_selected")
+
+[node name="Rows" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 3
+
+[node name="Header" type="HBoxContainer" parent="Rows"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Swatch" type="ColorRect" parent="Rows/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(12, 12)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="NameLabel" type="Label" parent="Rows/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_font_sizes/font_size = 15
+clip_text = true
+
+[node name="StateLabel" type="Label" parent="Rows/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+label_settings = SubResource("LabelSettings_state")
+horizontal_alignment = 2
+
+[node name="HealthBar" type="ProgressBar" parent="Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_back")
+theme_override_styles/fill = SubResource("StyleBoxFlat_health")
+step = 1.0
+show_percentage = false
+
+[node name="BloodBar" type="ProgressBar" parent="Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_back")
+theme_override_styles/fill = SubResource("StyleBoxFlat_blood")
+step = 1.0
+show_percentage = false

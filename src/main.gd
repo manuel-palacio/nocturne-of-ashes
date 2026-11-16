@@ -45,6 +45,12 @@ var _paused: bool = false
 func _ready() -> void:
 	input.select_requested.connect(select)
 	input.select_next_requested.connect(select_next)
+	input.targeting_changed.connect(hud.show_targeting)
+	hud.member_pressed.connect(select)
+	hud.gift_chosen.connect(input.press_gift)
+	selection_changed.connect(hud.show_selected)
+	pause_changed.connect(hud.set_paused)
+	room_cleared.connect(hud.show_cleared)
 	start_room()
 
 
@@ -81,6 +87,9 @@ func start_room() -> void:
 		member.revived.connect(_on_member_revived)
 		party.append(member)
 	player = party[0]
+	hud.bind_party(party)
+	hud.hide_fallen()
+	hud.hide_cleared()
 	for marker: Node in _room.get_children():
 		if marker is Marker3D and marker.name.begins_with("EnemySpawn"):
 			enemies.append(_spawn(CRUSADER, marker))
@@ -89,8 +98,6 @@ func start_room() -> void:
 	input.enabled = true
 	select(player)
 	rig.snap_to_target()
-	hud.bind(player)
-	hud.hide_fallen()
 	room_started.emit()
 
 
