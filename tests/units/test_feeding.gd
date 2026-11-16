@@ -171,3 +171,25 @@ func test_two_feeders_at_once_leave_one_feeding_until_it_completes() -> void:
 	assert_signal_emitted(pair[0], "fed")
 	assert_signal_not_emitted(pair[1], "fed")
 	assert_eq(pair[1].stats.blood, 60)
+
+func test_can_act_only_when_alive_unstunned_not_feeding_and_not_in_the_fury() -> void:
+	assert_true(alvar.can_act())
+	var stun := StatusEffect.new()
+	stun.id = &"stun"
+	stun.duration = 1.0
+	stun.stuns = true
+	alvar.add_effect(stun)
+	assert_false(alvar.can_act())
+	alvar.remove_effect(&"stun")
+	assert_true(alvar.can_act())
+	foe.take_hit(45)
+	alvar.order_feed(foe)
+	await wait_seconds(0.5)
+	assert_true(alvar.is_feeding())
+	assert_false(alvar.can_act())
+	alvar.stats.spend_blood(55)
+	assert_true(alvar.is_in_fury())
+	assert_false(alvar.can_act())
+	alvar.take_hit(999)
+	assert_false(alvar.is_in_fury())
+	assert_false(alvar.can_act())

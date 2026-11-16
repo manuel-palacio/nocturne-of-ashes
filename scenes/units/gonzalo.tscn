@@ -26,6 +26,6 @@ surface_material_override/0 = SubResource("StandardMaterial3D_slategrey")
 damage = 18
 cooldown = 1.3
 
-[node name="Brain" type="Node" parent="." index="7"]
+[node name="Brain" type="Node" parent="."]
 script = ExtResource("3_brain")
 enabled = false

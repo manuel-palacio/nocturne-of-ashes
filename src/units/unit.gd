@@ -155,6 +155,11 @@ func is_in_fury() -> bool:
 	return _fury.is_active()
 
 
+## Whether the unit is free to act on its own choices: alive, not stunned, not feeding, not in the Fury.
+func can_act() -> bool:
+	return is_alive() and not is_stunned() and not is_feeding() and not is_in_fury()
+
+
 ## Halts and drops any order; a feed in progress is broken. Ignored in the Fury.
 func stop() -> void:
 	if is_in_fury():

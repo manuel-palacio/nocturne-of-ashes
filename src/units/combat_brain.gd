@@ -44,7 +44,7 @@ func _physics_process(delta: float) -> void:
 	if _since_thought < think_interval:
 		return
 	_since_thought = 0.0
-	if enabled and _unit.is_alive() and not _unit.is_stunned() and not _unit.is_feeding() and not _unit.is_in_fury():
+	if enabled and _unit.can_act():
 		_think()
 
 
