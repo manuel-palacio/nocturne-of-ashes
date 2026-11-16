@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://src/units/unit.gd" id="1_unit"]
 [ext_resource type="Script" path="res://src/units/mover.gd" id="2_mover"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://src/units/effects.gd" id="4_effects"]
 [ext_resource type="Script" path="res://src/units/feeder.gd" id="5_feeder"]
 [ext_resource type="Script" path="res://src/units/fury.gd" id="6_fury"]
+[ext_resource type="Script" path="res://src/units/orders.gd" id="7_orders"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
@@ -63,3 +64,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
 visible = false
 cast_shadow = 0
 mesh = SubResource("SphereMesh_feed_mark")
+
+[node name="Orders" type="Node" parent="."]
+script = ExtResource("7_orders")

@@ -1,8 +1,8 @@
 class_name Unit
 extends CharacterBody3D
-## The body every character uses: carries out its orders, walking through its `Mover`, takes hits,
-## carries timed status effects, dies with its stats and can be revived. A blood-drinking unit feeds
-## on weakened enemies through its `Feeder`, and its `Fury` takes it over when Blood is spent too low.
+## The body every character uses: carries out its orders through its `Orders`, takes hits, carries
+## timed status effects, dies with its stats and can be revived. A blood-drinking unit feeds on
+## weakened enemies through its `Feeder`, and its `Fury` takes it over when Blood is spent too low.
 
 signal died(unit: Unit)
 signal arrived
@@ -36,18 +36,13 @@ signal fury_ended
 ## What the unit was last told to do; NONE once it is done, stopped or dead.
 enum Order { NONE, MOVE, ATTACK, FEED }
 
-## While chasing, the walk is re-aimed once the target has moved this far from where it was headed.
-const _CHASE_RETARGET: float = 0.5
-
-var _order: Order = Order.NONE
-var _attack_target: Unit
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _standing: Transform3D
 var _fallen: Transform3D
 
 @onready var _mover: Mover = $Mover
+@onready var _orders: Orders = $Orders
 @onready var _body: MeshInstance3D = $Body
-@onready var _melee: MeleeAttack = get_node_or_null(^"Melee")
 @onready var _effects: Effects = $Effects
 @onready var _feeder: Feeder = $Feeder
 @onready var _fury: Fury = $Fury
@@ -60,14 +55,14 @@ func _ready() -> void:
 	stats = stats.duplicate() if stats != null else Stats.new()
 	stats.reset()
 	stats.died.connect(_on_stats_died)
-	_mover.arrived.connect(_on_mover_arrived)
-	_mover.stalled.connect(stop)
 	_effects.changed.connect(effects_changed.emit)
-	_feeder.finished.connect(_on_feed_finished)
-	_feeder.broken.connect(_on_feed_broken)
+	_orders.arrived.connect(arrived.emit)
+	_orders.attack_ended.connect(attack_ended.emit)
+	_orders.fed.connect(fed.emit)
+	_orders.feed_broken.connect(feed_broken.emit)
+	_orders.fury_started.connect(fury_started.emit)
+	_orders.fury_ended.connect(fury_ended.emit)
 	_fury.watch(stats)
-	_fury.started.connect(_on_fury_started)
-	_fury.ended.connect(_on_fury_ended)
 	_standing = _body.transform
 	# Lying on its side, lowered so its lowest point touches the floor at the unit's feet.
 	var lying: Basis = Basis(Vector3.RIGHT, PI / 2.0)
@@ -76,20 +71,7 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	# A stunned unit keeps its order but neither chases, strikes nor walks; its Mover skips the frame.
-	if is_stunned():
-		_stand_still()
-	else:
-		if is_in_fury():
-			_rage()
-		if _order == Order.ATTACK:
-			_pursue()
-		elif _order == Order.FEED:
-			_approach_feed()
-		if _mover.steer():
-			var step: Vector3 = _mover.heading() * walk_speed()
-			velocity.x = step.x
-			velocity.z = step.z
+	_orders.step()
 	var was_on_floor: bool = is_on_floor()
 	if not was_on_floor:
 		velocity.y -= _gravity * delta
@@ -98,48 +80,37 @@ func _physics_process(delta: float) -> void:
 
 
 func current_order() -> Order:
-	return _order
+	return _orders.current()
 
 
 ## Walks to the reachable navmesh point nearest to `target`. Ignored once dead and in the Fury.
 ## An order given before the navigation map has synced is held until it has.
 func order_move(target: Vector3) -> void:
-	if not is_alive() or is_in_fury():
-		return
-	_feeder.cancel()
-	_attack_target = null
-	_order = Order.MOVE
-	# A plain walk that makes no progress is dropped with a warning.
-	_mover.stall_check = true
-	_mover.walk_to(target)
+	_orders.move(target)
 
 
 ## Chases `target` into melee range and strikes it until it dies. Ignored for friends and the dead,
 ## and in the Fury.
 func order_attack(target: Unit) -> void:
-	if not is_alive() or is_in_fury() or target == null or not target.is_alive() or not is_hostile_to(target):
+	if target == null or not target.is_alive() or not is_hostile_to(target):
 		return
-	_chase(target)
+	_orders.attack(target)
 
 
 func attack_target() -> Unit:
-	return _attack_target if is_instance_valid(_attack_target) else null
+	return _orders.attack_target()
 
 
 ## Closes to melee range of `target`, then feeds on it for `feed_time`, holding it stunned. Ignored
 ## unless `can_feed_on(target)`, which is never the case in the Fury.
 func order_feed(target: Unit) -> void:
-	if _melee == null or not can_feed_on(target):
-		return
-	_feeder.begin(target)
-	_attack_target = null
-	_order = Order.FEED
-	_close_in(target)
+	if can_feed_on(target):
+		_orders.feed(target)
 
 
 ## The unit this one has a feed order on, walking there or drinking; null when none.
 func feed_target() -> Unit:
-	return _feeder.target() if _order == Order.FEED else null
+	return _orders.feed_target()
 
 
 ## Whether this living blood-drinker can feed on `target`: a living hostile at or below this unit's
@@ -177,126 +148,27 @@ func can_act() -> bool:
 
 ## Halts and drops any order; a feed in progress is broken. Ignored in the Fury.
 func stop() -> void:
-	if is_in_fury():
-		return
-	_feeder.cancel()
-	_drop_order()
+	_orders.stop()
 
 
-func _drop_order() -> void:
-	_attack_target = null
-	_order = Order.NONE
-	_halt()
-
-
-## Stops walking and stands still.
-func _halt() -> void:
-	_mover.halt()
-	_stand_still()
+## Walks this frame in the flat unit `direction`, at `walk_speed()`.
+func walk(direction: Vector3) -> void:
+	var step: Vector3 = direction * walk_speed()
+	velocity.x = step.x
+	velocity.z = step.z
 
 
 ## Drops the horizontal velocity; a fall in progress carries on.
-func _stand_still() -> void:
+func stand_still() -> void:
 	velocity.x = 0.0
 	velocity.z = 0.0
 
 
-## A finished path ends a move order. A chase path can end short of the target; the chase goes on.
-func _on_mover_arrived() -> void:
-	_stand_still()
-	if _order == Order.MOVE:
-		_order = Order.NONE
-		arrived.emit()
-
-
-func _pursue() -> void:
-	if not is_instance_valid(_attack_target) or not _attack_target.is_alive():
-		stop()
-		attack_ended.emit()
-		return
-	if not _reach(_attack_target):
-		return
-	if _melee.ready_to_swing():
-		_melee.try_hit(_attack_target)
-
-
-## Walks to the feed's target and starts drinking once in reach. A lost target is the Feeder's to handle.
-func _approach_feed() -> void:
-	var target: Unit = _feeder.target()
-	if target == null or _feeder.is_drinking():
-		return
-	if _reach(target):
-		_feeder.start_drinking()
-
-
-## Attacks `target` whatever its faction: the checks are the caller's. Breaks a feed in progress.
-func _chase(target: Unit) -> void:
-	if _melee == null:
-		return
-	_feeder.cancel()
-	_attack_target = target
-	_order = Order.ATTACK
-	_close_in(target)
-
-
-## Starts a chase towards `target`. A chase re-aims on its own, and a blocked chaser keeps trying.
-func _close_in(target: Unit) -> void:
-	_mover.stall_check = false
-	_mover.walk_to(target.global_position)
-
-
-## One frame of a chase: re-aims while `target` is out of melee range and returns false; in range,
-## halts facing it and returns true.
-func _reach(target: Unit) -> bool:
-	var target_at: Vector3 = target.global_position
-	if not _melee.in_range(target):
-		var drift: Vector3 = target_at - _mover.destination()
-		# Re-aim only when the target has moved, so a path ending short of it does not re-path each frame.
-		if Vector2(drift.x, drift.z).length() > _CHASE_RETARGET:
-			_mover.walk_to(target_at)
-		return false
-	_halt()
-	var facing: Vector3 = target_at - global_position
+## Turns to face `point`, flat on XZ; a point at the unit's feet leaves the facing as it is.
+func face(point: Vector3) -> void:
+	var facing: Vector3 = point - global_position
 	if Vector2(facing.x, facing.z).length() > 0.01:
 		rotation.y = atan2(-facing.x, -facing.z)
-	return true
-
-
-func _on_feed_finished(target: Unit) -> void:
-	_order = Order.NONE
-	fed.emit(target)
-
-
-## A broken feed leaves the unit idle; a new order that broke it is set right after.
-func _on_feed_broken() -> void:
-	_order = Order.NONE
-	_halt()
-	feed_broken.emit()
-
-
-## In the Fury the unit keeps after its victim while it lives, then turns on the nearest unit of any
-## faction; with no one left it stands idle.
-func _rage() -> void:
-	var victim: Unit = attack_target()
-	if victim != null and victim.is_alive():
-		return
-	victim = _fury.nearest_victim()
-	if victim == null:
-		_drop_order()
-	else:
-		_chase(victim)
-
-
-func _on_fury_started() -> void:
-	_feeder.cancel()
-	_drop_order()
-	fury_started.emit()
-	_rage()
-
-
-func _on_fury_ended() -> void:
-	_drop_order()
-	fury_ended.emit()
 
 
 ## Metres per second while walking, with the effects applied.
