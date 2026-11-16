@@ -3,17 +3,27 @@ extends RefCounted
 ## Keeps one `GameState` in one JSON file. A file that exists but cannot be used is reported with a
 ## warning and treated as no save.
 
+## Appended to `path` for the file a save is written to before it replaces the old one.
+const TEMP_SUFFIX: String = ".tmp"
+
 var path: String = "user://save.json"
 
 
-## Writes `state` over any earlier save; false when the file cannot be written.
+## Writes `state` over any earlier save; false when it cannot be written, and then the earlier save
+## is kept. The state goes to a temporary file first, renamed over the save once complete, so an
+## interrupted write cannot leave a truncated save.
 func save(state: GameState) -> bool:
-	var file := FileAccess.open(path, FileAccess.WRITE)
+	var temp: String = path + TEMP_SUFFIX
+	var file := FileAccess.open(temp, FileAccess.WRITE)
 	if file == null:
 		return false
 	var written: bool = file.store_string(JSON.stringify(state.to_dict()))
 	file.close()
-	return written
+	if written and DirAccess.rename_absolute(temp, path) == OK:
+		return true
+	if FileAccess.file_exists(temp):
+		DirAccess.remove_absolute(temp)
+	return false
 
 
 ## The saved state; null when there is no save, and also, with a warning, when the file is unusable.
@@ -30,9 +40,11 @@ func has_save() -> bool:
 	return _read() is GameState
 
 
+## Removes the save and any temporary file left by an interrupted save.
 func clear() -> void:
-	if FileAccess.file_exists(path):
-		DirAccess.remove_absolute(path)
+	for file: String in [path, path + TEMP_SUFFIX]:
+		if FileAccess.file_exists(file):
+			DirAccess.remove_absolute(file)
 
 
 ## The saved state, null when there is no file, or a String saying why the file is unusable.

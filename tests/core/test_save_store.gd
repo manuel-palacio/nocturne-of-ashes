@@ -63,3 +63,26 @@ func test_a_save_from_another_version_is_unusable() -> void:
 	_write(JSON.stringify(data))
 	assert_null(store.load_state())
 	assert_push_warning("save")
+
+func test_saving_leaves_no_temporary_file() -> void:
+	assert_true(store.save(GameState.new_game()))
+	assert_false(FileAccess.file_exists(store.path + SaveStore.TEMP_SUFFIX))
+	assert_true(store.has_save())
+
+func test_a_failed_write_keeps_the_old_save() -> void:
+	var state := GameState.new_game()
+	store.save(state)
+	var temp: String = store.path + SaveStore.TEMP_SUFFIX
+	DirAccess.make_dir_absolute(temp)  # a directory where the temporary file goes cannot be written
+	state.set_flag(&"met_malakor")
+	assert_false(store.save(state))
+	DirAccess.remove_absolute(temp)
+	assert_false(store.load_state().has_flag(&"met_malakor"))
+
+func test_clear_removes_a_leftover_temporary_file() -> void:
+	var temp: String = store.path + SaveStore.TEMP_SUFFIX
+	var file := FileAccess.open(temp, FileAccess.WRITE)
+	file.store_string("{ half a sa")
+	file.close()
+	store.clear()
+	assert_false(FileAccess.file_exists(temp))
