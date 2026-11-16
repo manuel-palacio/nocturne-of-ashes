@@ -23,7 +23,9 @@ func can_be_used_by(_unit: Unit) -> bool:
 	return true
 
 
-## Emits `used` if `by` may use it; subclasses add what happens.
-func use(by: Unit) -> void:
-	if can_be_used_by(by):
-		used.emit(by)
+## Emits `used` if `by` may use it; subclasses add what happens. Returns whether it was used.
+func use(by: Unit) -> bool:
+	if not can_be_used_by(by):
+		return false
+	used.emit(by)
+	return true

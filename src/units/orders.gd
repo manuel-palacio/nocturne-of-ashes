@@ -199,18 +199,19 @@ func _approach_feed() -> void:
 		_feeder.start_drinking()
 
 
-## Uses the interact target once within its reach, which ends the order; a freed target ends it unused.
+## Uses the interact target once within its reach, which ends the order. A target freed on the way,
+## or one that starts refusing the unit, ends it unused.
 func _approach_interactable() -> void:
 	var target: Interactable = _interact_target
-	if not is_instance_valid(target):
+	if not is_instance_valid(target) or not target.can_be_used_by(_unit):
 		_break_off()
 		return
 	if not _in_reach(target):
 		return
 	_break_off()
 	_unit.face(target.global_position)
-	target.use(_unit)
-	interacted.emit(target)
+	if target.use(_unit):
+		interacted.emit(target)
 
 
 ## Whether `target` still exists and lies within its reach of the unit, flat.

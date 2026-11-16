@@ -88,3 +88,41 @@ func test_one_that_refuses_is_not_approached() -> void:
 	var picky := arena.add_interactable(Vector3(-6, 0, 0), func(_u: Unit) -> bool: return false)
 	alvar.order_interact(picky)
 	assert_eq(alvar.current_order(), Unit.Order.NONE)
+
+func test_a_target_that_starts_refusing_on_the_way_is_left_alone() -> void:
+	var open: Array[bool] = [true]
+	var door := arena.add_interactable(Vector3(-6, 0, 0), func(_u: Unit) -> bool: return open[0])
+	watch_signals(door)
+	watch_signals(alvar)
+	alvar.order_interact(door)
+	await wait_physics_frames(10)
+	open[0] = false
+	await wait_physics_frames(3)
+	assert_eq(alvar.current_order(), Unit.Order.NONE)
+	assert_false(alvar.is_moving())
+	await wait_seconds(1.5)
+	assert_signal_not_emitted(door, "used")
+	assert_signal_not_emitted(alvar, "interacted")
+	assert_push_warning_count(0)
+
+func test_one_that_refuses_at_the_moment_of_use_gives_no_interacted() -> void:
+	var grudging := Grudging.new()
+	arena.room.add_child(grudging)
+	grudging.global_position = Vector3(0, 0, 3)
+	watch_signals(grudging)
+	watch_signals(alvar)
+	alvar.order_interact(grudging)
+	await wait_seconds(1.5)
+	assert_eq(grudging.tries, 1)
+	assert_signal_not_emitted(grudging, "used")
+	assert_signal_not_emitted(alvar, "interacted")
+	assert_eq(alvar.current_order(), Unit.Order.NONE)
+
+
+## Allows anyone, but its use always fails, as a door that locks at the last moment.
+class Grudging extends Interactable:
+	var tries: int = 0
+
+	func use(_by: Unit) -> bool:
+		tries += 1
+		return false

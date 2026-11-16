@@ -135,7 +135,7 @@ func can_feed_on(target: Unit) -> bool:
 
 ## Walks within `target.reach` of `target`, flat, uses it once and ends the order. Ignored for a freed
 ## target, for one that refuses this unit, once dead and in the Fury. A path that ends out of reach,
-## or a target freed on the way, ends the order with the target unused.
+## or a target freed or refusing on the way, ends the order with the target unused.
 func order_interact(target: Interactable, issuer: Issuer = Issuer.PLAYER) -> void:
 	_orders.interact(target, issuer)
 
