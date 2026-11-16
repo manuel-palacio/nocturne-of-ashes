@@ -27,13 +27,16 @@ func ready_to_swing() -> bool:
 	return _cooldown_left <= 0.0
 
 
-## Strikes `target` if it is alive, in range and the cooldown has run out. Returns whether it hit.
+## Strikes `target` if both are alive, its own unit is not stunned, the target is in range and the
+## cooldown has run out. Returns whether it hit; `hit` carries the damage dealt.
 func try_hit(target: Unit) -> bool:
+	if not _unit.is_alive() or _unit.is_stunned():
+		return false
 	if not is_instance_valid(target) or not target.is_alive():
 		return false
 	if not ready_to_swing() or not in_range(target):
 		return false
-	target.stats.take_damage(damage)
+	var dealt: int = target.take_hit(roundi(damage * _unit.damage_dealt_multiplier()), _unit)
 	_cooldown_left = cooldown
-	hit.emit(target, damage)
+	hit.emit(target, dealt)
 	return true

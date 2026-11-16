@@ -54,3 +54,21 @@ func test_two_stats_do_not_share_numbers() -> void:
 	var other := Stats.new()
 	stats.take_damage(10)
 	assert_eq(other.health, 100)
+
+func test_starting_blood_is_used_when_set() -> void:
+	stats.starting_blood = 60
+	stats.reset()
+	assert_eq(stats.blood, 60)
+
+func test_revive_only_raises_the_dead() -> void:
+	stats.revive(50)
+	assert_eq(stats.health, 100)
+	stats.take_damage(999)
+	stats.revive(50)
+	assert_eq(stats.health, 50)
+
+func test_a_maximum_of_zero_is_treated_as_one() -> void:
+	stats.max_health = 0
+	stats.reset()
+	assert_eq(stats.health, 1)
+	assert_false(stats.is_dead())
