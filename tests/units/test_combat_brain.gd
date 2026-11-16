@@ -154,3 +154,15 @@ func test_a_hit_from_a_friend_does_not_turn_an_idle_enemy_on_it() -> void:
 	foe.take_hit(5, friend)
 	await wait_seconds(0.6)
 	assert_null(foe.attack_target())
+
+func test_a_brain_leaves_a_target_once_it_is_held_by_a_feed() -> void:
+	alvar.global_position = Vector3(5, 0, 8)
+	await wait_seconds(0.6)
+	assert_eq(foe.attack_target(), alvar)
+	var hold := StatusEffect.new()
+	hold.id = Feeder.FED_ON
+	hold.duration = 5.0
+	hold.stuns = true
+	alvar.add_effect(hold)
+	await wait_seconds(0.6)
+	assert_null(foe.attack_target())
