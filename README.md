@@ -15,12 +15,12 @@ Browser tests: `npx playwright test` (after `npm install` and a browser build)
 The Chromium run opens a browser window, because headless Chromium renders WebGL in software and cannot hold the frame rate.
 
 - Design: [docs/superpowers/specs/2026-11-15-vertical-slice-design.md](docs/superpowers/specs/2026-11-15-vertical-slice-design.md)
-- Plan: [docs/superpowers/plans/2026-11-15-milestone-1-first-room.md](docs/superpowers/plans/2026-11-15-milestone-1-first-room.md)
+- Plans: [docs/superpowers/plans/2026-11-15-milestone-1-first-room.md](docs/superpowers/plans/2026-11-15-milestone-1-first-room.md), [docs/superpowers/plans/2026-11-16-milestone-2-party-and-blood.md](docs/superpowers/plans/2026-11-16-milestone-2-party-and-blood.md)
 
 ## Controls
 
 - Left click on the floor to move the selected party member, on an enemy to attack it.
-- Left click on a weakened enemy to feed on it.
+- Left click on a weakened enemy to feed on it; a red mark shows an enemy weak enough to feed on. Each group of crusaders has a tougher sergeant.
 - Left click on a companion, or press Tab, to select another party member.
 - 1 and 2 use the selected member's Gifts; a Gift that needs a target waits for a click on one.
 - Escape (or a right click) cancels a Gift's targeting.

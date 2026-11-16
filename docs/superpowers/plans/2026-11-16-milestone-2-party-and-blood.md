@@ -1729,3 +1729,48 @@ test('a full fight runs to an end, and a fall can be restarted', async ({ page }
 - [ ] **Step 4: Build and run** — `ops/build-web.sh`, `npx playwright test --trace off`, `ops/test.sh`. Expected: every browser test passes in Chromium and Firefox; the unit suite passes. Note the size of `build/web` in the commit body.
 - [ ] **Step 5: Look at it.** Read `build/e2e/party.png` and describe it in the report: party panels, Gift bar, three party colours and the first enemy group.
 - [ ] **Step 6: Commit** — `feat: report the party to browser tests and document the controls`
+
+---
+
+## Amendments made while building
+
+These decisions changed what the tasks above describe. The code follows the amendments.
+
+- **Test totals.** Review fixes added tests; the suite's own report is the count.
+- **Task 1.** A frame in which a unit does not steer never counts towards a stall, so a frozen unit keeps its order.
+- **Task 2.** Timed effects live in an `Effects` child node; `Unit` keeps the public effect methods. `take_hit` returns, and `was_hit` carries, the health actually removed. The stun test walks to (−4, 0, 0): the original point lay inside the test room's obstacle.
+- **Task 3.** `CombatBrain.enabled` is exported, and switching it forgets the brain's chosen target, so an attack still running when a brain comes back on counts as the player's. A follow walk re-aims when the leader moves.
+- **Task 4.** The party scenes save their `Brain` disabled; `Main` enables brains for unselected members. A member's fall resets the calm timer, and the fight flow stops while Álvar is down.
+- **Task 5.** Selection and pause are refused while Álvar is down. The pause also holds the calm timer.
+- **Task 6.** Feeding and the Fury live in `Feeder` and `Fury` child nodes. Only one feed can hold a target. The Fury has no timer of its own: it lasts as long as its effect. `Unit.can_act()` is the single "alive, not stunned, not feeding, not in the Fury" test.
+- **Task 7.** `cooldowns_changed` fires only when a cooldown starts, ends or is reset.
+- **Task 9.** `GiftUser.is_ready(index)` is the test for "usable apart from its target". Open targeting closes when its Gift stops being ready. The brain's thresholds are exported (`mends_below`, `self_gift_enemies`, `self_gift_radius`). A companion uses an enemy Gift only on its attack target or a hostile inside its aggro radius, never on a meal, and keeps enough Blood for its ally Gift. Brains leave alone any hostile that is being fed on or walked to for a feed. A brain whose idle unit is hit turns on the attacker, at any distance, once the world is running.
+- **Task 10.** No HUD control takes keyboard focus, so Space and Enter never press a button.
+- **Task 11.** The fall-and-restart browser test is gone: the party may win. Unit tests cover the fall.
+- **After the final review.** The Gift first called "Dread Gaze" was renamed "Baleful Eye": the first name belongs to the original game's setting. Each enemy group has one sergeant (90 health, 12 damage) in place of a crusader, so the fight needs the party's Gifts. Enemies that the selected character can feed on carry a mark. Clicking an ally's panel while an ally Gift awaits its target uses the Gift on that ally.
+
+## Carried forward
+
+**Milestone 3 (talk and choose) — first task**
+- Move the order system out of `Unit` into an `Orders` child node, with an issuer (player or brain) on each order. Today the Fury-and-feed gate is repeated in four methods of `unit.gd`, the Fury goes round the public order rule through a private chase, and the brain tracks who gave an order with three flags it reconciles on every think. Dialogue adds a walk-up-and-talk order and a second reason to freeze units.
+
+**Milestone 3, further**
+- One snapshot and restore per unit (health, Blood, effects, cooldowns) before checkpoints; replace the Enter restart with a checkpoint reload, and add a deterministic browser test of fall and reload.
+- Split party, selection and revival out of `Main` before a second room exists.
+- Every player-facing string through `tr()`: prompts, state labels, Gift names, unit names.
+- After "The vault is quiet" there is nothing to do; room flow decides what comes next.
+- A dead companion stays selected if it falls after Álvar. Right click and the wheel are swallowed over HUD panels and buttons.
+- Untested: resuming an attack after a stun; the calm timer held while paused; Tab ignored while input is disabled; Gift and cancel key polling; right-click cancel; a real mouse click on a party panel.
+- GUT reports orphan nodes at the end of the run.
+- Effects can be added to a fallen unit; `was_hit` fires after `died` on a killing blow.
+
+**Milestone 4 (Toledo's look)**
+- Units pass through each other and have no avoidance, so attackers on one target stand inside each other.
+- HUD panels and Gift buttons reassign their text every frame instead of on change.
+- Camera follow runs per frame while units move per physics tick.
+- Gift numbers live in both each Gift's script defaults and its resource file; the resource wins.
+
+**Milestone 5 (the night of 1212)**
+- Enemies have no leash. A chaser halted in range stops striking if its target shifts less than 0.5 m. A feed ordered while stunned breaks at once. A brain obeys a hostile taunt before a player's order. The ally-Gift rule looks only at the most hurt ally. The stall check would misfire for a heavily slowed unit.
+- The selected character does not defend itself when its target dies. Gonzalo walks slower than the others, so the tank arrives last. A companion in the Fury can end the round if Álvar is nearest; companions do not defend themselves against a friend. Fallen companions rise beside whatever felled them.
+- Balance after real play: sergeant numbers, starting Blood, feed threshold.
