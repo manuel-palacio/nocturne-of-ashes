@@ -1,10 +1,8 @@
 class_name Main
 extends Node3D
-## The game's shell: loads rooms and runs them. In a room it spawns the members who have joined, with
-## the health, Blood and Gifts the `GameState` gives them, and the room's crusaders, a sergeant among
-## each group, unless the room was cleared before; wires camera, input and HUD, hands control to the
-## party's selected member, raises fallen companions once a fight is over, marks the enemies the
-## selected member can feed on, and restarts the room after Álvar's fall.
+## The game's shell: boots from a `GameState`, loads rooms, has the `Party` spawn the members who have
+## joined and the `Encounter` run the room's fight, wires camera, input and HUD, hands control to the
+## party's selected member, pauses the world, and restarts the room after Álvar's fall.
 ##
 ## The skirmish (`main.tscn`) always plays the vault with the whole party at full strength; the story
 ## (`game.tscn`) plays from a `GameState`.
@@ -20,8 +18,6 @@ signal party_changed
 ## Emitted when the world pause turns on or off.
 signal pause_changed(paused: bool)
 
-const CRUSADER: PackedScene = preload("res://scenes/units/crusader.tscn")
-const SERGEANT: PackedScene = preload("res://scenes/units/crusader_sergeant.tscn")
 ## Every room, by its `Room.room_id`.
 const ROOMS: Dictionary = {
 	&"vault": preload("res://scenes/rooms/vault_room.tscn"),
@@ -31,9 +27,6 @@ const ROOMS: Dictionary = {
 enum Boot { SKIRMISH, STORY }
 
 @export var boot: Boot = Boot.SKIRMISH
-
-## Seconds without a fight before fallen companions rise.
-@export var calm_time: float = 3.0
 
 ## The members who have joined, in `GameState.MEMBERS` order, Álvar first: the `Party` node's.
 var party: Array[Unit]:
@@ -46,7 +39,16 @@ var player: Unit:
 var selected: Unit:
 	get:
 		return _party.selected
-var enemies: Array[Unit] = []
+## The room's enemies: the `Encounter` node's.
+var enemies: Array[Unit]:
+	get:
+		return _encounter.enemies
+## Seconds without a fight before fallen companions rise: the `Encounter` node's.
+var calm_time: float:
+	get:
+		return _encounter.calm_time
+	set(value):
+		_encounter.calm_time = value
 ## The room the party is in.
 var room: Room
 ## What outlives a room. Set before entering the tree, or made at `_ready()`: the skirmish's, or a new game.
@@ -58,9 +60,6 @@ var show_title: bool = true
 ## Whether a new game opens with its first conversation. Not used yet.
 var opening_enabled: bool = true
 
-## Seconds since a fight was last on or a party member last fell.
-var _calm_for: float = 0.0
-var _cleared: bool = false
 var _paused: bool = false
 
 @onready var input: PlayerInput = $PlayerInput
@@ -68,6 +67,7 @@ var _paused: bool = false
 @onready var hud: Hud = $Hud
 @onready var _units: Node3D = $Units
 @onready var _party: Party = $Party
+@onready var _encounter: Encounter = $Encounter
 
 
 func _enter_tree() -> void:
@@ -80,6 +80,9 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+	# First, so the feed marks are right before anyone else hears of a fall or a selection.
+	_encounter.watch(_party)
+	_encounter.cleared.connect(room_cleared.emit)
 	input.select_requested.connect(select)
 	input.select_next_requested.connect(select_next)
 	_party.selection_changed.connect(_on_selection_changed)
@@ -111,13 +114,6 @@ func _process(_delta: float) -> void:
 		set_paused(not _paused)
 
 
-func _physics_process(delta: float) -> void:
-	if not _paused:
-		_advance_fight_flow(delta)
-	# Also while paused, so the marks are right while the player plans.
-	_update_feed_marks()
-
-
 ## Plays the room again. In a skirmish: the vault afresh, with the whole party at full strength. In the
 ## story: the current room, from its entry, with the health and Blood the party had on entering it.
 func start_room() -> void:
@@ -146,6 +142,7 @@ func set_paused(on: bool) -> void:
 		return
 	_paused = on
 	_units.process_mode = Node.PROCESS_MODE_DISABLED if on else Node.PROCESS_MODE_INHERIT
+	_encounter.paused = on
 	pause_changed.emit(on)
 
 
@@ -153,9 +150,9 @@ func is_paused() -> bool:
 	return _paused
 
 
-## True from the fall of this round's last enemy until the next round starts.
+## True from the fall of the room's last enemy, or from entering a cleared room, until the next round.
 func is_cleared() -> bool:
-	return _cleared
+	return _encounter.is_cleared()
 
 
 ## Gives camera and input to `unit` and sets the other living members following it.
@@ -171,44 +168,11 @@ func select_next() -> void:
 
 ## True while any living enemy is attacking someone.
 func fight_is_on() -> bool:
-	for enemy: Unit in enemies:
-		if enemy.is_alive() and enemy.attack_target() != null:
-			return true
-	return false
+	return _encounter.fight_is_on()
 
 
 func enemies_alive() -> int:
-	var alive: int = 0
-	for enemy: Unit in enemies:
-		if enemy.is_alive():
-			alive += 1
-	return alive
-
-
-## Signals a cleared room once and raises the fallen at once; otherwise raises them after `calm_time`
-## without a fight. Nothing happens while Álvar is down.
-func _advance_fight_flow(delta: float) -> void:
-	if not player.is_alive():
-		return
-	if not _cleared and enemies_alive() == 0:
-		_cleared = true
-		state.set_flag(_cleared_flag(room.room_id))
-		room_cleared.emit()
-		_party.revive_fallen()
-	if fight_is_on():
-		_calm_for = 0.0
-		return
-	_calm_for += delta
-	if _calm_for >= calm_time:
-		_party.revive_fallen()
-
-
-## Marks exactly the living enemies the selected member can feed on, whatever its Blood; none while
-## Álvar is down.
-func _update_feed_marks() -> void:
-	var feeder: Unit = selected if player != null and player.is_alive() else null
-	for enemy: Unit in enemies:
-		enemy.set_feed_mark(feeder != null and feeder.can_feed_on(enemy))
+	return _encounter.enemies_alive()
 
 
 ## True when the engine's locale is no longer the system's: `--language` (or code) chose it. Godot keeps
@@ -228,8 +192,6 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 		_units.remove_child(unit)
 		unit.queue_free()
 	_party.clear()
-	enemies.clear()
-	_calm_for = 0.0
 	_load_room(room_id)
 
 	var entry: Marker3D = room.entry(entry_name)
@@ -240,12 +202,7 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	hud.bind_party(party)
 	hud.hide_fallen()
 	hud.hide_cleared()
-	# A room without enemies has nothing to clear, so it starts cleared too, and nothing is signalled.
-	_cleared = state.has_flag(_cleared_flag(room_id)) or room.enemy_markers().is_empty()
-	if not state.has_flag(_cleared_flag(room_id)):
-		for marker: Marker3D in room.enemy_markers():
-			var scene: PackedScene = SERGEANT if room.sergeant_spawns.has(StringName(marker.name)) else CRUSADER
-			enemies.append(_spawn(scene, marker))
+	_encounter.begin(room, state, _units)
 
 	state.room = room_id
 	state.entry = StringName(String(entry.name).trim_prefix(Room.ENTRY_PREFIX))
@@ -255,10 +212,6 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	select(player)
 	rig.snap_to_target()
 	room_started.emit()
-
-
-static func _cleared_flag(room_id: StringName) -> StringName:
-	return StringName("%s_cleared" % room_id)
 
 
 ## Puts the room `room_id` in place of the current one, first among the children.
@@ -274,28 +227,18 @@ func _load_room(room_id: StringName) -> void:
 	room.owner = self
 
 
-func _spawn(scene: PackedScene, marker: Node3D) -> Unit:
-	var unit: Unit = scene.instantiate()
-	_units.add_child(unit)
-	unit.global_transform = marker.global_transform
-	return unit
-
-
 func _on_selection_changed(unit: Unit) -> void:
 	rig.target = unit
 	input.unit = unit
-	_update_feed_marks()
 	selection_changed.emit(unit)
 
 
 ## The party hands selection back to Álvar itself when a selected companion falls.
 func _on_member_died(unit: Unit) -> void:
-	_calm_for = 0.0
 	party_changed.emit()
 	if unit == player:
 		input.cancel_targeting()
 		input.enabled = false
-		_update_feed_marks()
 		hud.show_fallen()
 
 
