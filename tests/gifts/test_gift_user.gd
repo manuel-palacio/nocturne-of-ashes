@@ -91,3 +91,34 @@ func test_an_index_out_of_range_is_refused() -> void:
 	assert_null(gifts.gift(3))
 	assert_false(gifts.use(3, foe))
 	assert_false(gifts.use(-1, foe))
+
+func test_cooldowns_changed_fires_when_a_cooldown_starts_and_ends_only() -> void:
+	watch_signals(gifts)
+	gifts.use(0, foe)
+	assert_signal_emit_count(gifts, "cooldowns_changed", 1)
+	await wait_seconds(0.3)
+	assert_signal_emit_count(gifts, "cooldowns_changed", 1)
+	await wait_seconds(0.4)
+	assert_eq(gifts.cooldown_left(0), 0.0)
+	assert_signal_emit_count(gifts, "cooldowns_changed", 2)
+
+func test_reset_cooldowns_makes_a_gift_usable_again_at_once() -> void:
+	watch_signals(gifts)
+	gifts.reset_cooldowns()
+	assert_signal_emit_count(gifts, "cooldowns_changed", 0)
+	gifts.use(0, foe)
+	assert_false(gifts.can_use(0, foe))
+	gifts.reset_cooldowns()
+	assert_signal_emit_count(gifts, "cooldowns_changed", 2)
+	assert_eq(gifts.cooldown_left(0), 0.0)
+	assert_true(gifts.use(0, foe))
+
+func test_a_caster_in_the_fury_cannot_use_gifts() -> void:
+	alvar.stats.spend_blood(55)  # 5
+	assert_true(alvar.is_in_fury())
+	alvar.stats.gain_blood(40)  # 45
+	assert_false(gifts.can_use(0, foe))
+	assert_false(gifts.use(0, foe))
+	assert_eq(alvar.stats.blood, 45)
+	alvar.remove_effect(&"fury")
+	assert_true(gifts.can_use(0, foe))

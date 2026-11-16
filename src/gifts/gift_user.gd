@@ -4,6 +4,7 @@ extends Node
 ## cooldown is over, it has the Blood and the target suits the Gift.
 
 signal gift_used(index: int, target: Unit)
+## A cooldown started, reached zero or was reset. Read `cooldown_left` for the time remaining.
 signal cooldowns_changed
 
 @export var gifts: Array[Gift] = []:
@@ -19,12 +20,12 @@ var _cooldowns: PackedFloat32Array = PackedFloat32Array()
 
 
 func _physics_process(delta: float) -> void:
-	var ticked: bool = false
+	var ended: bool = false
 	for i: int in _cooldowns.size():
 		if _cooldowns[i] > 0.0:
 			_cooldowns[i] = maxf(_cooldowns[i] - delta, 0.0)
-			ticked = true
-	if ticked:
+			ended = ended or _cooldowns[i] == 0.0
+	if ended:
 		cooldowns_changed.emit()
 
 
@@ -43,7 +44,7 @@ func cooldown_left(index: int) -> float:
 
 func can_use(index: int, target: Unit = null) -> bool:
 	var used: Gift = gift(index)
-	if used == null or not _unit.can_act() or _cooldowns[index] > 0.0:
+	if used == null or not _unit.can_act() or cooldown_left(index) > 0.0:
 		return false
 	return _unit.stats.blood >= used.blood_cost and used.can_target(_unit, target)
 
@@ -62,6 +63,10 @@ func use(index: int, target: Unit = null) -> bool:
 	return true
 
 
+## Ends every cooldown at once; emits `cooldowns_changed` only if one was running.
 func reset_cooldowns() -> void:
-	_cooldowns.fill(0.0)
-	cooldowns_changed.emit()
+	for left: float in _cooldowns:
+		if left > 0.0:
+			_cooldowns.fill(0.0)
+			cooldowns_changed.emit()
+			return
