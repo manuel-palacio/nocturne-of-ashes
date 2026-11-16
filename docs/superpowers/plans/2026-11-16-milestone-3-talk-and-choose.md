@@ -1042,7 +1042,7 @@ func test_one_that_refuses_is_not_approached() -> void:
 - Modify: `project.godot` (the add-on's plugin and autoload), `CREDITS.md`, `export_presets.cfg` only if the add-on needs files included, `src/main.gd`, `scenes/main.tscn`, `src/ui/hud.gd`, `assets/i18n/es.po`
 
 **Interfaces:**
-- **The add-on.** Install the newest Dialogue Manager release that states support for this Godot version (the 4.x line: version 4 if it is released and loads cleanly on 4.7, otherwise the latest version 3), unmodified, with its licence, and list it in `CREDITS.md`. Step 1 below proves it works here before anything is built on it.
+- **The add-on.** Install Dialogue Manager v4.2.0 (released for Godot 4.7, MIT), unmodified, with its licence, and list it in `CREDITS.md`. Version 4 calls a conversation's entry points "cues" (the `~ name` lines) and writes a response's condition self-closing (`- Text [if condition /]`). Step 1 below proves it works here before anything is built on it.
 - Produces: `class_name StoryHooks extends RefCounted` — the only object conversations can call. Built by `Main` with the state and a way to reach Álvar.
   - `func conscience() -> int`, `func change_conscience(delta: int) -> void`
   - `func has_flag(key: String) -> bool`, `func set_flag(key: String) -> void`
@@ -1081,7 +1081,7 @@ Smith: What will you do with the prisoner?
 	do change_conscience(-2)
 	do give_blood(40)
 	Smith: So be it.
-- Say the secret word [if has_flag("knows_word")]
+- Say the secret word [if has_flag("knows_word") /]
 	Smith: You should not know that.
 => END
 
