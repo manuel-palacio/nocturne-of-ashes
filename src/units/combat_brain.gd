@@ -186,14 +186,19 @@ func _feed() -> bool:
 
 
 ## Uses the first Gift, in slot order, that is ready, leaves the unit's Blood at or above its
-## `fury_threshold`, and has a use now. Returns whether one was used.
+## `fury_threshold`, and has a use now. An ENEMY or SELF Gift must also leave the Blood for the unit's
+## ALLY Gift, if it carries one, so a mender always keeps the means to mend. Returns whether one was used.
 func _use_a_gift() -> bool:
 	var gifts: GiftUser = _unit.get_node_or_null(^"Gifts")
 	if gifts == null:
 		return false
+	var mend_reserve: int = _ally_gift_cost(gifts)
 	for index: int in gifts.count():
 		var gift: Gift = gifts.gift(index)
-		if not gifts.is_ready(index) or _unit.stats.blood - gift.blood_cost < _unit.fury_threshold:
+		var keep: int = _unit.fury_threshold
+		if gift.targeting != Gift.Targeting.ALLY:
+			keep += mend_reserve
+		if not gifts.is_ready(index) or _unit.stats.blood - gift.blood_cost < keep:
 			continue
 		match gift.targeting:
 			Gift.Targeting.ALLY:
@@ -208,6 +213,16 @@ func _use_a_gift() -> bool:
 				if target != null and gifts.use(index, target):
 					return true
 	return false
+
+
+## The highest Blood cost among the unit's ALLY Gifts; 0 when it carries none.
+static func _ally_gift_cost(gifts: GiftUser) -> int:
+	var cost: int = 0
+	for index: int in gifts.count():
+		var gift: Gift = gifts.gift(index)
+		if gift.targeting == Gift.Targeting.ALLY:
+			cost = maxi(cost, gift.blood_cost)
+	return cost
 
 
 ## The unit's attack target if `gift` can reach it, else the nearest hostile within `aggro_radius`

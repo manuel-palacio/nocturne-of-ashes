@@ -99,3 +99,16 @@ func test_a_taunt_comes_before_a_meal() -> void:
 	taunter.add_effect(taunt)
 	await wait_seconds(0.6)
 	assert_eq(gonzalo.attack_target(), taunter)
+
+func test_zahra_keeps_the_blood_to_mend() -> void:
+	var gifts := zahra.get_node("Gifts") as GiftUser
+	var foe: Unit = arena.spawn(Arena.CRUSADER, Vector3(0, 0, 6))
+	for i: int in 6:
+		await wait_seconds(0.3)
+		foe.stats.heal(999)  # the lances never kill it
+		gifts.reset_cooldowns()
+	assert_eq(zahra.stats.blood, 30, "two lances, then she keeps Mend Flesh's 20 and her Fury's 10")
+	alvar.take_hit(80)  # 40 of 120
+	await wait_seconds(0.6)
+	assert_eq(alvar.stats.health, 80)
+	assert_eq(zahra.stats.blood, 10)
