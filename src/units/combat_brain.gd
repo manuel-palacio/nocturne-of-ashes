@@ -1,10 +1,13 @@
 class_name CombatBrain
 extends Node
-## Fights and follows for its `Unit`, enemy or companion. Each think, the first rule that applies wins:
-## obey a taunt; leave an order the brain did not give alone; switch to a much nearer hostile; engage
-## the nearest hostile within `aggro_radius`; walk after `leader`. A follow walk is the brain's own
-## order, so taunts, switching and engaging interrupt it. It does nothing while its unit is feeding or
-## in the Fury. All distances are flat on XZ.
+## Fights and follows for its `Unit`, enemy or companion. Each think, a brain that `uses_gifts` first
+## feeds or uses one Gift, unless the unit is carrying out the player's order; if it did, the think
+## ends. Then the first rule that applies wins: obey a taunt; leave an order the brain did not give
+## alone; keep up its own feed; switch to a much nearer hostile; engage the nearest hostile within
+## `aggro_radius`; walk after `leader`. A follow walk is the brain's own order, so taunts, switching and
+## engaging interrupt it. Between thinks, a hit from a living hostile on an idle or following unit is
+## answered with an attack at once. It does nothing while its unit is drinking, stunned or in the Fury.
+## All distances are flat on XZ.
 
 ## A follow walk is re-aimed once the leader has moved this far from where the walk was aimed.
 const _FOLLOW_RETARGET: float = 1.0
@@ -15,12 +18,22 @@ const _FOLLOW_RETARGET: float = 1.0
 @export var switch_margin: float = 2.0
 ## How far short of the leader a follow walk ends.
 @export var follow_distance: float = 3.0
+## Whether the brain feeds and uses its unit's Gifts.
+@export var uses_gifts: bool = false
+## With `uses_gifts`, the unit feeds on a weakened hostile within `aggro_radius` while its Blood is below this.
+@export var feeds_below: int = 30
+## An ALLY Gift is used on the most hurt ally only below this fraction of its maximum health.
+@export var mends_below: float = 0.5
+## A SELF Gift is used when at least this many living hostiles are within `self_gift_radius`.
+@export var self_gift_enemies: int = 2
+@export var self_gift_radius: float = 4.0
 ## When false the brain does nothing. Turning it off stops a follow walk it started; a fight goes on.
 ## Any attack running when it is switched either way counts as the player's, left alone until it ends.
 @export var enabled: bool = true:
 	set(value):
 		enabled = value
 		_chosen_target = null
+		_feeding = false
 		if not enabled:
 			if _following and _unit != null and _unit.current_order() == Unit.Order.MOVE:
 				_unit.stop()
@@ -33,10 +46,16 @@ var _since_thought: float = 0.0
 var _chosen_target: Unit
 ## Whether the unit's current move order is a follow walk the brain started.
 var _following: bool = false
+## Whether the unit's current feed order is one the brain gave.
+var _feeding: bool = false
 ## Where the leader stood when the current follow walk was aimed.
 var _leader_was_at: Vector3
 
 @onready var _unit: Unit = get_parent()
+
+
+func _ready() -> void:
+	_unit.was_hit.connect(_on_unit_hit)
 
 
 func _physics_process(delta: float) -> void:
@@ -48,23 +67,44 @@ func _physics_process(delta: float) -> void:
 		_think()
 
 
+## A living hostile that hits the unit while it is idle or on the brain's follow walk is attacked at
+## once, at any distance. A player's order and an attack under way are left alone.
+func _on_unit_hit(_amount: int, source: Unit) -> void:
+	if not enabled or not _unit.can_act() or not is_instance_valid(source) or not source.is_alive():
+		return
+	if not _unit.is_hostile_to(source):
+		return
+	var order: Unit.Order = _unit.current_order()
+	if order == Unit.Order.NONE or (order == Unit.Order.MOVE and _following):
+		_attack(source)
+
+
 func _think() -> void:
 	var order: Unit.Order = _unit.current_order()
 	var attacking_own: bool = (
 		order == Unit.Order.ATTACK and _chosen_target != null and _unit.attack_target() == _chosen_target
 	)
 	var following_own: bool = order == Unit.Order.MOVE and _following
+	var feeding_own: bool = order == Unit.Order.FEED and _feeding
 	if not attacking_own:
 		_chosen_target = null
 	if not following_own:
 		_following = false
+	if not feeding_own:
+		_feeding = false
+	var players_order: bool = order != Unit.Order.NONE and not attacking_own and not following_own and not feeding_own
 
+	if uses_gifts and not players_order:
+		if not feeding_own and _feed():
+			return
+		if _use_a_gift():
+			return
 	var taunter: Unit = _nearest_taunter()
 	if taunter != null:
 		if _unit.attack_target() != taunter:
 			_attack(taunter)
 		return
-	if order != Unit.Order.NONE and not attacking_own and not following_own:
+	if players_order or feeding_own:
 		return
 	if attacking_own:
 		_reconsider()
@@ -99,8 +139,95 @@ func _follow() -> void:
 
 func _attack(target: Unit) -> void:
 	_following = false
+	_feeding = false
 	_chosen_target = target
 	_unit.order_attack(target)
+
+
+## Below `feeds_below` Blood, feeds on the nearest hostile within `aggro_radius` the unit can feed on.
+## Returns whether it gave the order.
+func _feed() -> bool:
+	if _unit.stats.blood >= feeds_below:
+		return false
+	var nearest: Unit = null
+	var best: float = INF
+	for other: Unit in _living_hostiles():
+		var distance: float = _flat_to(other)
+		if distance <= aggro_radius and distance < best and _unit.can_feed_on(other):
+			best = distance
+			nearest = other
+	if nearest == null:
+		return false
+	_following = false
+	_chosen_target = null
+	_unit.order_feed(nearest)
+	_feeding = true
+	return true
+
+
+## Uses the first Gift, in slot order, that is ready, leaves the unit's Blood at or above its
+## `fury_threshold`, and has a use now. Returns whether one was used.
+func _use_a_gift() -> bool:
+	var gifts: GiftUser = _unit.get_node_or_null(^"Gifts")
+	if gifts == null:
+		return false
+	for index: int in gifts.count():
+		var gift: Gift = gifts.gift(index)
+		if not gifts.is_ready(index) or _unit.stats.blood - gift.blood_cost < _unit.fury_threshold:
+			continue
+		match gift.targeting:
+			Gift.Targeting.ALLY:
+				var hurt: Unit = _most_hurt_ally()
+				if hurt != null and _health_fraction(hurt) < mends_below and gifts.use(index, hurt):
+					return true
+			Gift.Targeting.SELF:
+				if _hostiles_within(self_gift_radius) >= self_gift_enemies and gifts.use(index):
+					return true
+			Gift.Targeting.ENEMY:
+				var target: Unit = _gift_enemy(gift)
+				if target != null and gifts.use(index, target):
+					return true
+	return false
+
+
+## The unit's attack target if `gift` can reach it, else the nearest hostile within `aggro_radius`
+## that it can reach, or null.
+func _gift_enemy(gift: Gift) -> Unit:
+	var current: Unit = _unit.attack_target()
+	if current != null and gift.can_target(_unit, current):
+		return current
+	var nearest: Unit = null
+	var best: float = INF
+	for other: Unit in _living_hostiles():
+		var distance: float = _flat_to(other)
+		if distance <= aggro_radius and distance < best and gift.can_target(_unit, other):
+			best = distance
+			nearest = other
+	return nearest
+
+
+## The living friend, the unit included, with the lowest fraction of its maximum health.
+func _most_hurt_ally() -> Unit:
+	var hurt: Unit = null
+	var lowest: float = INF
+	for node: Node in get_tree().get_nodes_in_group(&"units"):
+		var other: Unit = node as Unit
+		if other != null and other.is_alive() and not _unit.is_hostile_to(other) and _health_fraction(other) < lowest:
+			lowest = _health_fraction(other)
+			hurt = other
+	return hurt
+
+
+func _hostiles_within(radius: float) -> int:
+	var near: int = 0
+	for other: Unit in _living_hostiles():
+		if _flat_to(other) <= radius:
+			near += 1
+	return near
+
+
+static func _health_fraction(unit: Unit) -> float:
+	return float(unit.stats.health) / unit.stats.max_health
 
 
 ## The nearest living hostile whose taunt reaches this unit, or null.

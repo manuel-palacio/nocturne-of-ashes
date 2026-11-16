@@ -63,6 +63,7 @@ func test_companions_follow_the_selected_member() -> void:
 		assert_gt(companion.global_position.x, -8.0, companion.display_name)
 
 func test_a_fallen_companion_rises_when_the_fight_has_been_calm() -> void:
+	(main.party[1].get_node("Brain") as CombatBrain).uses_gifts = false
 	main.calm_time = 0.5
 	main.party[1].take_hit(999)
 	await wait_seconds(1.0)

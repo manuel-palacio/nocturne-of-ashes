@@ -133,3 +133,24 @@ func test_a_follower_of_a_dead_leader_does_not_walk() -> void:
 	await wait_seconds(0.8)
 	assert_false(friend.is_moving())
 	assert_eq(friend.current_order(), Unit.Order.NONE)
+
+func test_an_idle_enemy_turns_on_a_distant_hostile_that_hits_it() -> void:
+	alvar.global_position = foe.global_position + Vector3(-12, 0, 0)
+	await wait_physics_frames(2)
+	foe.take_hit(5, alvar)
+	assert_eq(foe.attack_target(), alvar)
+
+func test_a_hit_from_a_third_unit_does_not_change_a_target() -> void:
+	alvar.global_position = Vector3(5, 0, 8)
+	await wait_seconds(0.6)
+	assert_eq(foe.attack_target(), alvar)
+	var sniper: Unit = arena.spawn(Arena.ALVAR, Vector3(-8, 0, 8))
+	foe.take_hit(5, sniper)
+	assert_eq(foe.attack_target(), alvar)
+
+func test_a_hit_from_a_friend_does_not_turn_an_idle_enemy_on_it() -> void:
+	var friend: Unit = arena.spawn(Arena.CRUSADER, Vector3(8, 0, 4))
+	await wait_physics_frames(2)
+	foe.take_hit(5, friend)
+	await wait_seconds(0.6)
+	assert_null(foe.attack_target())

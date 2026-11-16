@@ -36,3 +36,4 @@ gifts = Array[ExtResource("5_gift")]([ExtResource("6_mend_flesh"), ExtResource("
 [node name="Brain" type="Node" parent="."]
 script = ExtResource("3_brain")
 enabled = false
+uses_gifts = true
