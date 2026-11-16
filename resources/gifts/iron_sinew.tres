@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="IronSinew" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/gifts/iron_sinew.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+duration = 8.0
+speed_multiplier = 1.4
+damage_dealt_multiplier = 1.5
+id = &"iron_sinew"
+display_name = "Iron Sinew"
+blood_cost = 20
+cooldown = 12.0
+targeting = 0
+cast_range = 0.0
