@@ -40,6 +40,7 @@ func walk_to(target: Vector3) -> void:
 func halt() -> void:
 	_walking = false
 	_pending = false
+	_steered = false
 
 
 func is_walking() -> bool:
@@ -83,6 +84,8 @@ func after_move(delta: float, was_on_floor: bool) -> void:
 		_pending = true
 	if _steered and stall_check:
 		_check_progress(delta)
+	# A frame in which the unit did not steer, such as while it is held still, never counts as a stall.
+	_steered = false
 
 
 func _plan() -> void:

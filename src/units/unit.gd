@@ -88,17 +88,21 @@ func stop() -> void:
 	_halt()
 
 
-## Stops walking; a fall in progress carries on.
+## Stops walking and stands still.
 func _halt() -> void:
 	_mover.halt()
+	_stand_still()
+
+
+## Drops the horizontal velocity; a fall in progress carries on.
+func _stand_still() -> void:
 	velocity.x = 0.0
 	velocity.z = 0.0
 
 
 ## A finished path ends a move order. A chase path can end short of the target; the chase goes on.
 func _on_mover_arrived() -> void:
-	velocity.x = 0.0
-	velocity.z = 0.0
+	_stand_still()
 	if _order == Order.MOVE:
 		_order = Order.NONE
 		arrived.emit()
