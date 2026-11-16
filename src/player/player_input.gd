@@ -123,9 +123,12 @@ func click_at(screen_position: Vector2) -> void:
 
 ## A party member was pressed outside the world, as on its HUD panel: while targeting a Gift that can
 ## be used on `member`, uses it on them and keeps the selection; otherwise asks to select them.
+## Does nothing while input is off.
 func press_member(member: Unit) -> void:
+	if not enabled:
+		return
 	_close_stale_targeting()
-	if enabled and _targeting >= 0 and _use_targeted_on(member):
+	if _targeting >= 0 and _use_targeted_on(member):
 		return
 	select_requested.emit(member)
 

@@ -201,3 +201,28 @@ func test_a_use_refused_by_a_fall_does_not_count() -> void:
 	assert_false(smith.use(main.player))
 	assert_signal_not_emitted(smith, "used")
 	assert_false(main.is_talking())
+
+func _click(control: Control) -> void:
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.position = control.get_global_rect().get_center()
+	click.global_position = click.position
+	click.pressed = true
+	main.hud.get_viewport().push_input(click, true)
+	var release: InputEventMouseButton = click.duplicate()
+	release.pressed = false
+	main.hud.get_viewport().push_input(release, true)
+	await wait_physics_frames(2)
+
+func test_party_panels_and_gift_buttons_do_nothing_while_talking() -> void:
+	main.state.join(&"zahra")
+	main.state.learn(&"alvar", &"iron_sinew")
+	main.enter_room(&"haven")
+	await wait_physics_frames(3)
+	main.talk(TALK, "start")
+	await wait_physics_frames(2)
+	await _click(main.hud.panels()[1])
+	await _click(main.hud.gift_buttons()[0])
+	assert_eq(main.selected, main.player)
+	assert_false(main.player.has_effect(&"iron_sinew"))
+	assert_true(main.is_talking())
