@@ -52,6 +52,7 @@ func _process(delta: float) -> void:
 		press_gift(1)
 	if Input.is_action_just_pressed(&"cancel"):
 		cancel_targeting()
+	_close_stale_targeting()
 	if rig == null:
 		return
 	var turn: float = Input.get_action_strength(&"camera_right") - Input.get_action_strength(&"camera_left")
@@ -87,7 +88,8 @@ func cancel_targeting() -> void:
 	_set_targeting(-1)
 
 
-## While targeting, uses the Gift on a unit under the point that it can target, else does nothing.
+## While targeting, uses the Gift on a unit under the point that it can target, else does nothing;
+## targeting whose Gift is no longer ready is closed first, and the click counts as a plain one.
 ## Otherwise asks to select a living friend under the point; feeds on a living hostile there when the
 ## unit can and is short of Blood, else attacks it; else walks to the ground under it. A click on the
 ## controlled unit itself does nothing.
@@ -96,6 +98,7 @@ func click_at(screen_position: Vector2) -> void:
 		return
 	var cam: Camera3D = rig.camera()
 	var other: Unit = Picker.unit_at(cam, screen_position)
+	_close_stale_targeting()
 	if _targeting >= 0:
 		_use_targeted_on(other)
 		return
@@ -118,6 +121,14 @@ func click_at(screen_position: Vector2) -> void:
 func _use_targeted_on(target: Unit) -> void:
 	var gifts: GiftUser = _gifts()
 	if target != null and gifts != null and gifts.use(_targeting, target):
+		cancel_targeting()
+
+
+## Closes targeting once its Gift is no longer ready: the unit was stunned, fell, entered the Fury or
+## lost the Blood.
+func _close_stale_targeting() -> void:
+	var gifts: GiftUser = _gifts()
+	if _targeting >= 0 and (gifts == null or not gifts.is_ready(_targeting)):
 		cancel_targeting()
 
 

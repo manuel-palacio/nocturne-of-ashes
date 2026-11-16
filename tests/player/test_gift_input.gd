@@ -105,3 +105,16 @@ func test_a_click_on_a_weakened_enemy_attacks_at_full_blood() -> void:
 	_click(foe)
 	assert_eq(main.player.current_order(), Unit.Order.ATTACK)
 	assert_eq(main.player.attack_target(), foe)
+
+func test_targeting_closes_when_the_unit_is_stunned() -> void:
+	main.input.press_gift(1)
+	var stun := StatusEffect.new()
+	stun.id = &"stun"
+	stun.duration = 0.3
+	stun.stuns = true
+	main.player.add_effect(stun)
+	await wait_physics_frames(2)
+	assert_eq(main.input.targeting_gift(), -1)
+	await wait_seconds(0.5)
+	main.input.click_at(_screen(main.player.global_position + Vector3(2, 0, 2)))
+	assert_eq(main.player.current_order(), Unit.Order.MOVE)
