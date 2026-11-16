@@ -89,3 +89,54 @@ func test_a_join_closes_targeting() -> void:
 	await wait_physics_frames(2)
 	assert_eq(main.input.targeting_gift(), -1)
 	assert_false(main.hud.gift_buttons()[0].is_targeting())
+
+## Puts a character labelled `label` at `at` in the room; hidden unless `shown`.
+func _character(label: String, at: Vector3, shown: bool = true) -> Npc:
+	var npc: Npc = load("res://scenes/rooms/npc.tscn").instantiate()
+	npc.label = label
+	if not shown:
+		npc.shown_if = &"never_set"
+	main.room.add_child(npc)
+	npc.global_position = at
+	await wait_physics_frames(2)
+	return npc
+
+func _flat(point: Vector3) -> Vector2:
+	return Vector2(point.x, point.z)
+
+func _on_navmesh(point: Vector3) -> bool:
+	var map := main.get_world_3d().navigation_map
+	return point.distance_to(NavigationServer3D.map_get_closest_point(map, point)) < 0.3
+
+func _companion_marker() -> Vector3:
+	return (main.room.find_child("Entry_start").get_node("Companion1") as Node3D).global_position
+
+func test_a_joiner_appears_beside_their_character_toward_the_centre() -> void:
+	var npc: Npc = await _character("Zahra", Vector3(6, 0.3, 0))
+	main.state.join(&"zahra")
+	await wait_physics_frames(3)
+	var at: Vector3 = main.party[1].global_position
+	assert_almost_eq(_flat(at).distance_to(_flat(npc.global_position)), Room.BESIDE_NPC, 0.1)
+	assert_lt(_flat(at).length(), _flat(npc.global_position).length())
+	assert_true(_on_navmesh(at))
+
+func test_with_no_matching_character_a_joiner_appears_at_the_companion_marker() -> void:
+	await _character("Someone else", Vector3(6, 0.3, 0))
+	main.state.join(&"zahra")
+	await wait_physics_frames(3)
+	assert_almost_eq(_flat(main.party[1].global_position).distance_to(_flat(_companion_marker())), 0.0, 0.1)
+
+func test_a_hidden_character_is_ignored() -> void:
+	var npc: Npc = await _character("Zahra", Vector3(6, 0.3, 0), false)
+	assert_false(npc.visible)
+	main.state.join(&"zahra")
+	await wait_physics_frames(3)
+	assert_almost_eq(_flat(main.party[1].global_position).distance_to(_flat(_companion_marker())), 0.0, 0.1)
+
+func test_a_character_at_the_centre_still_gives_a_point_on_the_navmesh() -> void:
+	var npc: Npc = await _character("Zahra", Vector3(0, 0.3, 0))
+	main.state.join(&"zahra")
+	await wait_physics_frames(3)
+	var at: Vector3 = main.party[1].global_position
+	assert_true(_on_navmesh(at))
+	assert_almost_eq(_flat(at).distance_to(_flat(npc.global_position)), Room.BESIDE_NPC, 0.1)
