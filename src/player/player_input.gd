@@ -1,12 +1,12 @@
 class_name PlayerInput
 extends Node
-## Turns mouse clicks and camera keys into orders for the player's unit and moves for the camera rig.
+## Turns mouse clicks and keys into orders for the controlled unit, selection requests, and moves for
+## the camera rig. It never calls `Main`; selection goes out through its signals.
 
-## Length of the click ray, in metres.
-const _RAY_LENGTH: float = 100.0
-## The click ray tests the "world" (1) and "units" (2) physics layers. It skips "walls" (3):
-## the wall nearest the camera is not drawn, and its collider must not catch clicks meant for the floor.
-const _RAY_MASK: int = 0b11
+## A click landed on a living friend of the controlled unit.
+signal select_requested(unit: Unit)
+## The `select_next` action was pressed.
+signal select_next_requested
 
 var unit: Unit
 var rig: CameraRig
@@ -27,6 +27,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	# Polled rather than read from events, so presses made with Input.action_press count too.
+	if enabled and Input.is_action_just_pressed(&"select_next"):
+		select_next_requested.emit()
 	if rig == null:
 		return
 	var turn: float = Input.get_action_strength(&"camera_right") - Input.get_action_strength(&"camera_left")
@@ -34,23 +37,21 @@ func _process(delta: float) -> void:
 		rig.rotate_by(turn * rig.rotate_speed * delta)
 
 
-## Attacks a living hostile unit under the point, else walks to the ground under it.
+## Asks to select a living friend under the point, attacks a living hostile there, else walks to the
+## ground under it. A click on the controlled unit itself does nothing.
 func click_at(screen_position: Vector2) -> void:
 	if not enabled or unit == null or not unit.is_alive():
 		return
 	var cam: Camera3D = rig.camera()
-	var origin: Vector3 = cam.project_ray_origin(screen_position)
-	var direction: Vector3 = cam.project_ray_normal(screen_position)
-	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * _RAY_LENGTH, _RAY_MASK)
-	var hit: Dictionary = cam.get_world_3d().direct_space_state.intersect_ray(query)
-	if not hit.is_empty():
-		var other := hit.collider as Unit
-		if other != null and other.is_alive() and unit.is_hostile_to(other):
+	var other: Unit = Picker.unit_at(cam, screen_position)
+	if other == unit:
+		return
+	if other != null and other.is_alive():
+		if unit.is_hostile_to(other):
 			unit.order_attack(other)
 		else:
-			unit.order_move(hit.position)
+			select_requested.emit(other)
 		return
-	# Past the walls nothing is hit; the ground plane still gives a point to walk towards.
-	var on_ground: Variant = Plane(Vector3.UP, 0.0).intersects_ray(origin, direction)
+	var on_ground: Variant = Picker.ground_at(cam, screen_position)
 	if on_ground != null:
 		unit.order_move(on_ground)

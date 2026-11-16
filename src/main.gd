@@ -12,6 +12,8 @@ signal selection_changed(unit: Unit)
 signal room_cleared
 ## Emitted when a party member falls or rises.
 signal party_changed
+## Emitted when the world pause turns on or off.
+signal pause_changed(paused: bool)
 
 const ALVAR: PackedScene = preload("res://scenes/units/alvar.tscn")
 const ZAHRA: PackedScene = preload("res://scenes/units/zahra.tscn")
@@ -31,6 +33,7 @@ var enemies: Array[Unit] = []
 ## Seconds since a fight was last on or a party member last fell.
 var _calm_for: float = 0.0
 var _cleared: bool = false
+var _paused: bool = false
 
 @onready var input: PlayerInput = $PlayerInput
 @onready var rig: CameraRig = $CameraRig
@@ -40,6 +43,8 @@ var _cleared: bool = false
 
 
 func _ready() -> void:
+	input.select_requested.connect(select)
+	input.select_next_requested.connect(select_next)
 	start_room()
 
 
@@ -47,14 +52,18 @@ func _process(_delta: float) -> void:
 	# Polled rather than read from events, so presses made with Input.action_press count too.
 	if not player.is_alive() and Input.is_action_just_pressed(&"confirm"):
 		start_room()
+	if Input.is_action_just_pressed(&"pause"):
+		set_paused(not _paused)
 
 
 func _physics_process(delta: float) -> void:
-	_advance_fight_flow(delta)
+	if not _paused:
+		_advance_fight_flow(delta)
 
 
 ## Clears the last round's units and spawns a fresh one, with Álvar selected.
 func start_room() -> void:
+	set_paused(false)
 	for unit: Node in _units.get_children():
 		# Out of the tree at once, so no new unit finds an old one in the "units" group.
 		_units.remove_child(unit)
@@ -84,10 +93,24 @@ func start_room() -> void:
 	room_started.emit()
 
 
+## Freezes or releases every unit; camera, selection and orders keep working. Orders given while
+## frozen are stored by the units and begin on release. Turning it on is refused while Álvar is down.
+func set_paused(on: bool) -> void:
+	if on == _paused or (on and not player.is_alive()):
+		return
+	_paused = on
+	_units.process_mode = Node.PROCESS_MODE_DISABLED if on else Node.PROCESS_MODE_INHERIT
+	pause_changed.emit(on)
+
+
+func is_paused() -> bool:
+	return _paused
+
+
 ## Gives camera and input to `unit` and sets the other living members following it.
-## Ignored unless `unit` is a living party member.
+## Ignored unless `unit` is a living party member, and while Álvar is down.
 func select(unit: Unit) -> void:
-	if unit == null or not party.has(unit) or not unit.is_alive():
+	if not player.is_alive() or unit == null or not party.has(unit) or not unit.is_alive():
 		return
 	selected = unit
 	rig.target = unit
@@ -98,8 +121,10 @@ func select(unit: Unit) -> void:
 	selection_changed.emit(unit)
 
 
-## Selects the next living party member after the selected one, wrapping round.
+## Selects the next living party member after the selected one, wrapping round. Ignored while Álvar is down.
 func select_next() -> void:
+	if not player.is_alive():
+		return
 	var at: int = party.find(selected)
 	for step: int in range(1, party.size() + 1):
 		var candidate: Unit = party[(at + step) % party.size()]
