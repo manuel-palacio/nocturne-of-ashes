@@ -8,7 +8,7 @@ extends Node
 ## A conversation is refused while a fight is on, while Álvar is down and while another one runs.
 ## It reaches the game only through a `StoryHooks` on the state of the current room.
 
-## A conversation ran to its end; not emitted for one ended by `stop()`.
+## A conversation ran to its end; not emitted for one ended by `stop()` or by an error.
 signal ended
 
 var _runner: DialogueRunner
@@ -96,5 +96,5 @@ func _on_talk_requested(npc: Npc, _by: Unit) -> void:
 func _on_finished() -> void:
 	_hold.call(false)
 	_input.enabled = true
-	if not _stopping:
+	if not _stopping and not _runner.ended_in_error():
 		ended.emit()

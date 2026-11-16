@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://d21iukvhs0r8l"
+path="res://.godot/imported/test_broken_talk.dialogue-cbde8fca84faf262ad9a08d27c4d035c.tres"
+
+[deps]
+
+source_file="res://tests/fixtures/test_broken_talk.dialogue"
+dest_files=["res://.godot/imported/test_broken_talk.dialogue-cbde8fca84faf262ad9a08d27c4d035c.tres"]
+
+[params]
+
+defaults=true

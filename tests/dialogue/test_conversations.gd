@@ -138,3 +138,41 @@ func test_someone_hidden_by_a_flag_cannot_be_clicked() -> void:
 	await wait_physics_frames(2)
 	assert_false(smith.visible)
 	assert_false(smith.can_be_used_by(main.player))
+
+const BROKEN := preload("res://tests/fixtures/test_broken_talk.dialogue")
+
+func _assert_play_goes_on() -> void:
+	assert_false(main.is_talking())
+	assert_false(_box().visible)
+	assert_true(main.input.enabled)
+	var from: Vector3 = main.player.global_position
+	main.player.order_move(from + Vector3(-3, 0, 0))
+	await wait_seconds(0.5)
+	assert_gt(Arena.flat(main.player.global_position, from), 0.3)
+
+func test_a_call_the_hooks_do_not_offer_ends_the_conversation_unsaved() -> void:
+	watch_signals(main)
+	main.talk(BROKEN, "refused")
+	await wait_physics_frames(2)
+	await _tap(&"confirm")
+	assert_push_error("Method \"get_tree\" not found")
+	await _assert_play_goes_on()
+	assert_signal_not_emitted(main, "checkpoint_saved")
+
+func test_a_hook_called_with_the_wrong_arguments_ends_the_conversation_unsaved() -> void:
+	watch_signals(main)
+	main.talk(BROKEN, "wrong_args")
+	await wait_physics_frames(2)
+	await _tap(&"confirm")
+	assert_engine_error("expected 1 argument(s), but called with 0")
+	assert_eq(main.state.conscience, 7)
+	await _assert_play_goes_on()
+	assert_signal_not_emitted(main, "checkpoint_saved")
+
+func test_a_missing_cue_ends_the_conversation_unsaved() -> void:
+	watch_signals(main)
+	main.talk(TALK, "no_such_cue")
+	await wait_physics_frames(2)
+	assert_push_error("has no cue no_such_cue")
+	await _assert_play_goes_on()
+	assert_signal_not_emitted(main, "checkpoint_saved")

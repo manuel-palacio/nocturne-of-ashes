@@ -1,0 +1,11 @@
+~ refused
+Smith: Let me see.
+do get_tree()
+Smith: You should not hear this.
+=> END
+
+~ wrong_args
+Smith: Let me see.
+do change_conscience()
+Smith: You should not hear this.
+=> END
