@@ -51,6 +51,8 @@ var _following: bool = false
 var _feeding: bool = false
 ## Where the leader stood when the current follow walk was aimed.
 var _leader_was_at: Vector3
+## A hostile that hit the unit while the world was paused, answered once the brain runs again.
+var _hit_while_paused: Unit
 
 @onready var _unit: Unit = get_parent()
 
@@ -60,6 +62,10 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _hit_while_paused != null:
+		var source: Unit = _hit_while_paused if is_instance_valid(_hit_while_paused) else null
+		_hit_while_paused = null
+		_on_unit_hit(0, source)
 	_since_thought += delta
 	if _since_thought < think_interval:
 		return
@@ -69,8 +75,12 @@ func _physics_process(delta: float) -> void:
 
 
 ## A living hostile that hits the unit while it is idle or on the brain's follow walk is attacked at
-## once, at any distance. A player's order and an attack under way are left alone.
+## once, at any distance. A player's order and an attack under way are left alone. A hit taken while
+## the brain is not processing (the world is paused) is answered on its first frame back.
 func _on_unit_hit(_amount: int, source: Unit) -> void:
+	if not can_process():
+		_hit_while_paused = source
+		return
 	if not enabled or not _unit.can_act() or not is_instance_valid(source) or not source.is_alive():
 		return
 	if not _unit.is_hostile_to(source) or Feeder.is_held(source):

@@ -166,3 +166,12 @@ func test_a_brain_leaves_a_target_once_it_is_held_by_a_feed() -> void:
 	alvar.add_effect(hold)
 	await wait_seconds(0.6)
 	assert_null(foe.attack_target())
+
+func test_a_hit_taken_while_paused_is_answered_on_unpause() -> void:
+	arena.room.process_mode = Node.PROCESS_MODE_DISABLED  # as Main.set_paused(true) does to its units
+	foe.take_hit(5, alvar)
+	await wait_physics_frames(3)
+	assert_null(foe.attack_target())
+	arena.room.process_mode = Node.PROCESS_MODE_INHERIT
+	await wait_physics_frames(3)
+	assert_eq(foe.attack_target(), alvar)
