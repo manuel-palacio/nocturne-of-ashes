@@ -40,6 +40,9 @@ enum Order { NONE, MOVE, ATTACK, FEED }
 ## Who gave an order: the player, the unit's brain, or the game itself, as the Fury does.
 enum Issuer { NONE, PLAYER, BRAIN, SYSTEM }
 
+## The share of its maximum health a fallen unit rises with, wherever it rises.
+const RISEN_HEALTH: float = 0.3
+
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _standing: Transform3D
 var _fallen: Transform3D
@@ -182,11 +185,16 @@ func take_hit(amount: int, source: Unit = null) -> int:
 	return removed
 
 
-## Brings a dead unit back with `health_fraction` of its maximum health, standing and with no order.
-func revive(health_fraction: float = 0.3) -> void:
+## The health a fallen unit with `stats` rises with: `RISEN_HEALTH` of its maximum, at least 1.
+static func risen_health(stats: Stats) -> int:
+	return maxi(roundi(stats.max_health * RISEN_HEALTH), 1)
+
+
+## Brings a dead unit back with `risen_health()`, standing and with no order.
+func revive() -> void:
 	if is_alive():
 		return
-	stats.revive(maxi(roundi(stats.max_health * health_fraction), 1))
+	stats.revive(risen_health(stats))
 	_body.transform = _standing
 	# Deferred like the change on death, so a death and revival in one frame end on layer 2.
 	set_deferred(&"collision_layer", 2)

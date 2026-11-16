@@ -133,3 +133,49 @@ func test_restart_in_a_story_returns_to_how_the_room_was_entered() -> void:
 	assert_true(main.player.is_alive())
 	assert_eq(main.player.stats.blood, 40)
 	assert_eq(main.enemies_alive(), 6)
+
+func test_a_party_of_one_keeps_alvar_selected() -> void:
+	await _boot()
+	main.select_next()
+	assert_eq(main.selected, main.player)
+	main.select(main.player)
+	assert_eq(main.selected, main.player)
+
+func test_a_party_of_two_hands_selection_back_and_skips_the_fallen() -> void:
+	var state := GameState.new_game()
+	state.join(&"zahra")
+	await _boot(state)
+	var zahra: Unit = main.party[1]
+	main.select(zahra)
+	assert_eq(main.selected, zahra)
+	zahra.take_hit(999)
+	await wait_physics_frames(2)
+	assert_eq(main.selected, main.player)
+	assert_eq(main.rig.target, main.player)
+	main.select_next()
+	assert_eq(main.selected, main.player)
+
+func test_rising_in_a_room_and_arriving_fallen_give_the_same_health() -> void:
+	var state := GameState.new_game()
+	state.join(&"zahra")
+	await _boot(state)
+	main.party[1].take_hit(999)
+	main.party[1].revive()
+	var risen: int = main.party[1].stats.health
+	main.party[1].take_hit(999)
+	main.enter_room(&"vault")
+	await wait_physics_frames(3)
+	assert_eq(main.party[1].stats.health, risen)
+
+func test_a_restart_writes_no_vitals_for_members_who_have_not_joined() -> void:
+	var state := GameState.new_game()
+	state.join(&"zahra")
+	await _boot(state)
+	main.enter_room(&"vault")
+	await wait_physics_frames(3)
+	main.player.take_hit(999)
+	await wait_physics_frames(2)
+	main.start_room()
+	await wait_physics_frames(3)
+	var vitals: Dictionary = main.state.to_dict()["vitals"]
+	assert_eq(vitals.keys(), ["alvar", "zahra"])

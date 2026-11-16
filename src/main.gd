@@ -33,8 +33,6 @@ const ROOMS: Dictionary = {
 	&"vault": preload("res://scenes/rooms/vault_room.tscn"),
 	&"haven": preload("res://scenes/rooms/forge_haven.tscn"),
 }
-## The share of its maximum health a fallen member has in the next room, as when it rises.
-const RISEN_HEALTH: float = 0.3
 
 enum Boot { SKIRMISH, STORY }
 
@@ -142,7 +140,7 @@ func start_room() -> void:
 
 ## Takes the party to `room_id`, arriving at its entry `entry` (or at its start, with a warning, when
 ## it has none), with each member's health and Blood as they leave; a fallen member arrives risen at
-## `RISEN_HEALTH`. An unknown room is refused with a warning.
+## `Unit.risen_health()`. An unknown room is refused with a warning.
 func enter_room(room_id: StringName, entry: StringName = Room.START) -> void:
 	if not ROOMS.has(room_id):
 		push_warning("There is no room %s; staying in %s" % [room_id, room.room_id])
@@ -262,7 +260,7 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	state.room = room_id
 	state.entry = StringName(String(entry.name).trim_prefix(Room.ENTRY_PREFIX))
 	_entry_vitals.clear()
-	for member: StringName in GameState.MEMBERS:
+	for member: StringName in members:
 		_entry_vitals[member] = state.vitals(member)
 	input.rig = rig
 	input.enabled = true
@@ -271,12 +269,12 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	room_started.emit()
 
 
-## Stores each member's health and Blood in `state`; a fallen member's health as `RISEN_HEALTH`.
+## Stores each member's health and Blood in `state`; a fallen member's as `Unit.risen_health()`.
 func _record_vitals() -> void:
 	for member: Unit in party:
 		var health: int = member.stats.health
 		if not member.is_alive():
-			health = _risen_health(member.stats)
+			health = Unit.risen_health(member.stats)
 		state.set_vitals(member.member_id, health, member.stats.blood)
 
 
@@ -300,13 +298,9 @@ func _spawn_member(member_id: StringName, marker: Node3D) -> Unit:
 	_units.add_child(unit)
 	unit.global_transform = marker.global_transform
 	if vitals.x >= 0:
-		var health: int = _risen_health(unit.stats) if vitals.x == 0 else mini(vitals.x, unit.stats.max_health)
+		var health: int = Unit.risen_health(unit.stats) if vitals.x == 0 else mini(vitals.x, unit.stats.max_health)
 		unit.stats.take_damage(unit.stats.max_health - health)
 	return unit
-
-
-func _risen_health(stats: Stats) -> int:
-	return maxi(roundi(stats.max_health * RISEN_HEALTH), 1)
 
 
 static func _cleared_flag(room_id: StringName) -> StringName:
