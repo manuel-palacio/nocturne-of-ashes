@@ -1747,7 +1747,7 @@ These decisions changed what the tasks above describe. The code follows the amen
 - **Task 9.** `GiftUser.is_ready(index)` is the test for "usable apart from its target". Open targeting closes when its Gift stops being ready. The brain's thresholds are exported (`mends_below`, `self_gift_enemies`, `self_gift_radius`). A companion uses an enemy Gift only on its attack target or a hostile inside its aggro radius, never on a meal, and keeps enough Blood for its ally Gift. Brains leave alone any hostile that is being fed on or walked to for a feed. A brain whose idle unit is hit turns on the attacker, at any distance, once the world is running.
 - **Task 10.** No HUD control takes keyboard focus, so Space and Enter never press a button.
 - **Task 11.** The fall-and-restart browser test is gone: the party may win. Unit tests cover the fall.
-- **After the final review.** The Gift first called "Dread Gaze" was renamed "Baleful Eye": the first name belongs to the original game's setting. Each enemy group has one sergeant (90 health, 12 damage) in place of a crusader, so the fight needs the party's Gifts. Enemies that the selected character can feed on carry a mark. Clicking an ally's panel while an ally Gift awaits its target uses the Gift on that ally.
+- **After the final review.** One of Álvar's Gifts was renamed "Baleful Eye": its first name belonged to the original game's setting. Each enemy group has one sergeant (90 health, 12 damage) in place of a crusader, so the fight needs the party's Gifts. Enemies that the selected character can feed on carry a mark. Clicking an ally's panel while an ally Gift awaits its target uses the Gift on that ally.
 
 ## Carried forward
 
@@ -1774,3 +1774,4 @@ These decisions changed what the tasks above describe. The code follows the amen
 - Enemies have no leash. A chaser halted in range stops striking if its target shifts less than 0.5 m. A feed ordered while stunned breaks at once. A brain obeys a hostile taunt before a player's order. The ally-Gift rule looks only at the most hurt ally. The stall check would misfire for a heavily slowed unit.
 - The selected character does not defend itself when its target dies. Gonzalo walks slower than the others, so the tank arrives last. A companion in the Fury can end the round if Álvar is nearest; companions do not defend themselves against a friend. Fallen companions rise beside whatever felled them.
 - Balance after real play: sergeant numbers, starting Blood, feed threshold.
+- A friend's brain that thinks in the same frame as a feed order, and before it, can still strike the meal; from the next frame the meal is safe.
