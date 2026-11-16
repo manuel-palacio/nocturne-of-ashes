@@ -42,11 +42,15 @@ func cooldown_left(index: int) -> float:
 	return _cooldowns[index] if index >= 0 and index < _cooldowns.size() else 0.0
 
 
-func can_use(index: int, target: Unit = null) -> bool:
+## Whether the Gift at `index` could be used now, apart from its target: it exists, the unit is free
+## to act, the cooldown is over and the unit has the Blood.
+func is_ready(index: int) -> bool:
 	var used: Gift = gift(index)
-	if used == null or not _unit.can_act() or cooldown_left(index) > 0.0:
-		return false
-	return _unit.stats.blood >= used.blood_cost and used.can_target(_unit, target)
+	return used != null and _unit.can_act() and cooldown_left(index) <= 0.0 and _unit.stats.blood >= used.blood_cost
+
+
+func can_use(index: int, target: Unit = null) -> bool:
+	return is_ready(index) and gifts[index].can_target(_unit, target)
 
 
 ## Uses the Gift at `index` on `target` if `can_use`; returns whether it was used. The Blood is spent

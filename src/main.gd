@@ -64,6 +64,7 @@ func _physics_process(delta: float) -> void:
 ## Clears the last round's units and spawns a fresh one, with Álvar selected.
 func start_room() -> void:
 	set_paused(false)
+	input.cancel_targeting()
 	for unit: Node in _units.get_children():
 		# Out of the tree at once, so no new unit finds an old one in the "units" group.
 		_units.remove_child(unit)
@@ -193,6 +194,7 @@ func _on_member_died(unit: Unit) -> void:
 	_calm_for = 0.0
 	party_changed.emit()
 	if unit == player:
+		input.cancel_targeting()
 		input.enabled = false
 		hud.show_fallen()
 	elif unit == selected:
