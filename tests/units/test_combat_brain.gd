@@ -100,3 +100,36 @@ func test_a_follower_breaks_off_to_fight() -> void:
 	alvar.global_position = Vector3(-6, 0, 6)
 	await wait_seconds(0.8)
 	assert_eq(friend.attack_target(), alvar)
+
+func test_an_attack_running_when_re_enabled_is_left_alone() -> void:
+	var brain := foe.get_node("Brain") as CombatBrain
+	alvar.global_position = Vector3(3, 0, 8)
+	await wait_seconds(0.6)
+	assert_eq(foe.attack_target(), alvar)
+	brain.enabled = false
+	foe.order_attack(alvar)
+	brain.enabled = true
+	arena.spawn(Arena.ALVAR, foe.global_position + Vector3(0.8, 0, 0))
+	alvar.global_position = Vector3(1, 0, 8)
+	await wait_seconds(0.6)
+	assert_eq(foe.attack_target(), alvar)
+
+func test_a_follow_walk_reaims_when_the_leader_moves() -> void:
+	var leader: Unit = arena.spawn(Arena.CRUSADER, Vector3(8, 0, 8))
+	var friend: Unit = arena.spawn(Arena.CRUSADER, Vector3(-8, 0, 8), true)
+	(friend.get_node("Brain") as CombatBrain).leader = leader
+	await wait_seconds(1.0)
+	assert_true(friend.is_moving())
+	leader.global_position = Vector3(8, 0, -6)
+	await wait_seconds(7.0)
+	assert_lt(Arena.flat(friend.global_position, leader.global_position), 4.5)
+	assert_gt(Arena.flat(friend.global_position, Vector3(8, 0, 8)), 6.0)
+
+func test_a_follower_of_a_dead_leader_does_not_walk() -> void:
+	var leader: Unit = arena.spawn(Arena.CRUSADER, Vector3(8, 0, 8))
+	var friend: Unit = arena.spawn(Arena.CRUSADER, Vector3(-8, 0, 8), true)
+	(friend.get_node("Brain") as CombatBrain).leader = leader
+	leader.stats.take_damage(999)
+	await wait_seconds(0.8)
+	assert_false(friend.is_moving())
+	assert_eq(friend.current_order(), Unit.Order.NONE)

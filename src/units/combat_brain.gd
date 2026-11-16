@@ -15,9 +15,11 @@ const _FOLLOW_RETARGET: float = 1.0
 ## How far short of the leader a follow walk ends.
 @export var follow_distance: float = 3.0
 ## When false the brain does nothing. Turning it off stops a follow walk it started; a fight goes on.
+## Any attack running when it is switched either way counts as the player's, left alone until it ends.
 @export var enabled: bool = true:
 	set(value):
 		enabled = value
+		_chosen_target = null
 		if not enabled:
 			if _following and _unit != null and _unit.current_order() == Unit.Order.MOVE:
 				_unit.stop()
