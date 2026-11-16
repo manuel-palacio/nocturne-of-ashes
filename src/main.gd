@@ -1,8 +1,8 @@
 class_name Main
 extends Node3D
-## Runs the vault room: spawns the party and the crusaders, wires camera, input and HUD, hands control
-## to the selected party member, raises fallen companions once a fight is over, and restarts after
-## Álvar's fall.
+## Runs the vault room: spawns the party and the crusaders, a sergeant among each group, wires camera,
+## input and HUD, hands control to the selected party member, raises fallen companions once a fight is
+## over, and restarts after Álvar's fall.
 
 ## Emitted at the end of `start_room()`, once the new round's units are in place.
 signal room_started
@@ -19,9 +19,12 @@ const ALVAR: PackedScene = preload("res://scenes/units/alvar.tscn")
 const ZAHRA: PackedScene = preload("res://scenes/units/zahra.tscn")
 const GONZALO: PackedScene = preload("res://scenes/units/gonzalo.tscn")
 const CRUSADER: PackedScene = preload("res://scenes/units/crusader.tscn")
+const SERGEANT: PackedScene = preload("res://scenes/units/crusader_sergeant.tscn")
 
 ## Seconds without a fight before fallen companions rise.
 @export var calm_time: float = 3.0
+## The enemy spawn markers that get a sergeant instead of a crusader, one per group.
+@export var sergeant_spawns: Array[StringName] = [&"EnemySpawn3", &"EnemySpawn6"]
 
 ## Álvar, Zahra and Gonzalo, in that order.
 var party: Array[Unit] = []
@@ -98,7 +101,8 @@ func start_room() -> void:
 	hud.hide_cleared()
 	for marker: Node in _room.get_children():
 		if marker is Marker3D and marker.name.begins_with("EnemySpawn"):
-			enemies.append(_spawn(CRUSADER, marker))
+			var scene: PackedScene = SERGEANT if sergeant_spawns.has(StringName(marker.name)) else CRUSADER
+			enemies.append(_spawn(scene, marker))
 
 	input.rig = rig
 	input.enabled = true

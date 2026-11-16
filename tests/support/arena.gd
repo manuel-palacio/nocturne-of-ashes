@@ -7,6 +7,7 @@ const ALVAR: PackedScene = preload("res://scenes/units/alvar.tscn")
 const ZAHRA: PackedScene = preload("res://scenes/units/zahra.tscn")
 const GONZALO: PackedScene = preload("res://scenes/units/gonzalo.tscn")
 const CRUSADER: PackedScene = preload("res://scenes/units/crusader.tscn")
+const SERGEANT: PackedScene = preload("res://scenes/units/crusader_sergeant.tscn")
 
 var room: Node3D
 
