@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MendFlesh" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/gifts/mend_flesh.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+amount = 40
+id = &"mend_flesh"
+display_name = "Mend Flesh"
+blood_cost = 20
+cooldown = 6.0
+targeting = 2
+cast_range = 8.0

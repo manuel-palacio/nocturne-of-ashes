@@ -1,8 +1,12 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/units/unit_base.tscn" id="1_base"]
 [ext_resource type="Script" path="res://src/units/stats.gd" id="2_stats"]
 [ext_resource type="Script" path="res://src/units/combat_brain.gd" id="3_brain"]
+[ext_resource type="Script" path="res://src/gifts/gift_user.gd" id="4_gift_user"]
+[ext_resource type="Script" path="res://src/gifts/gift.gd" id="5_gift"]
+[ext_resource type="Resource" path="res://resources/gifts/mend_flesh.tres" id="6_mend_flesh"]
+[ext_resource type="Resource" path="res://resources/gifts/blood_lance.tres" id="7_blood_lance"]
 
 [sub_resource type="Resource" id="Resource_stats"]
 script = ExtResource("2_stats")
@@ -24,6 +28,10 @@ surface_material_override/0 = SubResource("StandardMaterial3D_teal")
 [node name="Melee" parent="." index="4"]
 damage = 8
 cooldown = 1.0
+
+[node name="Gifts" type="Node" parent="."]
+script = ExtResource("4_gift_user")
+gifts = Array[ExtResource("5_gift")]([ExtResource("6_mend_flesh"), ExtResource("7_blood_lance")])
 
 [node name="Brain" type="Node" parent="."]
 script = ExtResource("3_brain")

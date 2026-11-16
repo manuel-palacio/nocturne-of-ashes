@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BloodLance" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/gifts/blood_lance.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+damage = 30
+id = &"blood_lance"
+display_name = "Blood Lance"
+blood_cost = 15
+cooldown = 4.0
+targeting = 1
+cast_range = 10.0
