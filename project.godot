@@ -19,6 +19,10 @@ config/features=PackedStringArray("4.7")
 Probe="*res://src/core/probe.gd"
 DialogueManager="*res://addons/dialogue_manager/dialogue_manager.gd"
 
+[dialogue_manager]
+
+editor/translations/UPDATE_TRANSLATION_TEMPLATES_AUTOMATICALLY=false
+
 [display]
 
 window/size/viewport_width=1280
@@ -96,7 +100,7 @@ select_next={
 [internationalization]
 
 locale/translations=PackedStringArray("res://assets/i18n/es.po")
-locale/translations_pot_files=PackedStringArray("res://tests/fixtures/test_talk.dialogue")
+locale/fallback="en"
 
 [layer_names]
 
