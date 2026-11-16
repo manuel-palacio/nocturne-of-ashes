@@ -135,6 +135,67 @@ func test_a_subclass_that_skips_super_stays_on_the_interact_layer() -> void:
 	var at: Vector2 = cam.unproject_position(odd.global_position + Vector3(0, 0.9, 0))
 	assert_eq(Picker.interactable_at(cam, at), odd)
 
+func test_a_target_out_of_reach_of_the_floor_ends_the_order_quietly() -> void:
+	var far := arena.add_interactable(Vector3(0, 0, 15))
+	watch_signals(far)
+	watch_signals(alvar)
+	alvar.order_interact(far)
+	await wait_until(func() -> bool: return alvar.current_order() == Unit.Order.NONE, 6.0)
+	assert_eq(alvar.current_order(), Unit.Order.NONE)
+	assert_gt(alvar.global_position.z, 8.0)
+	assert_signal_not_emitted(far, "used")
+	assert_signal_not_emitted(alvar, "interacted")
+	assert_push_warning_count(0)
+
+func test_an_interact_order_breaks_a_feed_and_proceeds() -> void:
+	var foe: Unit = arena.spawn(Arena.CRUSADER, Vector3(0, 0, -1.2))
+	await wait_physics_frames(3)
+	foe.take_hit(45)
+	alvar.order_feed(foe)
+	await wait_seconds(0.8)
+	assert_true(alvar.is_feeding())
+	watch_signals(alvar)
+	watch_signals(thing)
+	alvar.order_interact(thing)
+	await wait_physics_frames(3)
+	assert_signal_emitted(alvar, "feed_broken")
+	assert_false(alvar.is_feeding())
+	assert_false(foe.is_stunned())
+	assert_true(foe.is_alive())
+	assert_eq(alvar.stats.blood, 60)
+	assert_eq(alvar.current_order(), Unit.Order.INTERACT)
+	await wait_for_signal(thing.used, 5.0)
+	assert_signal_emit_count(thing, "used", 1)
+
+func test_a_target_freed_during_a_stun_ends_the_order_after_it() -> void:
+	var stun := StatusEffect.new()
+	stun.id = &"stun"
+	stun.duration = 1.0
+	stun.stuns = true
+	alvar.add_effect(stun)
+	alvar.order_interact(thing)
+	await wait_physics_frames(5)
+	thing.free()
+	await wait_physics_frames(5)
+	assert_eq(alvar.current_order(), Unit.Order.INTERACT)
+	await wait_seconds(1.3)
+	assert_eq(alvar.current_order(), Unit.Order.NONE)
+	assert_engine_error_count(0)
+	assert_push_error_count(0)
+
+func test_within_reach_while_processing_is_off_it_waits_to_use_it() -> void:
+	watch_signals(thing)
+	alvar.order_interact(thing)
+	await wait_physics_frames(2)
+	arena.room.process_mode = Node.PROCESS_MODE_DISABLED
+	alvar.global_position = Vector3(0, 0, 4.5)
+	await wait_physics_frames(5)
+	assert_signal_not_emitted(thing, "used")
+	assert_eq(alvar.current_order(), Unit.Order.INTERACT)
+	arena.room.process_mode = Node.PROCESS_MODE_INHERIT
+	await wait_physics_frames(3)
+	assert_signal_emit_count(thing, "used", 1)
+
 
 func _camera_on_alvar() -> Camera3D:
 	var rig := CameraRig.new()
