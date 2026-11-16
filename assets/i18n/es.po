@@ -56,3 +56,10 @@ msgstr "Piel de Piedra"
 
 msgid "Hammerfall"
 msgstr "Martillazo"
+
+# Title
+msgid "Continue"
+msgstr "Continuar"
+
+msgid "New game"
+msgstr "Nueva partida"

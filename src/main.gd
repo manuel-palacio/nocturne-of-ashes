@@ -6,9 +6,9 @@ extends Node3D
 ##
 ## The skirmish (`main.tscn`) always plays the vault with the whole party at full strength and restarts
 ## it after Álvar's fall. The story (`game.tscn`) plays from a `GameState`, saves it at checkpoints and
-## reloads the last checkpoint after Álvar's fall.
+## reloads the last checkpoint after Álvar's fall; it opens on the title, with Continue and New game.
 
-## Emitted at the end of `start_room()` and `enter_room()`, once the room's units are in place.
+## Emitted whenever a room is entered (also on a reload and a new game), once its units are in place.
 signal room_started
 ## Emitted when a living party member becomes the selected one.
 signal selection_changed(unit: Unit)
@@ -60,7 +60,8 @@ var room: Room
 var state: GameState
 ## Where the story is saved; null in a skirmish. Set before entering the tree, or made at `_ready()`.
 var store: SaveStore
-## Whether the story opens on the title screen. Not used yet.
+## Whether the story opens on the title screen. Set before entering the tree. While the title is open
+## there is no room and no party, the world is held and input is off.
 var show_title: bool = true
 ## Whether a new game opens with its first conversation. Not used yet.
 var opening_enabled: bool = true
@@ -73,6 +74,8 @@ var _paused: bool = false
 @onready var _units: Node3D = $Units
 @onready var _party: Party = $Party
 @onready var _encounter: Encounter = $Encounter
+## Only the story scene has one.
+@onready var _title: TitleScreen = get_node_or_null(^"TitleLayer/TitleScreen")
 
 
 func _enter_tree() -> void:
@@ -105,10 +108,19 @@ func _ready() -> void:
 		store = SaveStore.new()
 	if state == null:
 		state = GameState.new_game() if boot == Boot.STORY else GameState.skirmish()
-	_play(state)
+	input.rig = rig
+	if _title != null:
+		_title.continue_chosen.connect(reload_checkpoint)
+		_title.new_game_chosen.connect(new_game)
+	if boot == Boot.STORY and show_title and _title != null:
+		_open_title()
+	else:
+		_play(state)
 
 
 func _process(_delta: float) -> void:
+	if _title_is_open():
+		return
 	# Polled rather than read from events, so presses made with Input.action_press count too.
 	if not player.is_alive() and Input.is_action_just_pressed(&"confirm"):
 		if store != null:
@@ -175,7 +187,7 @@ func new_game() -> void:
 ## Freezes or releases every unit; camera, selection and orders keep working. Orders given while
 ## frozen are stored by the units and begin on release. Turning it on is refused while Álvar is down.
 func set_paused(on: bool) -> void:
-	if on == _paused or (on and not player.is_alive()):
+	if on == _paused or (on and (player == null or not player.is_alive())):
 		return
 	_paused = on
 	_units.process_mode = Node.PROCESS_MODE_DISABLED if on else Node.PROCESS_MODE_INHERIT
@@ -220,8 +232,11 @@ func _locale_chosen_before_start() -> bool:
 
 
 ## Makes `from` the state and enters its room at its entry, or a new game's room and entry, with a
-## warning, when its room does not exist; then saves.
+## warning, when its room does not exist; then saves. Closes the title first.
 func _play(from: GameState) -> void:
+	if _title_is_open():
+		_title.close()
+		_units.process_mode = Node.PROCESS_MODE_INHERIT
 	state = from
 	if not ROOMS.has(state.room):
 		var fresh := GameState.new_game()
@@ -275,10 +290,20 @@ func _spawn_party(entry_name: StringName) -> StringName:
 	return StringName(String(entry.name).trim_prefix(Room.ENTRY_PREFIX))
 
 
+## Shows the title, offering Continue when there is a usable save, and holds the world until a choice.
+func _open_title() -> void:
+	_units.process_mode = Node.PROCESS_MODE_DISABLED
+	input.enabled = false
+	_title.open(store.has_save())
+
+
+func _title_is_open() -> bool:
+	return _title != null and _title.is_open()
+
+
 func _hand_control_to_alvar() -> void:
 	hud.hide_fallen()
 	hud.hide_cleared()
-	input.rig = rig
 	input.enabled = true
 	select(player)
 	rig.snap_to_target()
