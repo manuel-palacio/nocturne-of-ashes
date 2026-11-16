@@ -67,6 +67,8 @@ var show_title: bool = true
 var opening_enabled: bool = true
 
 var _paused: bool = false
+## The state at the last checkpoint, as `GameState.to_dict()`, for a reload when the store has none.
+var _last_checkpoint: Dictionary = {}
 
 @onready var input: PlayerInput = $PlayerInput
 @onready var rig: CameraRig = $CameraRig
@@ -109,9 +111,6 @@ func _ready() -> void:
 	if state == null:
 		state = GameState.new_game() if boot == Boot.STORY else GameState.skirmish()
 	input.rig = rig
-	if _title != null:
-		_title.continue_chosen.connect(reload_checkpoint)
-		_title.new_game_chosen.connect(new_game)
 	if boot == Boot.STORY and show_title and _title != null:
 		_open_title()
 	else:
@@ -156,31 +155,36 @@ func enter_room(room_id: StringName, entry: StringName = Room.START) -> void:
 	checkpoint()
 
 
-## Records the party's health and Blood in `state` and saves it. Does nothing in a skirmish.
+## Records the party's health and Blood in `state`, keeps it in memory and saves it. Does nothing in a
+## skirmish, while the title is open, or before a room is entered.
 func checkpoint() -> void:
-	if store == null:
+	if store == null or room == null or _title_is_open():
 		return
 	_party.record(state)
+	_last_checkpoint = state.to_dict()
 	if not store.save(state):
 		push_warning("Could not write the save file %s" % store.path)
 		return
 	checkpoint_saved.emit()
 
 
-## Plays on from the saved state, or from a new game when there is no usable save: its room, at its
-## entry. In a skirmish, with no save, it restarts the room.
+## Plays on from the saved state at its room and entry; when the store has no usable save, from the
+## last checkpoint kept in memory, else from a new game. In a skirmish, with no save, it restarts the room.
 func reload_checkpoint() -> void:
 	if store == null:
 		start_room()
 		return
 	var saved: GameState = store.load_state()
+	if saved == null and not _last_checkpoint.is_empty():
+		saved = GameState.from_dict(_last_checkpoint)
 	_play(saved if saved != null else GameState.new_game())
 
 
-## Forgets the save and starts a new game in the haven.
+## Forgets the save and the last checkpoint and starts a new game in the haven.
 func new_game() -> void:
 	if store != null:
 		store.clear()
+	_last_checkpoint = {}
 	_play(GameState.new_game())
 
 
@@ -291,7 +295,10 @@ func _spawn_party(entry_name: StringName) -> StringName:
 
 
 ## Shows the title, offering Continue when there is a usable save, and holds the world until a choice.
+## Called once, at boot.
 func _open_title() -> void:
+	_title.continue_chosen.connect(reload_checkpoint)
+	_title.new_game_chosen.connect(new_game)
 	_units.process_mode = Node.PROCESS_MODE_DISABLED
 	input.enabled = false
 	_title.open(store.has_save())

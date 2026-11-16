@@ -101,3 +101,51 @@ func test_reload_closes_pause_and_targeting() -> void:
 	await wait_physics_frames(3)
 	assert_false(main.is_paused())
 	assert_eq(main.input.targeting_gift(), -1)
+
+func _unwritable_path() -> String:
+	return "user://no_such_folder_%d/save.json" % randi()
+
+func test_a_fall_reloads_the_checkpoint_kept_in_memory_when_the_store_cannot_write() -> void:
+	var state := GameState.skirmish()
+	await _boot(state)
+	main.state.change_conscience(-2)
+	main.state.set_flag(&"met_malakor")
+	main.checkpoint()
+	main.store.clear()
+	main.store.path = _unwritable_path()
+	main.state.change_conscience(-3)  # after the checkpoint: must be undone
+	main.player.take_hit(999)
+	await wait_physics_frames(2)
+	Input.action_press("confirm")
+	await wait_physics_frames(2)
+	Input.action_release("confirm")
+	await wait_physics_frames(3)
+	assert_push_warning("Could not write")
+	assert_eq(main.room.room_id, &"vault")
+	assert_true(main.player.is_alive())
+	assert_eq(main.state.conscience, 5)
+	assert_true(main.state.has_flag(&"met_malakor"))
+	assert_eq(main.party.size(), 3)
+
+func test_a_reload_from_memory_is_independent_of_the_live_state() -> void:
+	await _boot()
+	main.store.clear()
+	main.store.path = _unwritable_path()
+	main.reload_checkpoint()
+	await wait_physics_frames(3)
+	main.state.change_conscience(-4)
+	main.reload_checkpoint()
+	await wait_physics_frames(3)
+	assert_push_warning_count(2)
+	assert_eq(main.state.conscience, 7)
+
+func test_new_game_forgets_the_checkpoint_in_memory() -> void:
+	var state := GameState.skirmish()
+	await _boot(state)
+	main.new_game()
+	await wait_physics_frames(3)
+	main.store.clear()
+	main.reload_checkpoint()
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"haven")
+	assert_eq(main.party.size(), 1)

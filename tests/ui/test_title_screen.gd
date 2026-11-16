@@ -67,3 +67,13 @@ func test_an_unusable_save_offers_only_new_game() -> void:
 	add_child_autofree(main)
 	await wait_physics_frames(3)
 	assert_false(_title().find_child("ContinueButton").visible)
+
+func test_a_checkpoint_while_the_title_is_open_keeps_the_save() -> void:
+	var saved := GameState.skirmish()
+	saved.change_conscience(-4)
+	await _boot_with_title(saved)
+	watch_signals(main)
+	main.checkpoint()
+	assert_signal_not_emitted(main, "checkpoint_saved")
+	assert_eq(main.store.load_state().conscience, 3)
+	assert_eq(main.store.load_state().room, &"vault")
