@@ -19,6 +19,7 @@ static func boot(test: GutTest, state: GameState = null, opening: bool = false) 
 	return main
 
 
-static func finish(main: Main) -> void:
-	if is_instance_valid(main) and main.store != null:
+## Removes the save of `main`, a `Main` or a freed instance or null (as `after_each` may pass).
+static func finish(main: Variant) -> void:
+	if is_instance_valid(main) and (main as Main).store != null:
 		main.store.clear()

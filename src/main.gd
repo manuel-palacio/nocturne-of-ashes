@@ -2,10 +2,11 @@ class_name Main
 extends Node3D
 ## The game's shell: boots from a `GameState`, loads rooms, has the `Party` spawn the members who have
 ## joined and the `Encounter` run the room's fight, wires camera, input and HUD, hands control to the
-## party's selected member, pauses the world, and restarts the room after Álvar's fall.
+## party's selected member, and pauses the world.
 ##
-## The skirmish (`main.tscn`) always plays the vault with the whole party at full strength; the story
-## (`game.tscn`) plays from a `GameState`.
+## The skirmish (`main.tscn`) always plays the vault with the whole party at full strength and restarts
+## it after Álvar's fall. The story (`game.tscn`) plays from a `GameState`, saves it at checkpoints and
+## reloads the last checkpoint after Álvar's fall.
 
 ## Emitted at the end of `start_room()` and `enter_room()`, once the room's units are in place.
 signal room_started
@@ -17,6 +18,8 @@ signal room_cleared
 signal party_changed
 ## Emitted when the world pause turns on or off.
 signal pause_changed(paused: bool)
+## Emitted when `checkpoint()` has saved the state.
+signal checkpoint_saved
 
 ## Every room, by its `Room.room_id`.
 const ROOMS: Dictionary = {
@@ -52,8 +55,8 @@ var calm_time: float:
 ## The room the party is in.
 var room: Room
 ## What outlives a room. Set before entering the tree, or made at `_ready()`: the skirmish's, or a new game.
-## The skirmish's `start_room()` replaces it with a fresh object, so anything that listens to it must
-## read `main.state` again on `room_started`.
+## The skirmish's `start_room()`, `reload_checkpoint()` and `new_game()` replace it with another object,
+## so anything that listens to it must read `main.state` again on `room_started`.
 var state: GameState
 ## Where the story is saved; null in a skirmish. Set before entering the tree, or made at `_ready()`.
 var store: SaveStore
@@ -96,28 +99,29 @@ func _ready() -> void:
 	selection_changed.connect(hud.show_selected)
 	pause_changed.connect(hud.set_paused)
 	room_cleared.connect(hud.show_cleared)
+	# A cleared room stays cleared even if Álvar falls right after.
+	room_cleared.connect(checkpoint)
 	if boot == Boot.STORY and store == null:
 		store = SaveStore.new()
 	if state == null:
 		state = GameState.new_game() if boot == Boot.STORY else GameState.skirmish()
-	if not ROOMS.has(state.room):
-		var fresh := GameState.new_game()
-		push_warning("The game state's room %s does not exist; starting in %s" % [state.room, fresh.room])
-		state.room = fresh.room
-		state.entry = fresh.entry
-	_enter(state.room, state.entry)
+	_play(state)
 
 
 func _process(_delta: float) -> void:
 	# Polled rather than read from events, so presses made with Input.action_press count too.
 	if not player.is_alive() and Input.is_action_just_pressed(&"confirm"):
-		start_room()
+		if store != null:
+			reload_checkpoint()
+		else:
+			start_room()
 	if Input.is_action_just_pressed(&"pause"):
 		set_paused(not _paused)
 
 
 ## Plays the room again. In a skirmish: the vault afresh, with the whole party at full strength. In the
-## story: the current room, from its entry, with the health and Blood the party had on entering it.
+## story: the current room, from its entry, with the health and Blood the party had on entering it, and
+## nothing else rolled back; after a fall the story reloads its checkpoint instead.
 func start_room() -> void:
 	if boot == Boot.SKIRMISH:
 		state = GameState.skirmish()
@@ -137,6 +141,35 @@ func enter_room(room_id: StringName, entry: StringName = Room.START) -> void:
 		return
 	_party.record(state)
 	_enter(room_id, entry)
+	checkpoint()
+
+
+## Records the party's health and Blood in `state` and saves it. Does nothing in a skirmish.
+func checkpoint() -> void:
+	if store == null:
+		return
+	_party.record(state)
+	if not store.save(state):
+		push_warning("Could not write the save file %s" % store.path)
+		return
+	checkpoint_saved.emit()
+
+
+## Plays on from the saved state, or from a new game when there is no usable save: its room, at its
+## entry. In a skirmish, with no save, it restarts the room.
+func reload_checkpoint() -> void:
+	if store == null:
+		start_room()
+		return
+	var saved: GameState = store.load_state()
+	_play(saved if saved != null else GameState.new_game())
+
+
+## Forgets the save and starts a new game in the haven.
+func new_game() -> void:
+	if store != null:
+		store.clear()
+	_play(GameState.new_game())
 
 
 ## Freezes or releases every unit; camera, selection and orders keep working. Orders given while
@@ -184,6 +217,19 @@ func enemies_alive() -> int:
 ## again gives the same language, or English where the system's has no texts.
 func _locale_chosen_before_start() -> bool:
 	return TranslationServer.get_locale() != TranslationServer.standardize_locale(OS.get_locale())
+
+
+## Makes `from` the state and enters its room at its entry, or a new game's room and entry, with a
+## warning, when its room does not exist; then saves.
+func _play(from: GameState) -> void:
+	state = from
+	if not ROOMS.has(state.room):
+		var fresh := GameState.new_game()
+		push_warning("The game state's room %s does not exist; starting in %s" % [state.room, fresh.room])
+		state.room = fresh.room
+		state.entry = fresh.entry
+	_enter(state.room, state.entry)
+	checkpoint()
 
 
 ## Clears the last room's units, loads `room_id`, spawns the party at `entry_name` and starts the room's
