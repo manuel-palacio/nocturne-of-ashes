@@ -1,0 +1,166 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/rooms/room.gd" id="1_rrw2c"]
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_klwib"]
+vertices = PackedVector3Array(-8.25, 0.3, -5.25, -8.25, 0.3, 5.5, 8.5, 0.3, 5.5, 8.5, 0.3, -5.25)
+polygons = [PackedInt32Array(3, 2, 0), PackedInt32Array(0, 2, 1)]
+geometry_parsed_geometry_type = 1
+geometry_collision_mask = 5
+agent_radius = 0.4
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2e8wm"]
+size = Vector3(18, 0.2, 12)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1blbs"]
+albedo_color = Color(0.36, 0.31, 0.27, 1)
+roughness = 0.95
+
+[sub_resource type="BoxMesh" id="BoxMesh_wnjyl"]
+material = SubResource("StandardMaterial3D_1blbs")
+size = Vector3(18, 0.2, 12)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7snrd"]
+size = Vector3(19, 4, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lt12a"]
+albedo_color = Color(0.27, 0.23, 0.2, 1)
+roughness = 0.95
+
+[sub_resource type="QuadMesh" id="QuadMesh_axnaj"]
+material = SubResource("StandardMaterial3D_lt12a")
+size = Vector2(18, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_nf4cx"]
+size = Vector3(19, 4, 0.5)
+
+[sub_resource type="QuadMesh" id="QuadMesh_nqdf8"]
+material = SubResource("StandardMaterial3D_lt12a")
+size = Vector2(18, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_arb1l"]
+size = Vector3(0.5, 4, 12)
+
+[sub_resource type="QuadMesh" id="QuadMesh_h4f1u"]
+material = SubResource("StandardMaterial3D_lt12a")
+size = Vector2(12, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5uq4i"]
+size = Vector3(0.5, 4, 12)
+
+[sub_resource type="QuadMesh" id="QuadMesh_0ebao"]
+material = SubResource("StandardMaterial3D_lt12a")
+size = Vector2(12, 4)
+
+[sub_resource type="Environment" id="Environment_lmdco"]
+background_mode = 1
+ambient_light_source = 2
+ambient_light_color = Color(0.16, 0.18, 0.26, 1)
+tonemap_mode = 2
+
+[node name="ForgeHaven" type="Node3D" unique_id=677468714]
+script = ExtResource("1_rrw2c")
+room_id = &"haven"
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=2129957403]
+navigation_mesh = SubResource("NavigationMesh_klwib")
+
+[node name="Floor" type="StaticBody3D" parent="NavigationRegion3D" unique_id=564985681]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Floor" unique_id=964080535]
+shape = SubResource("BoxShape3D_2e8wm")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Floor" unique_id=627014520]
+mesh = SubResource("BoxMesh_wnjyl")
+
+[node name="Walls" type="Node3D" parent="NavigationRegion3D" unique_id=30481016]
+
+[node name="North" type="StaticBody3D" parent="NavigationRegion3D/Walls" unique_id=1728746774]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -6.25)
+collision_layer = 4
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Walls/North" unique_id=1698606980]
+shape = SubResource("BoxShape3D_7snrd")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Walls/North" unique_id=858725353]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.25)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_axnaj")
+
+[node name="South" type="StaticBody3D" parent="NavigationRegion3D/Walls" unique_id=361857626]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 6.25)
+collision_layer = 4
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Walls/South" unique_id=1678510697]
+shape = SubResource("BoxShape3D_nf4cx")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Walls/South" unique_id=476350153]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.25)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_nqdf8")
+
+[node name="West" type="StaticBody3D" parent="NavigationRegion3D/Walls" unique_id=2107133149]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.25, 2, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Walls/West" unique_id=1931289410]
+shape = SubResource("BoxShape3D_arb1l")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Walls/West" unique_id=1138942245]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.25, 0, 0)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_h4f1u")
+
+[node name="East" type="StaticBody3D" parent="NavigationRegion3D/Walls" unique_id=1604192531]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.25, 2, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Walls/East" unique_id=471533555]
+shape = SubResource("BoxShape3D_5uq4i")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Walls/East" unique_id=329275710]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -0.25, 0, 0)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_0ebao")
+
+[node name="Lights" type="Node3D" parent="." unique_id=1876672760]
+
+[node name="Hearth1" type="OmniLight3D" parent="Lights" unique_id=940748027]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 2.8, 0)
+light_color = Color(1, 0.62, 0.32, 1)
+light_energy = 2.0
+shadow_enabled = true
+omni_range = 10.0
+
+[node name="Hearth2" type="OmniLight3D" parent="Lights" unique_id=438646382]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 2.8, 0)
+light_color = Color(1, 0.62, 0.32, 1)
+light_energy = 2.0
+omni_range = 10.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=685442373]
+environment = SubResource("Environment_lmdco")
+
+[node name="Entry_start" type="Marker3D" parent="." unique_id=1384605981]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0.3, 0)
+
+[node name="Companion1" type="Marker3D" parent="Entry_start" unique_id=209449777]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.5)
+
+[node name="Companion2" type="Marker3D" parent="Entry_start" unique_id=585283521]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5)
+
+[node name="Entry_from_vault" type="Marker3D" parent="." unique_id=629866804]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0.3, 0)
+
+[node name="Companion1" type="Marker3D" parent="Entry_from_vault" unique_id=1580494493]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.5)
+
+[node name="Companion2" type="Marker3D" parent="Entry_from_vault" unique_id=1504934942]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5)

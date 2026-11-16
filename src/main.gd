@@ -1,34 +1,49 @@
 class_name Main
 extends Node3D
-## Loads a room and runs it: spawns the party and the crusaders, a sergeant among each group, wires
-## camera, input and HUD, hands control to the party's selected member, raises fallen companions once a
-## fight is over, marks the enemies the selected member can feed on, and restarts after Álvar's fall.
+## The game's shell: loads rooms and runs them. In a room it spawns the members who have joined, with
+## the health, Blood and Gifts the `GameState` gives them, and the room's crusaders, a sergeant among
+## each group, unless the room was cleared before; wires camera, input and HUD, hands control to the
+## party's selected member, raises fallen companions once a fight is over, marks the enemies the
+## selected member can feed on, and restarts the room after Álvar's fall.
+##
+## The skirmish (`main.tscn`) always plays the vault with the whole party at full strength; the story
+## (`game.tscn`) plays from a `GameState`.
 
-## Emitted at the end of `start_room()`, once the new round's units are in place.
+## Emitted at the end of `start_room()` and `enter_room()`, once the room's units are in place.
 signal room_started
 ## Emitted when a living party member becomes the selected one.
 signal selection_changed(unit: Unit)
-## Emitted once per round, when the last enemy falls.
+## Emitted once per round, when the last enemy falls; not when a room is entered already cleared.
 signal room_cleared
 ## Emitted when a party member falls or rises.
 signal party_changed
 ## Emitted when the world pause turns on or off.
 signal pause_changed(paused: bool)
 
-const ALVAR: PackedScene = preload("res://scenes/units/alvar.tscn")
-const ZAHRA: PackedScene = preload("res://scenes/units/zahra.tscn")
-const GONZALO: PackedScene = preload("res://scenes/units/gonzalo.tscn")
+## Each party member's scene, by `Unit.member_id`.
+const MEMBERS: Dictionary = {
+	&"alvar": preload("res://scenes/units/alvar.tscn"),
+	&"zahra": preload("res://scenes/units/zahra.tscn"),
+	&"gonzalo": preload("res://scenes/units/gonzalo.tscn"),
+}
 const CRUSADER: PackedScene = preload("res://scenes/units/crusader.tscn")
 const SERGEANT: PackedScene = preload("res://scenes/units/crusader_sergeant.tscn")
 ## Every room, by its `Room.room_id`.
 const ROOMS: Dictionary = {
 	&"vault": preload("res://scenes/rooms/vault_room.tscn"),
+	&"haven": preload("res://scenes/rooms/forge_haven.tscn"),
 }
+## The share of its maximum health a fallen member has in the next room, as when it rises.
+const RISEN_HEALTH: float = 0.3
+
+enum Boot { SKIRMISH, STORY }
+
+@export var boot: Boot = Boot.SKIRMISH
 
 ## Seconds without a fight before fallen companions rise.
 @export var calm_time: float = 3.0
 
-## Álvar, Zahra and Gonzalo, in that order: the members of the `Party` node.
+## The members who have joined, in `GameState.MEMBERS` order, Álvar first: the `Party` node's.
 var party: Array[Unit]:
 	get:
 		return _party.members
@@ -42,11 +57,21 @@ var selected: Unit:
 var enemies: Array[Unit] = []
 ## The room the party is in.
 var room: Room
+## What outlives a room. Set before entering the tree, or made at `_ready()`: the skirmish's, or a new game.
+var state: GameState
+## Where the story is saved; null in a skirmish. Set before entering the tree, or made at `_ready()`.
+var store: SaveStore
+## Whether the story opens on the title screen. Not used yet.
+var show_title: bool = true
+## Whether a new game opens with its first conversation. Not used yet.
+var opening_enabled: bool = true
 
 ## Seconds since a fight was last on or a party member last fell.
 var _calm_for: float = 0.0
 var _cleared: bool = false
 var _paused: bool = false
+## Each member's vitals in `state` as the room was entered, for a restart.
+var _entry_vitals: Dictionary = {}  # StringName member -> Vector2i
 
 @onready var input: PlayerInput = $PlayerInput
 @onready var rig: CameraRig = $CameraRig
@@ -76,8 +101,16 @@ func _ready() -> void:
 	selection_changed.connect(hud.show_selected)
 	pause_changed.connect(hud.set_paused)
 	room_cleared.connect(hud.show_cleared)
-	_load_room(&"vault")
-	start_room()
+	if boot == Boot.STORY and store == null:
+		store = SaveStore.new()
+	if state == null:
+		state = GameState.new_game() if boot == Boot.STORY else GameState.skirmish()
+	if not ROOMS.has(state.room):
+		var fresh := GameState.new_game()
+		push_warning("The game state's room %s does not exist; starting in %s" % [state.room, fresh.room])
+		state.room = fresh.room
+		state.entry = fresh.entry
+	_enter(state.room, state.entry)
 
 
 func _process(_delta: float) -> void:
@@ -95,34 +128,27 @@ func _physics_process(delta: float) -> void:
 	_update_feed_marks()
 
 
-## Clears the last round's units and spawns a fresh one, with Álvar selected.
+## Plays the room again. In a skirmish: the vault afresh, with the whole party at full strength. In the
+## story: the current room, from its entry, with the health and Blood the party had on entering it.
 func start_room() -> void:
-	set_paused(false)
-	input.cancel_targeting()
-	for unit: Node in _units.get_children():
-		# Out of the tree at once, so no new unit finds an old one in the "units" group.
-		_units.remove_child(unit)
-		unit.queue_free()
-	_party.clear()
-	enemies.clear()
-	_calm_for = 0.0
-	_cleared = false
+	if boot == Boot.SKIRMISH:
+		state = GameState.skirmish()
+	else:
+		for member: StringName in _entry_vitals:
+			var vitals: Vector2i = _entry_vitals[member]
+			state.set_vitals(member, vitals.x, vitals.y)
+	_enter(state.room, state.entry)
 
-	var entry: Marker3D = room.entry(Room.START)
-	for spawn: Array in [[ALVAR, entry], [ZAHRA, entry.get_node(^"Companion1")], [GONZALO, entry.get_node(^"Companion2")]]:
-		_party.add(_spawn(spawn[0], spawn[1]))
-	hud.bind_party(party)
-	hud.hide_fallen()
-	hud.hide_cleared()
-	for marker: Marker3D in room.enemy_markers():
-		var scene: PackedScene = SERGEANT if room.sergeant_spawns.has(StringName(marker.name)) else CRUSADER
-		enemies.append(_spawn(scene, marker))
 
-	input.rig = rig
-	input.enabled = true
-	select(player)
-	rig.snap_to_target()
-	room_started.emit()
+## Takes the party to `room_id`, arriving at its entry `entry` (or at its start, with a warning, when
+## it has none), with each member's health and Blood as they leave; a fallen member arrives risen at
+## `RISEN_HEALTH`. An unknown room is refused with a warning.
+func enter_room(room_id: StringName, entry: StringName = Room.START) -> void:
+	if not ROOMS.has(room_id):
+		push_warning("There is no room %s; staying in %s" % [room_id, room.room_id])
+		return
+	_record_vitals()
+	_enter(room_id, entry)
 
 
 ## Freezes or releases every unit; camera, selection and orders keep working. Orders given while
@@ -178,6 +204,7 @@ func _advance_fight_flow(delta: float) -> void:
 		return
 	if not _cleared and enemies_alive() == 0:
 		_cleared = true
+		state.set_flag(_cleared_flag(room.room_id))
 		room_cleared.emit()
 		_party.revive_fallen()
 	if fight_is_on():
@@ -201,6 +228,89 @@ func _update_feed_marks() -> void:
 ## again gives the same language, or English where the system's has no texts.
 func _locale_chosen_before_start() -> bool:
 	return TranslationServer.get_locale() != TranslationServer.standardize_locale(OS.get_locale())
+
+
+## Clears the last room's units, loads `room_id` and spawns the party at `entry_name` and the room's
+## enemies, with Álvar selected and nothing paused or targeted.
+func _enter(room_id: StringName, entry_name: StringName) -> void:
+	set_paused(false)
+	input.cancel_targeting()
+	for unit: Node in _units.get_children():
+		# Out of the tree at once, so no new unit finds an old one in the "units" group.
+		_units.remove_child(unit)
+		unit.queue_free()
+	_party.clear()
+	enemies.clear()
+	_calm_for = 0.0
+	_load_room(room_id)
+
+	var entry: Marker3D = room.entry(entry_name)
+	var members: Array[StringName] = state.joined()
+	for index: int in members.size():
+		var marker: Node3D = entry if index == 0 else entry.get_node(NodePath("Companion%d" % index))
+		_party.add(_spawn_member(members[index], marker))
+	hud.bind_party(party)
+	hud.hide_fallen()
+	hud.hide_cleared()
+	# A room without enemies has nothing to clear, so it starts cleared too, and nothing is signalled.
+	_cleared = state.has_flag(_cleared_flag(room_id)) or room.enemy_markers().is_empty()
+	if not state.has_flag(_cleared_flag(room_id)):
+		for marker: Marker3D in room.enemy_markers():
+			var scene: PackedScene = SERGEANT if room.sergeant_spawns.has(StringName(marker.name)) else CRUSADER
+			enemies.append(_spawn(scene, marker))
+
+	state.room = room_id
+	state.entry = StringName(String(entry.name).trim_prefix(Room.ENTRY_PREFIX))
+	_entry_vitals.clear()
+	for member: StringName in GameState.MEMBERS:
+		_entry_vitals[member] = state.vitals(member)
+	input.rig = rig
+	input.enabled = true
+	select(player)
+	rig.snap_to_target()
+	room_started.emit()
+
+
+## Stores each member's health and Blood in `state`; a fallen member's health as `RISEN_HEALTH`.
+func _record_vitals() -> void:
+	for member: Unit in party:
+		var health: int = member.stats.health
+		if not member.is_alive():
+			health = _risen_health(member.stats)
+		state.set_vitals(member.member_id, health, member.stats.blood)
+
+
+## The party member `member_id` at `marker`, with only the Gifts it knows, in its scene's order, and
+## the vitals `state` holds for it.
+func _spawn_member(member_id: StringName, marker: Node3D) -> Unit:
+	var unit: Unit = (MEMBERS[member_id] as PackedScene).instantiate()
+	var gift_user: GiftUser = unit.get_node(^"Gifts")
+	var known: Array[StringName] = state.known_gifts(member_id)
+	var gifts: Array[Gift] = []
+	for gift: Gift in gift_user.gifts:
+		if known.has(gift.id):
+			gifts.append(gift)
+	gift_user.gifts = gifts
+	var vitals: Vector2i = state.vitals(member_id)
+	if vitals.y >= 0:
+		# Set as the starting Blood, so the unit begins with it and its Fury sees no fall into it.
+		var stats: Stats = unit.stats.duplicate()
+		stats.starting_blood = vitals.y
+		unit.stats = stats
+	_units.add_child(unit)
+	unit.global_transform = marker.global_transform
+	if vitals.x >= 0:
+		var health: int = _risen_health(unit.stats) if vitals.x == 0 else mini(vitals.x, unit.stats.max_health)
+		unit.stats.take_damage(unit.stats.max_health - health)
+	return unit
+
+
+func _risen_health(stats: Stats) -> int:
+	return maxi(roundi(stats.max_health * RISEN_HEALTH), 1)
+
+
+static func _cleared_flag(room_id: StringName) -> StringName:
+	return StringName("%s_cleared" % room_id)
 
 
 ## Puts the room `room_id` in place of the current one, first among the children.
