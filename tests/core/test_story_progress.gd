@@ -126,6 +126,16 @@ func test_a_joiner_appears_beside_their_character_toward_the_centre() -> void:
 	assert_lt(_flat(at).length(), _flat(npc.global_position).length())
 	assert_true(_on_navmesh(at))
 
+func test_a_joiner_whose_character_is_hidden_in_the_same_frame_still_appears_beside_it() -> void:
+	var npc: Npc = await _character("Zahra", Vector3(6, 0.3, 0))
+	npc.hidden_if = &"zahra_gone"
+	main.state.join(&"zahra")
+	main.state.set_flag(&"zahra_gone")
+	await wait_physics_frames(3)
+	assert_false(npc.visible)
+	var at: Vector3 = main.party[1].global_position
+	assert_almost_eq(_flat(at).distance_to(_flat(npc.global_position)), Room.BESIDE_NPC, 0.1)
+
 func test_with_no_matching_character_a_joiner_appears_at_the_companion_marker() -> void:
 	await _character("Someone else", Vector3(6, 0.3, 0))
 	main.state.join(&"zahra")

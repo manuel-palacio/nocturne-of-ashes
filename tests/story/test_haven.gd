@@ -69,6 +69,23 @@ func test_gonzalo_joins() -> void:
 	await _talk("gonzalo")
 	assert_eq(main.party.map(func(u: Unit) -> StringName: return u.member_id), [&"alvar", &"gonzalo"])
 
+## The member `member_id` stands near where their character `npc_name` stood, now hidden.
+func _assert_joined_beside(member_id: StringName, npc_name: String) -> void:
+	var npc: Npc = main.room.find_child(npc_name) as Npc
+	var member: Unit = main.party.filter(func(u: Unit) -> bool: return u.member_id == member_id)[0]
+	assert_false(npc.visible)
+	assert_lt(Arena.flat(member.global_position, npc.global_position), 2.5)
+
+func test_zahra_arrives_beside_where_she_stood() -> void:
+	await _boot(_after_waking())
+	await _talk("zahra")
+	_assert_joined_beside(&"zahra", "ZahraNpc")
+
+func test_gonzalo_arrives_beside_where_he_stood() -> void:
+	await _boot(_after_waking())
+	await _talk("gonzalo")
+	_assert_joined_beside(&"gonzalo", "GonzaloNpc")
+
 func _meet_the_captive(choice: int) -> void:
 	await _boot(_after_waking())
 	main.player.stats.spend_blood(30)  # 30

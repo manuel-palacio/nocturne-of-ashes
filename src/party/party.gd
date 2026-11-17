@@ -40,6 +40,9 @@ var _state: GameState
 var _room: Room
 var _entry: Marker3D
 var _parent: Node
+## Where each member who joined this frame will stand, chosen as they joined: by the time they are
+## spawned, the same conversation may have hidden the character they stand beside.
+var _arrivals: Dictionary = {}  # StringName member -> Vector3
 
 
 ## Forgets every member; the caller frees their nodes.
@@ -89,16 +92,20 @@ func spawn(member_id: StringName, marker: Node3D, state: GameState, parent: Node
 ## none) with its units under `parent`: from now on a Gift learned in `state` is added to its member,
 ## and a member who joins is spawned. Both happen at the end of the frame, not inside the change: a
 ## conversation changes the state while it looks up its next line, and nothing the scene does in
-## answer (such as setting up a figure) may run inside that lookup. Drops the state followed before.
+## answer (such as setting up a figure) may run inside that lookup. Where a joiner will stand is chosen
+## at once, while their character is still shown. Drops the state followed before.
 ## Called at each room start, once the party is spawned, as `Main` may hold a new state object then.
 func begin_room(state: GameState, room: Room, entry: Marker3D, parent: Node) -> void:
 	if _state != null and _state.member_joined.is_connected(_on_member_joined):
+		_state.member_joined.disconnect(_on_member_joining)
 		_state.member_joined.disconnect(_on_member_joined)
 		_state.gift_learned.disconnect(_on_gift_learned)
 	_state = state
 	_room = room
 	_entry = entry
 	_parent = parent
+	_arrivals.clear()
+	state.member_joined.connect(_on_member_joining)
 	state.member_joined.connect(_on_member_joined, CONNECT_DEFERRED)
 	state.gift_learned.connect(_on_gift_learned, CONNECT_DEFERRED)
 
@@ -230,14 +237,14 @@ func _member(member_id: StringName) -> Unit:
 ## Spawns the member who joined beside their character in the room, or at the entry's next free
 ## companion marker, in `GameState.MEMBERS` order among the members, following the selected one.
 func _on_member_joined(member_id: StringName) -> void:
+	var arrival: Variant = _arrivals.get(member_id)
+	_arrivals.erase(member_id)
 	# Answered later in the frame: the state followed may have changed since, as a reload does.
 	if _member(member_id) != null or not is_instance_valid(_room) or not _state.has_joined(member_id):
 		return
-	var marker: Node3D = _room
-	if _entry != null:
-		marker = _room.companion_marker(_entry, clampi(members.size(), 1, 2))
+	var marker: Node3D = _arrival_marker(members.size())
 	var unit: Unit = spawn(member_id, marker, _state, _parent)
-	unit.global_position = _room.arrival_point(unit.display_name, marker)
+	unit.global_position = arrival if arrival != null else _room.arrival_point(unit.display_name, marker)
 	# `spawn()` appended it; it goes where `MEMBERS` puts it among those present.
 	members.erase(unit)
 	var rank: int = GameState.MEMBERS.find(member_id)
@@ -251,6 +258,31 @@ func _on_member_joined(member_id: StringName) -> void:
 	if selected != null:
 		_steer_brain(unit)
 	member_added.emit(unit)
+
+
+## Chooses, as `member_id` joins, where they will stand once spawned.
+func _on_member_joining(member_id: StringName) -> void:
+	if _member(member_id) != null or not is_instance_valid(_room) or _arrivals.has(member_id):
+		return
+	# Those already waiting to be spawned this frame take the markers before this one.
+	var marker: Node3D = _arrival_marker(members.size() + _arrivals.size())
+	_arrivals[member_id] = _room.arrival_point(_display_name(member_id), marker)
+
+
+## The companion marker of the entry for a member arriving when `present` members are there.
+func _arrival_marker(present: int) -> Node3D:
+	if _entry == null:
+		return _room
+	return _room.companion_marker(_entry, clampi(present, 1, 2))
+
+
+## The name the scene of `member_id` gives its unit, read without making one.
+static func _display_name(member_id: StringName) -> String:
+	var scene: SceneState = (SCENES[member_id] as PackedScene).get_state()
+	for i: int in scene.get_node_property_count(0):
+		if scene.get_node_property_name(0, i) == &"display_name":
+			return scene.get_node_property_value(0, i)
+	return ""
 
 
 func _on_gift_learned(member_id: StringName, _gift: StringName) -> void:
