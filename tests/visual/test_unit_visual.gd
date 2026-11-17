@@ -161,3 +161,71 @@ func test_a_unit_spawned_while_held_shows_the_idle_pose() -> void:
 		if not shown[bone].is_equal_approx(skeleton.get_bone_rest(bone)):
 			moved_from_rest += 1
 	assert_gt(moved_from_rest, 0)
+
+func test_a_nudged_unit_stays_idle() -> void:
+	alvar.velocity = Vector3(0.1, 0, 0)
+	await wait_physics_frames(3)
+	assert_eq(_visual(alvar).clip(), &"idle")
+
+func test_a_moving_unit_keeps_travelling_down_to_the_lower_threshold() -> void:
+	alvar.order_move(Vector3(-6, 0, 0))
+	await wait_seconds(0.5)
+	alvar.stop()
+	alvar.velocity = Vector3(0.08, 0, 0)
+	await wait_physics_frames(3)
+	assert_true(_visual(alvar).clip() in [&"walk", &"run"], String(_visual(alvar).clip()))
+	alvar.velocity = Vector3(0.03, 0, 0)
+	await wait_physics_frames(3)
+	assert_eq(_visual(alvar).clip(), &"idle")
+
+func test_walk_and_run_switch_with_a_margin() -> void:
+	alvar.move_speed = 2.2
+	alvar.order_move(Vector3(-8, 0, 0))
+	await wait_seconds(0.4)
+	assert_eq(_visual(alvar).clip(), &"walk", "2.2 m/s from a walk")
+	alvar.move_speed = 4.0
+	await wait_seconds(0.3)
+	assert_eq(_visual(alvar).clip(), &"run", "4 m/s")
+	alvar.move_speed = 2.2
+	await wait_seconds(0.3)
+	assert_eq(_visual(alvar).clip(), &"run", "2.2 m/s from a run")
+	alvar.move_speed = 1.8
+	await wait_seconds(0.3)
+	assert_eq(_visual(alvar).clip(), &"walk", "1.8 m/s")
+
+func _lean(unit: Unit) -> float:
+	return _visual(unit).model().position.length()
+
+func test_a_feeder_leans_in_while_drinking_and_back_after_the_feed() -> void:
+	foe.take_hit(45)
+	alvar.order_feed(foe)
+	await wait_seconds(0.8)
+	assert_true(alvar.is_feeding())
+	assert_gt(_lean(alvar), 0.3)
+	await wait_for_signal(alvar.fed, 3.0)
+	await wait_seconds(1.0)
+	assert_almost_eq(_lean(alvar), 0.0, 0.001)
+
+func test_a_broken_feed_leans_back() -> void:
+	foe.take_hit(45)
+	alvar.order_feed(foe)
+	await wait_seconds(0.8)
+	assert_gt(_lean(alvar), 0.3)
+	alvar.stop()
+	await wait_seconds(1.0)
+	assert_almost_eq(_lean(alvar), 0.0, 0.001)
+
+func test_a_seated_speaker_talks_seated_and_sits_again() -> void:
+	var npc: Npc = preload("res://scenes/rooms/npc.tscn").instantiate()
+	npc.sitting = true
+	arena.room.add_child(npc)
+	npc.global_position = Vector3(4, 0, 0)
+	await wait_physics_frames(2)
+	var visual: UnitVisual = npc.get_node("Visual")
+	assert_eq(visual.clip(), &"sit")
+	npc.set_speaking(true)
+	await wait_physics_frames(2)
+	assert_eq(visual.clip(), &"sit_talk")
+	npc.set_speaking(false)
+	await wait_physics_frames(2)
+	assert_eq(visual.clip(), &"sit")

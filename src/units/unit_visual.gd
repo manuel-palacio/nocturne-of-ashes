@@ -10,7 +10,7 @@ extends Node3D
 ## 4. stunned, which includes being fed on: `stagger`
 ## 5. a strike, a Gift or a hit just now: `attack`, `cast` or `hit`, for at most `ONE_SHOT_TIME`; a
 ##    hit does not cut a strike or a Gift short
-## 6. moving: `run` above `RUN_ABOVE` or while hastened, else `walk`, at the speed that keeps the
+## 6. moving: `run` when fast (see `RUN_ABOVE`) or while hastened, else `walk`, at the speed that keeps the
 ##    feet on the ground
 ## 7. otherwise `idle`
 ##
@@ -29,9 +29,10 @@ const ONE_SHOT_TIME: float = 0.7
 ## `STOPPED`, so a unit nudged at about one speed does not flicker between the two.
 const MOVING: float = 0.15
 const STOPPED: float = 0.05
-## Above this flat speed, in metres per second, a unit travels with `run`: played fast enough to keep
-## up, `walk` turns into a shuffle.
-const RUN_ABOVE: float = 2.2
+## A moving unit takes up `run` above this flat speed, in metres per second, and goes back to `walk`
+## below `WALK_BELOW`: played fast enough to keep up with 3-4 m/s, `walk` turns into a shuffle.
+const RUN_ABOVE: float = 2.4
+const WALK_BELOW: float = 2.0
 ## While drinking, the model is drawn up to `FEED_REACH` metres towards the victim, stopping
 ## `FEED_GAP` from it, easing in and out over `FEED_EASE` seconds. The unit itself stays where it is.
 const FEED_REACH: float = 0.8
@@ -72,6 +73,7 @@ var _one_shot_left: float = 0.0
 var _rising_left: float = 0.0
 var _tinted: bool = false
 var _moving: bool = false
+var _running: bool = false
 ## How far the feed's lean towards the victim has eased in, from 0 to 1.
 var _lean: float = 0.0
 ## Where the lean goes, flat in world space, as of the last frame of drinking.
@@ -152,6 +154,7 @@ func _choose() -> StringName:
 		return &"sit_talk" if resting == &"sit" else &"talk"
 	var speed: float = _flat_speed()
 	_moving = speed > (STOPPED if _moving else MOVING)
+	_running = _moving and speed > (WALK_BELOW if _running else RUN_ABOVE)
 	var higher: StringName = &""
 	if not _unit.is_alive() or _is_rising():
 		higher = &"death"
@@ -166,7 +169,7 @@ func _choose() -> StringName:
 	if _one_shot_left > 0.0:
 		return _one_shot
 	if _moving:
-		return &"run" if speed > RUN_ABOVE or _unit.speed_multiplier() > 1.0 else &"walk"
+		return &"run" if _running or _unit.speed_multiplier() > 1.0 else &"walk"
 	return &"idle"
 
 
