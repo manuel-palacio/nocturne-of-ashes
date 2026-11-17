@@ -1993,3 +1993,47 @@ Each item is one small change with its test.
 ### After the last task: put the milestone online
 
 Once the final review's fixes are in and the suites are green, the controller (not a task implementer) runs `ops/deploy-fly.sh`, checks that https://nocturne-of-ashes.fly.dev/ serves the new build and that the game starts there, and reports the address. The owner has asked for this at the end of every milestone.
+
+---
+
+## Amendments made while building
+
+These decisions changed what the tasks above describe. The code follows the amendments.
+
+- **Test totals.** Review fixes added tests; the suite's own report is the count.
+- **Task 1.** The 260-line target for `unit.gd` applied to that task only. The relays from `Orders` are explicit connections; `Unit.drive()` and `face()` are for `Orders` only.
+- **Task 2.** Godot strips `--language` from the command-line arguments it reports, so `Main` picks the language only while the engine's locale still equals the system's.
+- **Task 3.** Loaded numbers are clamped, never wrapped: vitals to −1…10000, Conscience to 0…10. Álvar is always joined. An empty room or entry makes a save unusable. The save is written to a temporary file and renamed.
+- **Task 4.** `Main` is a shell over `Party` (builds members from the state), `Encounter` (the fight flow) and, later, `Conversation`, `Travel` and `WorldHold`. A room without enemies starts cleared. Blood carried into a room is applied as starting Blood, so arriving low does not start the Fury. `Main.state` can be replaced; listeners re-read it on `room_started`.
+- **Task 5.** The last checkpoint is also kept in memory and is what a reload uses first, so a browser that cannot write saves does not turn a fall into a wipe. `checkpoint()` does nothing while the title is open.
+- **Task 6.** `Interactable.use` returns whether it was used; its collision layer is set when it enters the tree, whatever a scene or subclass says.
+- **Task 7.** The add-on is Dialogue Manager 4.2.0. A conversation that goes wrong ends by itself (a refused call, a missing cue, or more than 2 s without a line), is not saved, and the last checkpoint is reloaded. A conversation's hooks are revoked when it ends. Escape does not close a conversation. The add-on's automatic translation-template updates are switched off.
+- **Task 8.** A member who joins mid-room stands 2 m from the character of the same name. Learning a Gift keeps running cooldowns.
+- **Task 9.** A door's travel is deferred to the end of the frame and re-checked. Doors also refuse during the Fury and while anyone is feeding.
+- **Task 10.** A `captive_spared` flag exists. Íñigo's talk changes no state; his opening line changes once the captive is dealt with. Malakor names only the companions still missing.
+- **Task 11.** `fresh`, `at`, `title`, `calm` and `frail` work only with `probe=1`. `skirmish=1` never touches a save.
+- **After the final review.**
+  - Units that are held (pause, conversation, title) stay in the physics world, so they can be clicked while paused.
+  - Entering a room that has no enemies restores the party's health (not its Blood): the haven is where the party rests.
+  - Characters and doors are Álvar's to use: a click on one with a companion selected sends Álvar.
+  - The dialogue box shows how to continue and accepts Space as well as Enter.
+
+## Carried forward
+
+**Milestone 4 (Toledo's look)**
+- A controls card reachable from the title; "or click" on the fallen prompt; the cleared line fades; New game asks before erasing a save.
+- Any error logged while a conversation looks up its next line ends that conversation: narrow this before visuals are spawned inside a join.
+- Keep the camera's focus inside the room: at the waking a third of the screen shows the dark beyond the west wall.
+- A character within 2 m of a room's centre puts a joiner on the far side of the centre.
+
+**Milestone 5 (the night of 1212)**
+- Extract the session (state, store, checkpoints, title) and the room transition from `Main` before adding rooms, fades and an ending.
+- The save has no migration: a version change discards every existing save. Add `migrate(data)` by version, a registry of flags, values other than booleans, state per room beyond one cleared flag, and somewhere for inventory.
+- Joining is recorded twice (the joined set and the `*_joined` flags), and the test start `at=vault` copies the flag list by hand.
+- Conversations are English only; the HUD follows the system language. Translate them, or offer Spanish only on request until they are.
+- "The vault is quiet" is the cleared line for every room. After the vault there is nothing more to do.
+- Balance: draining the captive gains little over a sip; the Fury in the haven wounds companions who do not defend themselves.
+- A deliberate wait longer than 2 s inside a conversation is cut off by the watchdog.
+
+**Milestone 6 (out the door)**
+- The test probe and its page parameters ship in the release build.

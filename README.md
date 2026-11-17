@@ -37,8 +37,9 @@ crusaders wait; its last lock does not open yet.
 - Escape (or a right click) cancels a Gift's targeting.
 - Space pauses and resumes the world; orders given while paused begin on resume.
 - Q and E turn the camera; the mouse wheel zooms.
-- Left click on someone to walk up and talk with them; Enter or a click on the box goes on, and 1–4 (or a click) take a choice.
-- With Álvar selected, left click on a door to take the party through it; a door stays shut while a fight is on or until the story opens it.
+- Left click on someone to have Álvar walk up and talk with them, whoever is selected; Enter, Space or a click on the box goes on, and 1–4 (or a click) take a choice.
+- Left click on a door to have Álvar take the party through it, whoever is selected; a door stays shut while a fight is on or until the story opens it.
+- Entering a room with no enemies left, such as the haven, restores the party's health; Blood is not restored.
 - Enter, after Álvar falls, plays on from the last checkpoint.
 
 Progress is saved in the browser: on entering a room, at the end of each conversation and when a room
