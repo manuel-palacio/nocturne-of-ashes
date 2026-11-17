@@ -9,10 +9,9 @@ extends Node
 ## started with, revoked when it ends, so nothing left running in the add-on can change the game
 ## afterwards, while the hooks given can start another conversation.
 ##
-## A conversation that goes wrong never holds the game: an error the add-on or the hooks raise while
-## a line is being found (a refused or missing call, a call with the wrong arguments) ends it at once,
-## and so does waiting more than `WATCHDOG_SECONDS` for a line. Errors from anything else the line sets
-## going, such as a companion's figure set up as they join, do not end it. The runner reports a
+## A conversation that goes wrong never holds the game: an error logged while a line is being found
+## (a refused or missing call, a call with the wrong arguments) ends it at once, and so does waiting
+## more than `WATCHDOG_SECONDS` for a line. The add-on reports those errors; the runner reports a
 ## missing cue and the watchdog. `ended_in_error()` tells such an end from a normal one.
 
 ## A line is shown. `choices` lists the open choices in order; it is empty for a plain line.
@@ -25,25 +24,14 @@ const WATCHDOG_SECONDS: float = 2.0
 const _ONLY_HOOKS: String = "A conversation may only use the story hooks, not %s.%s"
 
 
-## Notes errors raised by the add-on or the hooks, so the runner can tell that a line request went
-## wrong. An error counts when the script running as it was raised is one of theirs; without a script
-## stack to tell by, as in a build that does not track one, every error counts.
+## Notes errors logged by anyone, so the runner can tell that a line request went wrong.
 class ErrorWatch extends Logger:
-	const _OURS: Array[String] = ["res://addons/dialogue_manager/", "res://src/core/story_hooks.gd"]
-
 	var seen: bool = false
 
 	func _log_error(_function: String, _file: String, _line: int, _code: String, _rationale: String,
-			_editor_notify: bool, error_type: int, script_backtraces: Array[ScriptBacktrace]) -> void:
-		if error_type != ERROR_TYPE_WARNING and _raised_by_ours(script_backtraces):
+			_editor_notify: bool, error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
+		if error_type != ERROR_TYPE_WARNING:
 			seen = true
-
-	static func _raised_by_ours(backtraces: Array[ScriptBacktrace]) -> bool:
-		for backtrace: ScriptBacktrace in backtraces:
-			if backtrace.get_frame_count() > 0:
-				var file: String = backtrace.get_frame_file(0)
-				return _OURS.any(func(ours: String) -> bool: return file.begins_with(ours))
-		return true
 
 
 var _resource: DialogueResource

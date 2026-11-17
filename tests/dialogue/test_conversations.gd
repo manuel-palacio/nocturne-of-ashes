@@ -336,19 +336,19 @@ func test_space_advances_a_plain_line_and_does_not_take_a_choice() -> void:
 	assert_true(main.is_talking())
 	assert_false(main.is_paused())
 
-## Logs an error on entering the tree, as a companion's figure might while it is set up.
-class NoisyVisual extends Node3D:
-	func _enter_tree() -> void:
+## Logs an error as a companion's figure enters the tree, as a figure that went wrong might.
+func _noisy_figure(node: Node) -> void:
+	if node is UnitVisual and node.get_parent() is Unit and (node.get_parent() as Unit).member_id == &"gonzalo":
 		push_error("A noisy visual entered the tree")
 
 func test_a_companion_joining_with_a_noisy_visual_does_not_end_the_conversation() -> void:
-	main.state.member_joined.connect(func(member: StringName) -> void:
-		var unit: Unit = main.party.filter(func(u: Unit) -> bool: return u.member_id == member)[0]
-		unit.add_child(NoisyVisual.new()))
+	get_tree().node_added.connect(_noisy_figure)
 	main.talk(TALK, "joins")
 	await wait_physics_frames(2)
 	await _tap(&"confirm")
+	get_tree().node_added.disconnect(_noisy_figure)
 	assert_push_error("A noisy visual entered the tree")
 	assert_true(main.state.has_joined(&"gonzalo"))
+	assert_eq(main.party.size(), 2)
 	assert_true(main.is_talking())
 	assert_string_contains(_box().find_child("TextLabel").text, "Look after him.")

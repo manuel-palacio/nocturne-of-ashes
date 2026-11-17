@@ -87,8 +87,10 @@ func spawn(member_id: StringName, marker: Node3D, state: GameState, parent: Node
 
 ## Follows `state` while the party is in `room`, having arrived at `entry` (null when the room has
 ## none) with its units under `parent`: from now on a Gift learned in `state` is added to its member,
-## and a member who joins is spawned. Drops the state followed before. Called at each room start, once
-## the party is spawned, as `Main` may hold a new state object then.
+## and a member who joins is spawned. Both happen at the end of the frame, not inside the change: a
+## conversation changes the state while it looks up its next line, and nothing the scene does in
+## answer (such as setting up a figure) may run inside that lookup. Drops the state followed before.
+## Called at each room start, once the party is spawned, as `Main` may hold a new state object then.
 func begin_room(state: GameState, room: Room, entry: Marker3D, parent: Node) -> void:
 	if _state != null and _state.member_joined.is_connected(_on_member_joined):
 		_state.member_joined.disconnect(_on_member_joined)
@@ -97,8 +99,8 @@ func begin_room(state: GameState, room: Room, entry: Marker3D, parent: Node) -> 
 	_room = room
 	_entry = entry
 	_parent = parent
-	state.member_joined.connect(_on_member_joined)
-	state.gift_learned.connect(_on_gift_learned)
+	state.member_joined.connect(_on_member_joined, CONNECT_DEFERRED)
+	state.gift_learned.connect(_on_gift_learned, CONNECT_DEFERRED)
 
 
 ## Stores each member's health and Blood in `state`; a fallen member's health as `Unit.risen_health()`.
@@ -228,7 +230,8 @@ func _member(member_id: StringName) -> Unit:
 ## Spawns the member who joined beside their character in the room, or at the entry's next free
 ## companion marker, in `GameState.MEMBERS` order among the members, following the selected one.
 func _on_member_joined(member_id: StringName) -> void:
-	if _member(member_id) != null or not is_instance_valid(_room):
+	# Answered later in the frame: the state followed may have changed since, as a reload does.
+	if _member(member_id) != null or not is_instance_valid(_room) or not _state.has_joined(member_id):
 		return
 	var marker: Node3D = _room
 	if _entry != null:
