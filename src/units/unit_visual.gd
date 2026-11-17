@@ -232,7 +232,8 @@ func _hang_gear() -> void:
 		for mesh: MeshInstance3D in worn.find_children("*", "MeshInstance3D", true, false):
 			mesh.material_override = material
 			if piece.cloth:
-				var fit := ClothFit.new(mesh, _skeleton, bone, worn.transform * mesh.transform, piece.clearance)
+				var fit := ClothFit.new(mesh, _skeleton, bone, worn.transform * mesh.transform, piece.clearance,
+						piece.shape)
 				if fit.is_fitting():
 					_fits.append(fit)
 

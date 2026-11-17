@@ -13,3 +13,5 @@ extends Resource
 @export var region: Dress.Region = Dress.Region.TUNIC
 ## For cloth that stretches round the legs: how far it keeps from them, beyond their thickness, in metres.
 @export var clearance: float = 0.03
+## For cloth that stretches: its tables, written by the tool beside the piece as `<piece>_cloth.tres`.
+@export var shape: ClothShape
