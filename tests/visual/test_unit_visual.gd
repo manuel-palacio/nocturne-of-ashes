@@ -129,7 +129,9 @@ func test_a_unit_spawned_while_held_shows_the_idle_pose() -> void:
 	held.process_mode = Node.PROCESS_MODE_DISABLED
 	arena.room.add_child(held)
 	var zahra: Unit = Arena.ZAHRA.instantiate()
-	zahra.remove_child(zahra.get_node("Brain"))
+	var brain: Node = zahra.get_node("Brain")
+	zahra.remove_child(brain)
+	brain.free()
 	held.add_child(zahra)
 	await wait_physics_frames(3)
 	var reference: Node3D = add_child_autofree(UnitVisual.HUMAN.instantiate())
