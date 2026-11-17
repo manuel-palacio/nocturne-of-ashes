@@ -7,14 +7,12 @@
 [ext_resource type="Script" path="res://src/gifts/gift.gd" id="5_gift"]
 [ext_resource type="Resource" path="res://resources/gifts/iron_sinew.tres" id="6_iron_sinew"]
 [ext_resource type="Resource" path="res://resources/gifts/baleful_eye.tres" id="7_baleful_eye"]
+[ext_resource type="Resource" path="res://resources/dress/alvar.tres" id="9_dress"]
 
 [sub_resource type="Resource" id="Resource_stats"]
 script = ExtResource("2_stats")
 max_health = 120
 starting_blood = 60
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_offwhite"]
-albedo_color = Color(0.92, 0.9, 0.84, 1)
 
 [node name="Alvar" instance=ExtResource("1_base")]
 stats = SubResource("Resource_stats")
@@ -23,8 +21,8 @@ member_id = &"alvar"
 display_name = "Brother Álvar"
 drinks_blood = true
 
-[node name="Body" parent="." index="1"]
-surface_material_override/0 = SubResource("StandardMaterial3D_offwhite")
+[node name="Visual" parent="." index="1"]
+dress = ExtResource("9_dress")
 
 [node name="Melee" parent="." index="4"]
 damage = 15

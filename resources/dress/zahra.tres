@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="Dress" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/units/dress.gd" id="1_dress"]
+[ext_resource type="Texture2D" uid="uid://d03jjfrybmkp4" path="res://assets/characters/human/palette-zahra.png" id="2_palette"]
+
+[resource]
+script = ExtResource("1_dress")
+palette = ExtResource("2_palette")
+height = 1.7

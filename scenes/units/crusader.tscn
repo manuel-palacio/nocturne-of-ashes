@@ -3,13 +3,11 @@
 [ext_resource type="PackedScene" path="res://scenes/units/unit_base.tscn" id="1_base"]
 [ext_resource type="Script" path="res://src/units/stats.gd" id="2_stats"]
 [ext_resource type="Script" path="res://src/units/combat_brain.gd" id="3_brain"]
+[ext_resource type="Resource" path="res://resources/dress/crusader.tres" id="9_dress"]
 
 [sub_resource type="Resource" id="Resource_stats"]
 script = ExtResource("2_stats")
 max_health = 60
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_darkred"]
-albedo_color = Color(0.45, 0.06, 0.06, 1)
 
 [node name="Crusader" instance=ExtResource("1_base")]
 stats = SubResource("Resource_stats")
@@ -17,8 +15,8 @@ faction = &"crusader"
 move_speed = 3.2
 display_name = "Crusader"
 
-[node name="Body" parent="." index="1"]
-surface_material_override/0 = SubResource("StandardMaterial3D_darkred")
+[node name="Visual" parent="." index="1"]
+dress = ExtResource("9_dress")
 
 [node name="Melee" parent="." index="4"]
 damage = 8

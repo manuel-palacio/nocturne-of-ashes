@@ -20,7 +20,9 @@ borders are put on the borders between pieces wherever possible, because a borde
 piece follows its triangles and comes out ragged. A segment's vertices take the region of the bone
 that moves them; a joint piece takes one region as a whole. Only the hair is cut by height.
 
-The model keeps only the clips in CLIPS, renamed; `stagger` is made here from `Hit_Head`. Clips
+The model keeps only the clips in CLIPS, renamed; `stagger` is made here from `Hit_Head` and `feed`
+from `Push_Loop` (the library has no feeding clip: the figure leans in with both arms out at a
+victim's shoulders, swaying a little, its feet still). Clips
 that loop are written with a `_loop` ending, which Godot's importer reads as looping and removes,
 so the game sees exactly the names in CLIPS. The mesh is turned to face -Z, Godot's forward, and
 the binary buffer is rebuilt to hold only what the model uses. The output is byte-identical from
@@ -42,6 +44,7 @@ CROWN = 1.745          # hair above this on the head
 NAPE = 1.60            # and down to here at the back of the head
 SEGMENTS, JOINTS = "M_Main", "M_Joints"  # the library's materials for the two kinds of piece
 BELT = (0.99, 1.12)    # segment pieces wholly inside this band (the rims round the waist joint) are belt
+BELT_PIECES = 2        # the abdomen's lower rim and the pelvis's upper rim
 
 PALETTES = {
     # skin, hair, tunic, sleeves, skirt, hose, boots, trim
@@ -63,7 +66,7 @@ PALETTES = {
     "captive": ["#c9a084", "#3a2e24", "#b4ae9e", "#aaa494", "#968e7c", "#c29a7e", "#ad866a", "#6e624e"],
 }
 
-# Game name: (library clip, loops). `stagger` is made from Hit_Head below.
+# Game name: (library clip, loops). `stagger` and `feed` are made by PINGPONG below.
 CLIPS = {
     "idle": ("Idle_Loop", True),
     "walk": ("Walk_Loop", True),
@@ -76,11 +79,15 @@ CLIPS = {
     "stagger": ("Hit_Head", True),
     "talk": ("Idle_Talking_Loop", True),
     "sit": ("Sitting_Idle_Loop", True),
+    "feed": ("Push_Loop", True),
 }
-# The stagger loop: Hit_Head's keys from STAGGER_KEYS[0] to STAGGER_KEYS[1], played forward then
-# back, slowed by STAGGER_SLOW, so the figure reels on the blow and its ends meet.
-STAGGER_KEYS = (2, 10)
-STAGGER_SLOW = 1.5
+# Loops made from a stretch of a library clip: game name: (first key, last key, slowed by). The keys
+# are played forward then back, so the ends meet. `stagger` reels on the blow of Hit_Head; `feed`
+# holds the lean of Push_Loop's first keys, where its feet barely move, as a slow sway.
+PINGPONG = {
+    "stagger": (2, 10, 1.5),
+    "feed": (0, 4, 4.0),
+}
 
 WIDTH = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT4": 16}
 FLOAT, UBYTE, USHORT = 5126, 5121, 5123
@@ -205,10 +212,13 @@ def main(source: str) -> None:
         else:
             of_vertex[i] = region
     # The rims of the abdomen and the pelvis on either side of the waist joint widen the belt.
+    belt = 0
     for piece in pieces(triangles[~joint_piece[triangles[:, 0]]], len(position)):
         heights = position[piece, 1]
         if BELT[0] <= heights.min() and heights.max() <= BELT[1] and abs(position[piece, 0]).max() < 0.2:
             of_vertex[piece] = TRIM
+            belt += 1
+    assert belt == BELT_PIECES, f"expected {BELT_PIECES} belt pieces round the waist, found {belt}"
     for piece in pieces(triangles[joint_piece[triangles[:, 0]]], len(position)):
         piece_bones = {bones[lead[i]] for i in piece}
         region = joint_region(piece_bones)
@@ -266,8 +276,8 @@ def main(source: str) -> None:
     animations = []
     for name, (source_name, loops) in CLIPS.items():
         animation = by_name[source_name]
-        if name == "stagger":
-            make_stagger(animation, read, add, copy)
+        if name in PINGPONG:
+            make_pingpong(animation, source_name, PINGPONG[name], read, add)
         else:
             for sampler in animation.samplers:
                 sampler.input = copy(sampler.input, bounds=True)
@@ -308,23 +318,24 @@ def pieces(triangles, count: int) -> list[list[int]]:
     return sorted(groups.values(), key=lambda group: group[0])
 
 
-def make_stagger(animation, read, add, copy) -> None:
-    """Turns Hit_Head into a loop: a stretch of its keys forward, then back to where it began."""
+def make_pingpong(animation, source_name: str, stretch: tuple[int, int, float], read, add) -> None:
+    """Turns a clip into a loop: its keys `stretch[0]` to `stretch[1]` forward, then back to where
+    they began, `stretch[2]` times slower."""
     import numpy as np
 
     inputs = {s.input for s in animation.samplers}
-    assert len(inputs) == 1, "Hit_Head's channels have different key times"
+    assert len(inputs) == 1, f"{source_name}'s channels have different key times"
     times = read(next(iter(inputs)))[:, 0]
-    first, last = STAGGER_KEYS
-    assert last < len(times), "Hit_Head has fewer keys than STAGGER_KEYS needs"
+    first, last, slow = stretch
+    assert last < len(times), f"{source_name} has fewer keys than its stretch needs"
     forward = list(range(first, last + 1))
     keys = forward + forward[-2::-1]  # first .. last .. first
     step = np.diff(times[first:last + 1])
-    gaps = np.concatenate([step, step[::-1]]) * STAGGER_SLOW
+    gaps = np.concatenate([step, step[::-1]]) * slow
     new_times = np.concatenate([[0.0], np.cumsum(gaps)]).reshape(-1, 1)
     new_input = add(new_times, "SCALAR", FLOAT, bounds=True)
     for sampler in animation.samplers:
-        assert sampler.interpolation in (None, "LINEAR"), f"Hit_Head has {sampler.interpolation} keys"
+        assert sampler.interpolation in (None, "LINEAR"), f"{source_name} has {sampler.interpolation} keys"
         values = read(sampler.output)
         kind = {width: name for name, width in WIDTH.items()}[values.shape[1]]
         sampler.input = new_input

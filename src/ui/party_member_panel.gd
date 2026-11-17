@@ -1,8 +1,8 @@
 class_name PartyMemberPanel
 extends PanelContainer
-## One party member in the HUD: a swatch in the body's colour, the name, health and Blood bars, and
-## whether the member is fallen, in the Fury or feeding. A left click asks to select the member. The
-## left button is consumed; the right button and the wheel pass through to the world.
+## One party member in the HUD: a swatch in the colour of the member's tunic, the name, health and
+## Blood bars, and whether the member is fallen, in the Fury or feeding. A left click asks to select
+## the member. The left button is consumed; the right button and the wheel pass through to the world.
 
 ## The panel was clicked; the click is consumed, so it gives no order in the world.
 signal pressed(unit: Unit)
@@ -43,7 +43,7 @@ func _gui_input(event: InputEvent) -> void:
 func bind(unit: Unit) -> void:
 	_unit = unit
 	_name_label.text = tr(unit.display_name)
-	_swatch.color = _body_colour(unit)
+	_swatch.color = _tunic_colour(unit)
 	unit.stats.health_changed.connect(_on_health_changed)
 	unit.stats.blood_changed.connect(_on_blood_changed)
 	for changed: Signal in [unit.died, unit.revived]:
@@ -93,7 +93,8 @@ func _on_blood_changed(current: int, maximum: int) -> void:
 	_blood_bar.value = current
 
 
-func _body_colour(unit: Unit) -> Color:
-	var body := unit.get_node_or_null(^"Body") as MeshInstance3D
-	var material := body.get_surface_override_material(0) as BaseMaterial3D if body != null else null
-	return material.albedo_color if material != null else Color.GRAY
+func _tunic_colour(unit: Unit) -> Color:
+	var visual := unit.get_node_or_null(^"Visual") as UnitVisual
+	if visual == null or visual.dress == null:
+		return Color.GRAY
+	return visual.dress.colour(Dress.Region.TUNIC)

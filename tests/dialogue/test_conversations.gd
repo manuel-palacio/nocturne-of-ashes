@@ -335,3 +335,20 @@ func test_space_advances_a_plain_line_and_does_not_take_a_choice() -> void:
 	assert_eq(main.state.conscience, 7)
 	assert_true(main.is_talking())
 	assert_false(main.is_paused())
+
+## Logs an error on entering the tree, as a companion's figure might while it is set up.
+class NoisyVisual extends Node3D:
+	func _enter_tree() -> void:
+		push_error("A noisy visual entered the tree")
+
+func test_a_companion_joining_with_a_noisy_visual_does_not_end_the_conversation() -> void:
+	main.state.member_joined.connect(func(member: StringName) -> void:
+		var unit: Unit = main.party.filter(func(u: Unit) -> bool: return u.member_id == member)[0]
+		unit.add_child(NoisyVisual.new()))
+	main.talk(TALK, "joins")
+	await wait_physics_frames(2)
+	await _tap(&"confirm")
+	assert_push_error("A noisy visual entered the tree")
+	assert_true(main.state.has_joined(&"gonzalo"))
+	assert_true(main.is_talking())
+	assert_string_contains(_box().find_child("TextLabel").text, "Look after him.")

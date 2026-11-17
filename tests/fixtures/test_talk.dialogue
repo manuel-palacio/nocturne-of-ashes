@@ -19,3 +19,9 @@ if conscience() >= 8
 else
 	Smith: I have seen that look before.
 => END
+
+~ joins
+Smith: Gonzalo will walk with you.
+do join("gonzalo")
+Smith: Look after him.
+=> END

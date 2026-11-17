@@ -31,13 +31,6 @@ func test_a_dead_unit_cannot_strike() -> void:
 	alvar.take_hit(999)
 	assert_false(alvar.get_node("Melee").try_hit(foe))
 
-func test_a_fallen_body_rests_on_the_floor() -> void:
-	alvar.take_hit(999)
-	await wait_physics_frames(5)
-	var body: MeshInstance3D = alvar.get_node("Body")
-	var lowest: float = (body.global_transform * body.get_aabb()).position.y
-	assert_almost_eq(lowest, alvar.global_position.y, 0.05)
-
 func test_revival_restores_a_working_unit() -> void:
 	watch_signals(alvar)
 	alvar.take_hit(999)

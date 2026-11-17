@@ -46,14 +46,11 @@ enum Issuer { NONE, PLAYER, BRAIN, SYSTEM }
 const RISEN_HEALTH: float = 0.3
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
-var _standing: Transform3D
-var _fallen: Transform3D
 ## True while `take_hit()` deals its damage.
 var _taking_hit: bool = false
 
 @onready var _mover: Mover = $Mover
 @onready var _orders: Orders = $Orders
-@onready var _body: MeshInstance3D = $Body
 @onready var _effects: Effects = $Effects
 @onready var _feeder: Feeder = $Feeder
 @onready var _fury: Fury = $Fury
@@ -76,11 +73,6 @@ func _ready() -> void:
 	_orders.fury_started.connect(fury_started.emit)
 	_orders.fury_ended.connect(fury_ended.emit)
 	_fury.watch(stats)
-	_standing = _body.transform
-	# Lying on its side, lowered so its lowest point touches the floor at the unit's feet.
-	var lying: Basis = Basis(Vector3.RIGHT, PI / 2.0)
-	var lowest: float = (Transform3D(lying, Vector3.ZERO) * _body.get_aabb()).position.y
-	_fallen = Transform3D(lying, Vector3(_standing.origin.x, -lowest, _standing.origin.z))
 
 
 func _physics_process(delta: float) -> void:
@@ -217,7 +209,6 @@ func revive() -> void:
 	if is_alive():
 		return
 	stats.revive(risen_health(stats))
-	_body.transform = _standing
 	# Deferred like the change on death, so a death and revival in one frame end on layer 2.
 	set_deferred(&"collision_layer", 2)
 	clear_effects()
@@ -294,5 +285,4 @@ func _fall() -> void:
 	clear_effects()
 	# Off every layer, so clicks and rays pass through the body, which still rests on the floor.
 	set_deferred(&"collision_layer", 0)
-	_body.transform = _fallen
 	died.emit(self)

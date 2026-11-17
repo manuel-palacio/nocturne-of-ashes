@@ -7,14 +7,12 @@
 [ext_resource type="Script" path="res://src/gifts/gift.gd" id="5_gift"]
 [ext_resource type="Resource" path="res://resources/gifts/mend_flesh.tres" id="6_mend_flesh"]
 [ext_resource type="Resource" path="res://resources/gifts/blood_lance.tres" id="7_blood_lance"]
+[ext_resource type="Resource" path="res://resources/dress/zahra.tres" id="9_dress"]
 
 [sub_resource type="Resource" id="Resource_stats"]
 script = ExtResource("2_stats")
 max_health = 80
 starting_blood = 60
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_teal"]
-albedo_color = Color(0.1, 0.55, 0.55, 1)
 
 [node name="Zahra" instance=ExtResource("1_base")]
 stats = SubResource("Resource_stats")
@@ -23,8 +21,8 @@ member_id = &"zahra"
 display_name = "Zahra"
 drinks_blood = true
 
-[node name="Body" parent="." index="1"]
-surface_material_override/0 = SubResource("StandardMaterial3D_teal")
+[node name="Visual" parent="." index="1"]
+dress = ExtResource("9_dress")
 
 [node name="Melee" parent="." index="4"]
 damage = 8
