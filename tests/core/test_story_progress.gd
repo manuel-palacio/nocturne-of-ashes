@@ -90,8 +90,13 @@ func test_a_join_closes_targeting() -> void:
 	assert_eq(main.input.targeting_gift(), -1)
 	assert_false(main.hud.gift_buttons()[0].is_targeting())
 
-## Puts a character labelled `label` at `at` in the room; hidden unless `shown`.
+## Puts a character labelled `label` at `at` in the room; hidden unless `shown`. The room's own Zahra,
+## the member these tests have join, is taken out first, so only the test's character can place her.
 func _character(label: String, at: Vector3, shown: bool = true) -> Npc:
+	for resident: Npc in main.room.npcs():
+		if resident.label == "Zahra":
+			main.room.remove_child(resident)
+			resident.free()
 	var npc: Npc = load("res://scenes/rooms/npc.tscn").instantiate()
 	npc.label = label
 	if not shown:

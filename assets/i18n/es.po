@@ -76,3 +76,7 @@ msgstr "La escalera está cerrada hasta que Malakor diga otra cosa"
 
 msgid "The last lock does not yield. Not yet."
 msgstr "El último cerrojo no cede. Aún no."
+
+# People
+msgid "The captive"
+msgstr "El cautivo"
