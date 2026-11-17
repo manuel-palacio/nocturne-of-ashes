@@ -103,6 +103,24 @@ func is_running() -> bool:
 	return _running
 
 
+## Who speaks the line on show; "" while no line is on show.
+func speaker() -> String:
+	return _line.character if _line != null else ""
+
+
+## What the line on show says; "" while no line is on show.
+func line_text() -> String:
+	return _line.text if _line != null else ""
+
+
+## The open choices of the line on show, in order; empty for a plain line or while none is on show.
+func choice_texts() -> Array[String]:
+	var texts: Array[String] = []
+	for response: DialogueResponse in _choices:
+		texts.append(response.text)
+	return texts
+
+
 ## Whether the last conversation ended because it went wrong or its next line never came.
 func ended_in_error() -> bool:
 	return _ended_in_error

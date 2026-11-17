@@ -16,7 +16,7 @@ async function open(page, query) {
 
 test('the room loads without errors and shows the player and six enemies', async ({ page }) => {
   test.setTimeout(90000);
-  const errors = await open(page, 'probe=1&calm=1');
+  const errors = await open(page, 'skirmish=1&probe=1&calm=1');
   const s = await state(page);
   expect(s.health).toBe(120);
   expect(s.enemies).toBe(6);
@@ -27,7 +27,7 @@ test('the room loads without errors and shows the player and six enemies', async
 
 test('a click on the floor walks the character there', async ({ page }) => {
   test.setTimeout(90000);
-  const errors = await open(page, 'probe=1&calm=1');
+  const errors = await open(page, 'skirmish=1&probe=1&calm=1');
   const start = (await state(page)).pos;
   const box = await page.locator('canvas').boundingBox();
   await page.mouse.click(box.x + box.width * 0.65, box.y + box.height * 0.5);
@@ -41,7 +41,7 @@ test('a click on the floor walks the character there', async ({ page }) => {
 
 test('the room holds 30 frames a second', async ({ page }) => {
   test.setTimeout(90000);
-  await open(page, 'probe=1&calm=1');
+  await open(page, 'skirmish=1&probe=1&calm=1');
   await page.waitForTimeout(3000);
   expect((await state(page)).fps).toBeGreaterThanOrEqual(30);
 });

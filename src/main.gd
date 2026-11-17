@@ -88,6 +88,7 @@ var _last_checkpoint: Dictionary = {}
 
 
 func _enter_tree() -> void:
+	PageBoot.configure(self)
 	# A language given on the command line (as the tests do) wins over the page and the system.
 	if not _locale_chosen_before_start():
 		Language.apply(Language.pick(Language.requested_from_page(), OS.get_locale()))
@@ -135,7 +136,7 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	# While talking, the dialogue box has the keys.
-	if _title_is_open() or is_talking():
+	if is_title_open() or is_talking():
 		return
 	# Polled rather than read from events, so presses made with Input.action_press count too.
 	if not player.is_alive() and Input.is_action_just_pressed(&"confirm"):
@@ -175,7 +176,7 @@ func enter_room(room_id: StringName, entry: StringName = Room.START) -> void:
 ## Records the party's health and Blood in `state`, keeps it in memory and saves it. Does nothing in a
 ## skirmish, while the title is open, or before a room is entered.
 func checkpoint() -> void:
-	if store == null or room == null or _title_is_open():
+	if store == null or room == null or is_title_open():
 		return
 	_party.record(state)
 	_last_checkpoint = state.to_dict()
@@ -228,6 +229,10 @@ func is_talking() -> bool:
 	return _conversation.is_talking()
 
 
+func is_title_open() -> bool:
+	return _title != null and _title.is_open()
+
+
 ## True from the fall of the room's last enemy, or from entering a cleared room, until the next round.
 func is_cleared() -> bool:
 	return _encounter.is_cleared()
@@ -263,7 +268,7 @@ func _locale_chosen_before_start() -> bool:
 ## Makes `from` the state and enters its room at its entry, or a new game's room and entry, with a
 ## warning, when its room does not exist; then saves. Closes the title first.
 func _play(from: GameState) -> void:
-	if _title_is_open():
+	if is_title_open():
 		_title.close()
 		_world_hold.set_held(&"title", false)
 	state = from
@@ -334,10 +339,6 @@ func _open_title() -> void:
 	_world_hold.set_held(&"title", true)
 	input.enabled = false
 	_title.open(store.has_save())
-
-
-func _title_is_open() -> bool:
-	return _title != null and _title.is_open()
 
 
 func _hand_control_to_alvar() -> void:

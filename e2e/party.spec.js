@@ -16,7 +16,7 @@ async function open(page, query) {
 
 test('the party of three starts with Álvar selected', async ({ page }) => {
   test.setTimeout(90000);
-  const errors = await open(page, 'probe=1&calm=1');
+  const errors = await open(page, 'skirmish=1&probe=1&calm=1');
   const s = await state(page);
   expect(s.party.map((m) => m.name)).toEqual(['Brother Álvar', 'Zahra', 'Gonzalo']);
   expect(s.party.map((m) => m.blood)).toEqual([60, 60, 60]);
@@ -28,7 +28,7 @@ test('the party of three starts with Álvar selected', async ({ page }) => {
 
 test('Tab selects the next member and the companions follow the leader', async ({ page }) => {
   test.setTimeout(90000);
-  const errors = await open(page, 'probe=1&calm=1');
+  const errors = await open(page, 'skirmish=1&probe=1&calm=1');
   await page.keyboard.press('Tab');
   await page.waitForFunction(() => { window.nocturneProbe(); return window.nocturneState.selected === 1; });
   const before = await state(page);
@@ -44,7 +44,7 @@ test('Tab selects the next member and the companions follow the leader', async (
 
 test('Space pauses the world and orders wait for it', async ({ page }) => {
   test.setTimeout(90000);
-  const errors = await open(page, 'probe=1&calm=1');
+  const errors = await open(page, 'skirmish=1&probe=1&calm=1');
   await page.keyboard.press('Space');
   await page.waitForFunction(() => { window.nocturneProbe(); return window.nocturneState.paused; });
   const before = (await state(page)).party[0].pos;
@@ -63,7 +63,7 @@ test('Space pauses the world and orders wait for it', async ({ page }) => {
 
 test('key 1 spends Blood on Iron Sinew', async ({ page }) => {
   test.setTimeout(90000);
-  const errors = await open(page, 'probe=1&calm=1');
+  const errors = await open(page, 'skirmish=1&probe=1&calm=1');
   await page.keyboard.press('1');
   await page.waitForFunction(() => {
     window.nocturneProbe();
@@ -75,7 +75,7 @@ test('key 1 spends Blood on Iron Sinew', async ({ page }) => {
 
 test('a full fight runs to an end, and a fall can be restarted', async ({ page }) => {
   test.setTimeout(240000);
-  const errors = await open(page, 'probe=1');
+  const errors = await open(page, 'skirmish=1&probe=1');
   const box = await page.locator('canvas').boundingBox();
   for (let i = 0; i < 40; i++) {
     const s = await state(page);

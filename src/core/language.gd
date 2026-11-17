@@ -24,10 +24,7 @@ static func apply(locale: String) -> void:
 
 ## On the web, the page URL's `lang` query parameter; elsewhere, or when absent, "".
 static func requested_from_page() -> String:
-	if not OS.has_feature("web"):
-		return ""
-	var value: Variant = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('lang') || ''")
-	return str(value) if value != null else ""
+	return PageParams.value("lang")
 
 
 static func _language_part(locale: String) -> String:

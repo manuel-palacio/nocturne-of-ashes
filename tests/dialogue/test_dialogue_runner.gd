@@ -132,3 +132,15 @@ func test_what_a_stopped_conversation_still_runs_changes_nothing() -> void:
 	await wait_seconds(0.5)
 	assert_false(state.has_flag(&"late"))
 	assert_eq(lines.size(), 1)
+
+func test_it_tells_the_line_on_show_and_its_choices() -> void:
+	assert_eq([runner.speaker(), runner.line_text(), runner.choice_texts()], ["", "", [] as Array[String]])
+	runner.start(TALK, "start", hooks)
+	await wait_physics_frames(2)
+	assert_eq([runner.speaker(), runner.line_text()], ["Smith", "The forge is cold tonight."])
+	assert_eq(runner.choice_texts(), [] as Array[String])
+	runner.advance()
+	await wait_physics_frames(2)
+	assert_eq(runner.choice_texts(), ["Spare him", "Drain him"] as Array[String])
+	runner.stop()
+	assert_eq([runner.speaker(), runner.line_text(), runner.choice_texts()], ["", "", [] as Array[String]])

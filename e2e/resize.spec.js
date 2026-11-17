@@ -6,7 +6,7 @@ const state = (page) => page.evaluate(() => { window.nocturneProbe(); return win
 test('after a resize and a lost focus the canvas fills the window and clicks still land', async ({ page }) => {
   test.setTimeout(90000);
   await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto('/?probe=1&calm=1');
+  await page.goto('/?skirmish=1&probe=1&calm=1');
   await page.waitForFunction(() => window.nocturneStarted === true, null, { timeout: 60000 });
   await page.setViewportSize({ width: 900, height: 600 });
   await page.evaluate(() => { window.dispatchEvent(new Event('blur')); window.dispatchEvent(new Event('focus')); });
