@@ -30,10 +30,13 @@ Quaternius's Universal Animation Library (CC0), which is not kept in the reposit
    (or https://opengameart.org/content/universal-animation-library) and unpack it outside the
    project's tracked files.
 2. Run, from the repository root, with the path to its Godot file:
-   `uv run --with pygltflib --with numpy --with pillow python3 tools/make_character.py "<unpacked>/Animation Library[Standard]/Godot/AnimationLibrary_Godot_Standard.glb"`
-3. A palette change needs no library: edit `PALETTES` in the tool and run it with `--palettes-only`.
+   `uv run --python 3.12 --with pygltflib==1.16.5 --with numpy==2.5.5 --with pillow==13.0.0 python3 tools/make_character.py "<unpacked>/Animation Library[Standard]/Godot/AnimationLibrary_Godot_Standard.glb"`
+3. A palette change needs no library: edit `PALETTES` in the tool and run the same command with
+   `--palettes-only` in place of the path.
 
-The tool writes the same bytes on every run, so an unchanged input leaves `git status` clean.
+The tool writes the same bytes on every run, so an unchanged input leaves `git status` clean. That
+holds for the pinned library versions above: other versions of pygltflib, Pillow or zlib can write
+the same model and palettes with different bytes, so keep the pins when running it.
 
 ## Story so far
 

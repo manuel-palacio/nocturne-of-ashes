@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """Makes the human model and its palettes from Quaternius's Universal Animation Library (CC0).
 
-    uv run --with pygltflib --with numpy --with pillow python3 tools/make_character.py <AnimationLibrary_Godot_Standard.glb>
-    uv run --with pygltflib --with numpy --with pillow python3 tools/make_character.py --palettes-only
+    uv run --python 3.12 --with pygltflib==1.16.5 --with numpy==2.5.5 --with pillow==13.0.0 \
+        python3 tools/make_character.py <AnimationLibrary_Godot_Standard.glb>
+    uv run --python 3.12 --with pygltflib==1.16.5 --with numpy==2.5.5 --with pillow==13.0.0 \
+        python3 tools/make_character.py --palettes-only
+
+The versions are pinned because the output is compared byte for byte: another pygltflib can write
+the JSON differently and another Pillow or zlib can compress the PNGs differently.
 
 The library's mannequin is a fully animated human with no clothes. This tool dresses it with
 colour alone: every triangle is given one body region from the bone that moves it most and its
@@ -82,7 +87,7 @@ ARRAY_BUFFER, ELEMENT_ARRAY_BUFFER = 34962, 34963
 NEAREST, CLAMP_TO_EDGE = 9728, 33071
 
 
-def region_of(bone: str, x: float, y: float, z: float) -> int:
+def region_of(bone: str, x: float, y: float, z: float) -> int | None:
     """The region of a vertex moved most by `bone`, at (`x`, `y`, `z`); `z` < 0 is the back."""
     if "head" in bone:
         return HAIR if y > CROWN or (y > NAPE and z < -0.02) else SKIN
@@ -107,7 +112,7 @@ def region_of(bone: str, x: float, y: float, z: float) -> int:
         if BELT[0] <= y <= BELT[1]:
             return TRIM
         return TUNIC if y > WAIST else SKIRT
-    raise ValueError(f"no region for bone {bone}")
+    return None
 
 
 def main(source: str) -> None:
@@ -126,23 +131,23 @@ def main(source: str) -> None:
         view = old_views[accessor.bufferView]
         dtype = np.dtype(dtypes[accessor.componentType])
         width = WIDTH[accessor.type]
-        assert not view.byteStride or view.byteStride == dtype.itemsize * width, "interleaved data"
-        assert accessor.sparse is None, "sparse accessor"
+        assert not view.byteStride or view.byteStride == dtype.itemsize * width, f"accessor {index} is interleaved"
+        assert accessor.sparse is None, f"accessor {index} is sparse"
         offset = (view.byteOffset or 0) + (accessor.byteOffset or 0)
         return np.frombuffer(old_blob, dtype=dtype, count=accessor.count * width, offset=offset).reshape(
             accessor.count, width)
 
-    # A fresh buffer holding only what the model uses, in a fixed order.
+    # A fresh buffer holding only what the model uses, in a fixed order, every view 4-byte aligned.
     blob = bytearray()
     accessors: list = []
     views: list = []
 
     def add(data: np.ndarray, kind: str, component: int, target=None, bounds: bool = False) -> int:
-        while len(blob) % 4:
-            blob.append(0)
         raw = np.ascontiguousarray(data.astype(dtypes[component])).tobytes()
         views.append(BufferView(buffer=0, byteOffset=len(blob), byteLength=len(raw), target=target))
         blob.extend(raw)
+        while len(blob) % 4:
+            blob.append(0)
         accessor = Accessor(bufferView=len(views) - 1, componentType=component, count=len(data), type=kind)
         if bounds:
             accessor.min = data.min(axis=0).astype(float).tolist()
@@ -159,7 +164,7 @@ def main(source: str) -> None:
         return copied[index]
 
     # The mesh: both of the library's primitives joined into one, one region per triangle.
-    assert len(gltf.meshes) == 1 and len(gltf.skins) == 1
+    assert len(gltf.meshes) == 1 and len(gltf.skins) == 1, "expected the library's one mesh and one skin"
     bones = [gltf.nodes[j].name for j in gltf.skins[0].joints]
     parts = {"position": [], "normal": [], "joints": [], "weights": [], "triangles": []}
     base = 0
@@ -167,13 +172,19 @@ def main(source: str) -> None:
         position = read(primitive.attributes.POSITION)
         parts["position"].append(position)
         parts["normal"].append(read(primitive.attributes.NORMAL))
-        parts["joints"].append(read(primitive.attributes.JOINTS_0))
+        assert old_accessors[primitive.attributes.WEIGHTS_0].componentType == FLOAT, "weights are not floats"
+        joint_index = read(primitive.attributes.JOINTS_0)
+        assert joint_index.max() < 256, "a joint index does not fit in a byte"
+        parts["joints"].append(joint_index)
         parts["weights"].append(read(primitive.attributes.WEIGHTS_0))
         parts["triangles"].append(read(primitive.indices).reshape(-1, 3).astype(np.int64) + base)
         base += len(position)
     position, normal, joints, weights, triangles = (np.concatenate(parts[k]) for k in
                                                     ("position", "normal", "joints", "weights", "triangles"))
     lead = joints[np.arange(len(joints)), weights.argmax(axis=1)]
+    unmapped = sorted({bones[b] for b in lead if region_of(bones[b], 0.0, 1.0, 0.0) is None})
+    if unmapped:
+        sys.exit(f"make_character: no region for the bones {', '.join(unmapped)}")
     of_vertex = np.array([region_of(bones[lead[i]], *position[i]) for i in range(len(position))])
     # A triangle takes the commonest region among its corners (the lowest on a tie), and a vertex
     # is copied once for each region that uses it, so no triangle spans two palette squares.
@@ -191,7 +202,7 @@ def main(source: str) -> None:
     source_index = np.array([k[0] for k in order])
     regions = np.array([k[1] for k in order])
     uv = np.stack([(regions + 0.5) / len(REGION_NAMES), np.full(len(order), 0.5)], axis=1)
-    assert len(order) < 65536
+    assert len(order) < 65536, "too many vertices for 16-bit indices"
     mesh_primitive = Primitive(material=0, mode=4)
     mesh_primitive.attributes.POSITION = add(position[source_index], "VEC3", FLOAT, ARRAY_BUFFER, bounds=True)
     mesh_primitive.attributes.NORMAL = add(normal[source_index], "VEC3", FLOAT, ARRAY_BUFFER)
@@ -253,7 +264,7 @@ def make_stagger(animation, read, add, copy) -> None:
     assert len(inputs) == 1, "Hit_Head's channels have different key times"
     times = read(next(iter(inputs)))[:, 0]
     first, last = STAGGER_KEYS
-    assert last < len(times)
+    assert last < len(times), "Hit_Head has fewer keys than STAGGER_KEYS needs"
     forward = list(range(first, last + 1))
     keys = forward + forward[-2::-1]  # first .. last .. first
     step = np.diff(times[first:last + 1])
@@ -261,17 +272,18 @@ def make_stagger(animation, read, add, copy) -> None:
     new_times = np.concatenate([[0.0], np.cumsum(gaps)]).reshape(-1, 1)
     new_input = add(new_times, "SCALAR", FLOAT, bounds=True)
     for sampler in animation.samplers:
-        assert sampler.interpolation in (None, "LINEAR"), sampler.interpolation
+        assert sampler.interpolation in (None, "LINEAR"), f"Hit_Head has {sampler.interpolation} keys"
         values = read(sampler.output)
+        kind = {width: name for name, width in WIDTH.items()}[values.shape[1]]
         sampler.input = new_input
-        sampler.output = add(values[keys], "VEC4" if values.shape[1] == 4 else "VEC3", FLOAT)
+        sampler.output = add(values[keys], kind, FLOAT)
 
 
 def write_palettes() -> None:
     """Every character's palette, 8 x 1 pixels in REGION_NAMES order. Needs no model."""
     OUT.mkdir(parents=True, exist_ok=True)
     for name, colours in PALETTES.items():
-        assert len(colours) == len(REGION_NAMES), name
+        assert len(colours) == len(REGION_NAMES), f"palette {name} needs {len(REGION_NAMES)} colours"
         image = Image.new("RGB", (len(REGION_NAMES), 1))
         for x, colour in enumerate(colours):
             image.putpixel((x, 0), tuple(int(colour[i:i + 2], 16) for i in (1, 3, 5)))
