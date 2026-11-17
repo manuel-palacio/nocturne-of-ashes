@@ -166,3 +166,30 @@ func test_a_new_game_from_the_title_opens_on_the_waking_once_the_title_closes() 
 	assert_false(title.is_open())
 	assert_true(main.is_talking())
 	assert_eq(main.find_child("DialogueBox").find_child("SpeakerLabel").text, "Malakor")
+
+func _lines_of(title: String) -> Array[String]:
+	var lines: Array[String] = []
+	var note := func(_speaker: String, text: String, _choices: Array[String]) -> void: lines.append(text)
+	main.dialogue.line_shown.connect(note)
+	await _talk(title)
+	main.dialogue.line_shown.disconnect(note)
+	return lines
+
+func test_lines_fit_what_has_happened_so_far() -> void:
+	var state := _after_waking()
+	state.set_flag(&"captive_done")
+	await _boot(state)
+	var smith: Array[String] = await _lines_of("smith")
+	assert_false(smith[0].to_lower().contains("again"))
+	assert_false(smith[0].to_lower().contains("once more"))
+	var both: String = " ".join(await _lines_of("malakor"))
+	assert_true(both.contains("Zahra") and both.contains("Gonzalo"))
+	main.state.set_flag(&"gonzalo_joined")
+	var zahra_missing: String = " ".join(await _lines_of("malakor"))
+	assert_true(zahra_missing.contains("Zahra"))
+	assert_false(zahra_missing.contains("Gonzalo"))
+	main.state.set_flag(&"gonzalo_joined", false)
+	main.state.set_flag(&"zahra_joined")
+	var gonzalo_missing: String = " ".join(await _lines_of("malakor"))
+	assert_true(gonzalo_missing.contains("Gonzalo"))
+	assert_false(gonzalo_missing.contains("Zahra"))

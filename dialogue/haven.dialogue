@@ -25,23 +25,31 @@ elif has_flag("zahra_joined") and has_flag("gonzalo_joined") and has_flag("capti
 	- Hand it over
 		do change_conscience(-1)
 		do set_flag("gave_letter")
+		do set_flag("order_given")
 		Malakor: Good. She will not get far.
 	- Say it burned in the quarter
 		do change_conscience(1)
 		do set_flag("kept_letter")
+		do set_flag("order_given")
 		Malakor: Burned. Much burned that night. Remember that you told me so.
-	do set_flag("order_given")
 	Malakor: The stair is open. Go.
 else
-	if not has_flag("zahra_joined") or not has_flag("gonzalo_joined")
+	if not has_flag("zahra_joined") and not has_flag("gonzalo_joined")
 		Malakor: You do not go below alone. Zahra and Gonzalo go with you. Find them.
+	elif not has_flag("zahra_joined")
+		Malakor: You do not go below without Zahra. Find her.
+	elif not has_flag("gonzalo_joined")
+		Malakor: You do not go below without Gonzalo. Find him.
 	if not has_flag("captive_done")
-		Malakor: And see to the prisoner. He is yours.
+		if has_flag("zahra_joined") and has_flag("gonzalo_joined")
+			Malakor: The prisoner is still yours. See to him before you go below.
+		else
+			Malakor: And see to the prisoner. He is yours.
 => END
 
 ~ smith
 if has_flag("captive_done")
-	Íñigo: Back again. Stand clear of the quench, and I will say it once more.
+	Íñigo: Stand clear of the quench. You have been to the alcove, I can see it on you. Listen while I work.
 else
 	Íñigo: Stand there, out of the sparks. He told me to tell you how things are.
 Íñigo: The Blood in you is not your own now. Every Gift you call on spends some of it, the way this fire spends charcoal.
