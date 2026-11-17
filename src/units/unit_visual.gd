@@ -23,8 +23,10 @@ const MODEL_HEIGHT: float = 1.83
 const BLEND: float = 0.15
 ## A strike, a Gift or a hit shows for its clip's length, but no longer than this.
 const ONE_SHOT_TIME: float = 0.7
-## Flat metres per second above which a unit counts as walking.
-const MOVING: float = 0.1
+## A unit starts to count as moving above this flat speed, in metres per second, and stops below
+## `STOPPED`, so a unit nudged at about one speed does not flicker between the two.
+const MOVING: float = 0.15
+const STOPPED: float = 0.05
 ## How fast a revived unit plays its fall backwards.
 const RISE_SPEED: float = 2.0
 ## The ground speed, in metres per second at scale 1, at which each clip's planted foot stays put:
@@ -59,6 +61,10 @@ var _one_shot: StringName = &""
 var _one_shot_left: float = 0.0
 var _rising_left: float = 0.0
 var _tinted: bool = false
+var _moving: bool = false
+## The material's own colours, which the Fury's tint leaves and gives back.
+var _albedo: Color
+var _emission: Color
 
 
 func _ready() -> void:
@@ -72,6 +78,8 @@ func _ready() -> void:
 	# On from the start, so the Fury changes a colour and not the shader.
 	_material.emission_enabled = true
 	_material.emission = Color.BLACK
+	_albedo = _material.albedo_color
+	_emission = _material.emission
 	_mesh.material_override = _material
 	_wear()
 	_unit = get_parent() as Unit
@@ -84,12 +92,12 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_one_shot_left = maxf(_one_shot_left - delta, 0.0)
 	_rising_left = maxf(_rising_left - delta, 0.0)
-	_show(_choose(), _rising_left > 0.0 and _unit.is_alive())
+	_show(_choose(), _is_rising())
 	var tinted: bool = _unit != null and _unit.is_in_fury()
 	if tinted != _tinted:
 		_tinted = tinted
-		_material.albedo_color = FURY_TINT if tinted else Color.WHITE
-		_material.emission = FURY_GLOW if tinted else Color.BLACK
+		_material.albedo_color = _albedo * FURY_TINT if tinted else _albedo
+		_material.emission = FURY_GLOW if tinted else _emission
 
 
 ## The clip on show; a revived unit's fall played backwards is `death` too.
@@ -123,29 +131,45 @@ func _follow(unit: Unit) -> void:
 func _choose() -> StringName:
 	if _unit == null:
 		return &"talk" if speaking else resting
-	if not _unit.is_alive() or _rising_left > 0.0:
-		return &"death"
-	if _unit.is_feeding():
-		return &"feed"
-	if _unit.is_stunned():
-		return &"stagger"
+	var speed: float = _flat_speed()
+	_moving = speed > (STOPPED if _moving else MOVING)
+	var higher: StringName = &""
+	if not _unit.is_alive() or _is_rising():
+		higher = &"death"
+	elif _unit.is_feeding():
+		higher = &"feed"
+	elif _unit.is_stunned():
+		higher = &"stagger"
+	if not higher.is_empty():
+		# A strike or a hit cut short by a higher rule does not show once that rule ends.
+		_one_shot_left = 0.0
+		return higher
 	if _one_shot_left > 0.0:
 		return _one_shot
-	if _flat_speed() > MOVING:
+	if _moving:
 		return &"run" if _unit.speed_multiplier() > 1.0 else &"walk"
 	return &"idle"
 
 
-## Plays `clip`, blending, unless it already plays; `rising` plays the fall backwards.
-func _show(clip_name: StringName, rising: bool) -> void:
-	if clip_name != _clip or rising != _rising:
+func _is_rising() -> bool:
+	return _rising_left > 0.0 and _unit != null and _unit.is_alive()
+
+
+## Plays `clip`, blending from what showed before, unless it already plays; `rising` plays the fall
+## backwards. `restart` plays it again from its start even when it already plays.
+func _show(clip_name: StringName, rising: bool, restart: bool = false) -> void:
+	if clip_name != _clip or rising != _rising or restart:
+		# A finished clip that does not loop has stopped, but its last pose still blends out.
+		var blend: float = 0.0 if _clip.is_empty() else BLEND
+		var again: bool = clip_name == _clip and rising == _rising
 		_clip = clip_name
 		_rising = rising
-		var blend: float = BLEND if _player.has_animation(_player.current_animation) else 0.0
 		if rising:
 			_player.play(clip_name, blend, -RISE_SPEED, true)
 		else:
 			_player.play(clip_name, blend)
+		if again:
+			_player.seek(0.0, true)
 		# Posed at once: a unit spawned or revived while held does not process, and would show its rest pose.
 		_player.advance(0.0)
 	_player.speed_scale = 1.0
@@ -160,9 +184,9 @@ func _flat_speed() -> float:
 func _start_one_shot(clip_name: StringName) -> void:
 	_one_shot = clip_name
 	_one_shot_left = minf(_player.get_animation(clip_name).length, ONE_SHOT_TIME)
-	# Played again from its start, even when the same clip shows.
-	_clip = &""
-	_show(_choose(), false)
+	var shown: StringName = _choose()
+	# The one-shot starts again from its start; anything a higher rule shows carries on as it was.
+	_show(shown, _is_rising(), shown == clip_name)
 
 
 func _on_hit() -> void:
