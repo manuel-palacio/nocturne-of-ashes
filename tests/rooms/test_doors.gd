@@ -135,3 +135,68 @@ func test_no_leaving_while_a_member_feeds() -> void:
 	await wait_physics_frames(3)
 	assert_eq(main.room.room_id, &"vault")
 	assert_eq(main.hud.notice(), "Not while they are upon you")
+
+func test_a_companion_sent_to_a_door_walks_there_and_stops() -> void:
+	await _boot_in_a_calm_vault()
+	var door: Door = _door("WestDoor")
+	var zahra: Unit = main.party[1]
+	main.select(zahra)
+	var map := main.get_world_3d().navigation_map
+	var inward: Vector3 = main.player.global_position - door.global_position
+	inward.y = 0.0
+	zahra.global_position = NavigationServer3D.map_get_closest_point(map, door.global_position + inward.normalized() * 4.0)
+	main.rig.snap_to_target()
+	await wait_physics_frames(3)
+	var cam: Camera3D = main.rig.camera()
+	var at: Vector2 = cam.unproject_position(door.global_position + Vector3(0, 1.0, 0))
+	assert_eq(Picker.interactable_at(cam, at), door)
+	watch_signals(door)
+	main.input.click_at(at)
+	assert_eq(zahra.current_order(), Unit.Order.MOVE)
+	await wait_until(func() -> bool: return zahra.current_order() == Unit.Order.NONE, 5.0)
+	assert_eq(zahra.current_order(), Unit.Order.NONE)
+	assert_lt(Arena.flat(zahra.global_position, door.global_position), door.reach + 1.0)
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"vault")
+	assert_signal_not_emitted(door, "used")
+	assert_push_warning_count(0)
+
+func test_a_door_is_inert_during_a_conversation() -> void:
+	await _boot(GameState.skirmish())
+	main.talk(preload("res://tests/fixtures/test_talk.dialogue"), "start")
+	await wait_physics_frames(2)
+	assert_true(main.is_talking())
+	watch_signals(_door("WestDoor"))
+	assert_false(_door("WestDoor").use(main.player))
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"vault")
+	assert_eq(main.hud.notice(), "")
+	assert_signal_not_emitted(_door("WestDoor"), "travel_requested")
+
+func test_a_door_is_inert_while_the_title_shows() -> void:
+	main = preload("res://scenes/game.tscn").instantiate()
+	main.store = SaveStore.new()
+	main.store.path = "user://test_doors_%d.json" % randi()
+	main.store.clear()
+	add_child_autoqfree(main)
+	await wait_physics_frames(3)
+	assert_true(main.is_title_open())
+	# There is no room on the title, so a room's doors are handed to the travel by hand.
+	var vault: Room = add_child_autoqfree(Main.ROOMS[&"vault"].instantiate())
+	(main.get_node("Travel") as Travel).begin_room(vault, main.state)
+	var door: Door = vault.find_child("WestDoor")
+	var alvar: Unit = autofree(Party.SCENES[&"alvar"].instantiate())
+	watch_signals(door)
+	assert_false(door.use(alvar))
+	await wait_physics_frames(3)
+	assert_null(main.room)
+	assert_eq(main.hud.notice(), "")
+	assert_signal_not_emitted(door, "travel_requested")
+
+func test_a_door_used_just_before_the_fight_starts_does_not_travel() -> void:
+	await _boot_in_a_calm_vault()
+	assert_true(_door("WestDoor").use(main.player))
+	# In the same frame, before the party would go through at its end.
+	main.enemies[0].order_attack(main.player)
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"vault")
