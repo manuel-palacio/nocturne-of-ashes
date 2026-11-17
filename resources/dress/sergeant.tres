@@ -1,9 +1,16 @@
-[gd_resource type="Resource" script_class="Dress" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="Dress" load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://src/units/dress.gd" id="1_dress"]
 [ext_resource type="Texture2D" uid="uid://cw8fnrqbhc63b" path="res://assets/characters/human/palette-sergeant.png" id="2_palette"]
+[ext_resource type="Script" path="res://src/units/gear_piece.gd" id="3_piece"]
+[ext_resource type="Resource" path="res://resources/gear/skirt_short.tres" id="gear_skirt_short"]
+[ext_resource type="Resource" path="res://resources/gear/helmet.tres" id="gear_helmet"]
+[ext_resource type="Resource" path="res://resources/gear/mail_coif.tres" id="gear_mail_coif"]
+[ext_resource type="Resource" path="res://resources/gear/sword.tres" id="gear_sword"]
+[ext_resource type="Resource" path="res://resources/gear/shield_large.tres" id="gear_shield_large"]
 
 [resource]
 script = ExtResource("1_dress")
 palette = ExtResource("2_palette")
+gear = Array[ExtResource("3_piece")]([ExtResource("gear_skirt_short"), ExtResource("gear_helmet"), ExtResource("gear_mail_coif"), ExtResource("gear_sword"), ExtResource("gear_shield_large")])
 height = 1.88

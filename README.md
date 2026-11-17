@@ -38,6 +38,13 @@ The tool writes the same bytes on every run, so an unchanged input leaves `git s
 holds for the pinned library versions above: other versions of pygltflib, Pillow or zlib can write
 the same model and palettes with different bytes, so keep the pins when running it.
 
+The gear and cloth hung on the model (swords, shields, helmets, skirts, mantles, veils...) are made
+by `tools/blender/gear.py`, one `assets/gear/<piece>.glb` each, plus `assets/gear/palette-gear.png`
+for the colours of steel, wood and leather. Run it from the repository root with Blender:
+`blender -b --factory-startup -P tools/blender/gear.py`. Its docstring has the table of which bone
+each piece hangs from; `resources/gear/<piece>.tres` holds the same for the game, and each
+character's `resources/dress/<name>.tres` lists what it wears. It too writes the same bytes on every run.
+
 ## Story so far
 
 Brother Álvar wakes after his Turning in the forge-haven of the Blood-Forged, under Toledo, and

@@ -17,8 +17,15 @@ extends Node3D
 ## Anyone else plays `talk` while `speaking` (`sit_talk` when `resting` is `sit`), else `resting`.
 ## The model's animation runs in the parent's subtree, so it stops whenever the parent stops
 ## processing.
+##
+## The dress's gear hangs from the model's bones, each piece under its own `BoneAttachment3D`. Cloth is
+## coloured from the dress's palette and stretched round the legs by a `ClothFit`; everything else
+## shares one material that shows the gear palette. Every one of these materials is the body's with
+## another texture or offset, so the gear adds no shader to compile.
 
 const HUMAN: PackedScene = preload("res://assets/characters/human/human.glb")
+## The colours of every piece that is not cloth: steel, wood, leather.
+const GEAR_PALETTE: Texture2D = preload("res://assets/gear/palette-gear.png")
 ## The model's height in metres at scale 1.
 const MODEL_HEIGHT: float = 1.83
 ## Seconds to blend from one clip into the next.
@@ -47,6 +54,11 @@ const STRIDE_SPEED: Dictionary = {&"walk": 1.06, &"run": 5.4}
 ## turns red.
 const FURY_TINT: Color = Color(1.0, 0.5, 0.45)
 const FURY_GLOW: Color = Color(0.5, 0.03, 0.02)
+## Regions of the palette, which is this many squares wide.
+const PALETTE_SQUARES: int = 8
+
+## The material every piece with its own colours shares: the body's, showing the gear palette.
+static var _own_colours: StandardMaterial3D
 
 ## What it wears; the model's own palette without one.
 @export var dress: Dress:
@@ -64,7 +76,13 @@ var _unit: Unit
 var _model: Node3D
 var _player: AnimationPlayer
 var _mesh: MeshInstance3D
+var _skeleton: Skeleton3D
 var _material: StandardMaterial3D
+## The body's material and the cloth's, which the Fury tints together.
+var _materials: Array[StandardMaterial3D] = []
+## The pieces' attachments, under the skeleton.
+var _gear: Array[BoneAttachment3D] = []
+var _fits: Array[ClothFit] = []
 ## What is playing, and whether it is the fall played backwards.
 var _clip: StringName = &""
 var _rising: bool = false
@@ -89,6 +107,8 @@ func _ready() -> void:
 	add_child(_model)
 	_player = _model.find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer
 	_mesh = _model.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+	_skeleton = _model.find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
+	_skeleton.skeleton_updated.connect(_fit_cloth)
 	# Its own copy, so one figure's palette and tint never show on another.
 	_material = (_mesh.mesh.surface_get_material(0) as StandardMaterial3D).duplicate()
 	# On from the start, so the Fury changes a colour and not the shader.
@@ -97,6 +117,7 @@ func _ready() -> void:
 	_albedo = _material.albedo_color
 	_emission = _material.emission
 	_mesh.material_override = _material
+	_materials.append(_material)
 	_wear()
 	_unit = get_parent() as Unit
 	if _unit != null:
@@ -114,8 +135,8 @@ func _process(delta: float) -> void:
 	var tinted: bool = _unit != null and _unit.is_in_fury()
 	if tinted != _tinted:
 		_tinted = tinted
-		_material.albedo_color = _albedo * FURY_TINT if tinted else _albedo
-		_material.emission = FURY_GLOW if tinted else _emission
+		for material: StandardMaterial3D in _materials:
+			_tint(material)
 
 
 ## The clip on show; a revived unit's fall played backwards is `death` too.
@@ -133,6 +154,84 @@ func _wear() -> void:
 	_model.scale = Vector3.ONE * (dress.height / MODEL_HEIGHT)
 	if dress.palette != null:
 		_material.albedo_texture = dress.palette
+	_hang_gear()
+
+
+## Hangs each piece of the dress from its bone, in place of any hung before.
+func _hang_gear() -> void:
+	for attachment: BoneAttachment3D in _gear:
+		_skeleton.remove_child(attachment)
+		attachment.queue_free()
+	_gear.clear()
+	_fits.clear()
+	_materials.resize(1)
+	for piece: GearPiece in dress.gear:
+		var bone: int = _skeleton.find_bone(piece.bone)
+		if bone < 0 or piece.scene == null:
+			push_error("The model has no bone %s for %s" % [piece.bone, piece.resource_path])
+			continue
+		var attachment := BoneAttachment3D.new()
+		attachment.name = piece.scene.resource_path.get_file().get_basename()
+		attachment.bone_name = piece.bone
+		_skeleton.add_child(attachment)
+		_gear.append(attachment)
+		var worn: Node3D = piece.scene.instantiate()
+		attachment.add_child(worn)
+		worn.transform = _hang_at_rest(bone)
+		var material: StandardMaterial3D = _cloth_material(piece.region) if piece.cloth else _shared_own_colours(_material)
+		for mesh: MeshInstance3D in worn.find_children("*", "MeshInstance3D", true, false):
+			mesh.material_override = material
+			if piece.cloth:
+				var fit := ClothFit.new(mesh, _skeleton, bone, worn.transform * mesh.transform, piece.clearance)
+				if fit.is_fitting():
+					_fits.append(fit)
+
+
+## Where a piece modelled in the model's frame at rest, with its origin at `bone`'s rest head, lies
+## relative to that bone: the bone's rest turn undone, so the piece keeps the model's axes at rest.
+func _hang_at_rest(bone: int) -> Transform3D:
+	var rig := Transform3D()  # the skeleton's frame in the model's
+	var node: Node = _skeleton
+	while node != _model:
+		rig = (node as Node3D).transform * rig
+		node = node.get_parent()
+	var rest: Transform3D = _skeleton.get_bone_global_rest(bone)
+	return (rig * rest).affine_inverse() * Transform3D(Basis.IDENTITY, rig * rest.origin)
+
+
+## This figure's cloth material for `region`: the body's, shifted to that square of the palette.
+func _cloth_material(region: Dress.Region) -> StandardMaterial3D:
+	var material := _material.duplicate() as StandardMaterial3D
+	material.albedo_color = _albedo
+	material.emission = _emission
+	material.uv1_offset = Vector3(float(region) / PALETTE_SQUARES, 0.0, 0.0)
+	_materials.append(material)
+	_tint(material)
+	return material
+
+
+func _tint(material: StandardMaterial3D) -> void:
+	material.albedo_color = _albedo * FURY_TINT if _tinted else _albedo
+	material.emission = FURY_GLOW if _tinted else _emission
+
+
+## Made once, from a body's material (`body`) as it stands untinted.
+static func _shared_own_colours(body: StandardMaterial3D) -> StandardMaterial3D:
+	if _own_colours == null:
+		_own_colours = body.duplicate() as StandardMaterial3D
+		_own_colours.albedo_color = Color.WHITE
+		_own_colours.emission = Color.BLACK
+		_own_colours.albedo_texture = GEAR_PALETTE
+	return _own_colours
+
+
+## Fits the cloth to the pose just set. A fallen figure's skirt lies flat: hung rigidly from the hips,
+## it would stand up off the floor round the legs.
+func _fit_cloth() -> void:
+	var delta: float = get_process_delta_time()
+	var lying: bool = _clip == &"death" and not _rising
+	for fit: ClothFit in _fits:
+		fit.fit(delta, lying)
 
 
 func _follow(unit: Unit) -> void:

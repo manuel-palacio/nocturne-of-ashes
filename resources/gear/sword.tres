@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="GearPiece" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/units/gear_piece.gd" id="1_piece"]
+[ext_resource type="PackedScene" path="res://assets/gear/sword.glb" id="2_scene"]
+
+[resource]
+script = ExtResource("1_piece")
+scene = ExtResource("2_scene")
+bone = &"DEF-hand.R"

@@ -1,9 +1,13 @@
-[gd_resource type="Resource" script_class="Dress" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="Dress" load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://src/units/dress.gd" id="1_dress"]
 [ext_resource type="Texture2D" uid="uid://cvqmp0hoq2nfl" path="res://assets/characters/human/palette-gonzalo.png" id="2_palette"]
+[ext_resource type="Script" path="res://src/units/gear_piece.gd" id="3_piece"]
+[ext_resource type="Resource" path="res://resources/gear/apron.tres" id="gear_apron"]
+[ext_resource type="Resource" path="res://resources/gear/hammer.tres" id="gear_hammer"]
 
 [resource]
 script = ExtResource("1_dress")
 palette = ExtResource("2_palette")
+gear = Array[ExtResource("3_piece")]([ExtResource("gear_apron"), ExtResource("gear_hammer")])
 height = 1.9
