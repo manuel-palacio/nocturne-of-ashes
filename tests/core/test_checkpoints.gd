@@ -163,3 +163,17 @@ func test_a_failed_write_warns_once_and_play_goes_on() -> void:
 	main.player.order_move(from + Vector3(4, 0, 0))
 	await wait_for_signal(main.player.arrived, 4.0)
 	assert_lt(Arena.flat(main.player.global_position, from + Vector3(4, 0, 0)), 0.5)
+
+func test_a_checkpoint_in_memory_newer_than_the_file_wins_on_reload() -> void:
+	await _boot()
+	var path: String = main.store.path
+	main.store.path = _unwritable_path()
+	main.state.change_conscience(-2)
+	main.checkpoint()
+	assert_push_warning("Could not write")
+	main.store.path = path
+	assert_eq(main.store.load_state().conscience, 7)
+	main.state.change_conscience(-3)  # after the checkpoint: must be undone
+	main.reload_checkpoint()
+	await wait_physics_frames(3)
+	assert_eq(main.state.conscience, 5)

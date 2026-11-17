@@ -185,15 +185,15 @@ func checkpoint() -> void:
 	checkpoint_saved.emit()
 
 
-## Plays on from the saved state at its room and entry; when the store has no usable save, from the
-## last checkpoint kept in memory, else from a new game. In a skirmish, with no save, it restarts the room.
+## Plays on from the last checkpoint kept in memory, at its room and entry: within a session it is
+## never older than the file, which a failed write leaves behind. Without one (at boot), from the
+## store's save, else from a new game. In a skirmish, with no save, it restarts the room.
 func reload_checkpoint() -> void:
 	if store == null:
 		start_room()
 		return
-	var saved: GameState = store.load_state()
-	if saved == null and not _last_checkpoint.is_empty():
-		saved = GameState.from_dict(_last_checkpoint)
+	var saved: GameState = (GameState.from_dict(_last_checkpoint) if not _last_checkpoint.is_empty()
+			else store.load_state())
 	_play(saved if saved != null else GameState.new_game())
 
 
