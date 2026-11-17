@@ -120,8 +120,9 @@ func _ready() -> void:
 	room_cleared.connect(checkpoint)
 	_conversation.setup(dialogue, input, _party, _encounter, _world_hold)
 	hud.bind_dialogue(dialogue)
-	# The end of a conversation is a checkpoint; a stopped one is not.
+	# An ended conversation is a checkpoint, a stopped one is not, a failed one reloads the last (deferred).
 	_conversation.ended.connect(checkpoint)
+	_conversation.failed.connect(reload_checkpoint, CONNECT_DEFERRED)
 	room_started.connect(func() -> void: _conversation.play_opening(opening_enabled))
 	_travel.setup(input, _party, _encounter, hud, enter_room)
 	if boot == Boot.STORY and store == null:
@@ -291,7 +292,6 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	_load_room(room_id)
 	var arrived_at: StringName = _spawn_party(entry_name)
 	_encounter.begin(room, state, _units)
-	# A room without living enemies is where the party rests.
 	_party.arrive(_encounter.is_cleared())
 	_conversation.begin_room(room, state)
 	if boot == Boot.STORY:

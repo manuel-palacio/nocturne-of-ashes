@@ -10,6 +10,8 @@ extends Node
 
 ## A conversation ran to its end; not emitted for one ended by `stop()` or by an error.
 signal ended
+## A conversation ended in an error: what it already changed should be undone.
+signal failed
 
 ## The conversation a new game opens on, at the cue `OPENING_CUE`, in the room `OPENING_ROOM`, until
 ## the story flag `OPENING_DONE` is set.
@@ -121,5 +123,7 @@ func _on_talk_requested(npc: Npc, _by: Unit) -> void:
 func _on_finished() -> void:
 	_world_hold.set_held(&"talk", false)
 	_input.enabled = true
-	if not _stopping and not _runner.ended_in_error():
+	if _runner.ended_in_error():
+		failed.emit()
+	elif not _stopping:
 		ended.emit()

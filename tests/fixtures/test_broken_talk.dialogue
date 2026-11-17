@@ -9,3 +9,10 @@ Smith: Let me see.
 do change_conscience()
 Smith: You should not hear this.
 => END
+
+~ changed_then_refused
+Smith: Let me see.
+do change_conscience(-2)
+do get_tree()
+Smith: You should not hear this.
+=> END

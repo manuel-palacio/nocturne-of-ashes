@@ -157,7 +157,7 @@ func test_a_call_the_hooks_do_not_offer_ends_the_conversation_unsaved() -> void:
 	await _tap(&"confirm")
 	assert_push_error("Method \"get_tree\" not found")
 	await _assert_play_goes_on()
-	assert_signal_not_emitted(main, "checkpoint_saved")
+	assert_signal_emitted(main, "room_started", "the last checkpoint is reloaded")
 
 func test_a_hook_called_with_the_wrong_arguments_ends_the_conversation_unsaved() -> void:
 	watch_signals(main)
@@ -167,7 +167,7 @@ func test_a_hook_called_with_the_wrong_arguments_ends_the_conversation_unsaved()
 	assert_engine_error("expected 1 argument(s), but called with 0")
 	assert_eq(main.state.conscience, 7)
 	await _assert_play_goes_on()
-	assert_signal_not_emitted(main, "checkpoint_saved")
+	assert_signal_emitted(main, "room_started", "the last checkpoint is reloaded")
 
 func test_a_missing_cue_ends_the_conversation_unsaved() -> void:
 	watch_signals(main)
@@ -175,7 +175,7 @@ func test_a_missing_cue_ends_the_conversation_unsaved() -> void:
 	await wait_physics_frames(2)
 	assert_push_error("has no cue no_such_cue")
 	await _assert_play_goes_on()
-	assert_signal_not_emitted(main, "checkpoint_saved")
+	assert_signal_emitted(main, "room_started", "the last checkpoint is reloaded")
 
 const SLOW := preload("res://tests/fixtures/test_slow_talk.dialogue")
 
@@ -187,7 +187,7 @@ func test_a_line_that_takes_over_two_seconds_ends_the_conversation_unsaved() -> 
 	await wait_seconds(2.5)
 	assert_push_error("waited more than 2 s")
 	await _assert_play_goes_on()
-	assert_signal_not_emitted(main, "checkpoint_saved")
+	assert_signal_emitted(main, "room_started", "the last checkpoint is reloaded")
 	# Past the add-on's wait, so its suspended call has finished before the test ends; what it ran
 	# then changed nothing.
 	await wait_seconds(0.6)
@@ -297,3 +297,14 @@ func test_a_click_on_someone_while_alvar_is_in_the_fury_does_nothing() -> void:
 	await wait_seconds(1.0)
 	assert_signal_not_emitted(smith, "used")
 	assert_false(main.is_talking())
+
+func test_a_conversation_that_changes_conscience_and_then_fails_leaves_no_trace() -> void:
+	main.talk(BROKEN, "changed_then_refused")
+	await wait_physics_frames(2)
+	await _tap(&"confirm")
+	assert_push_error("Method \"get_tree\" not found")
+	await wait_physics_frames(2)
+	assert_false(main.is_talking())
+	main.checkpoint()
+	assert_eq(main.state.conscience, 7)
+	assert_eq(main.store.load_state().conscience, 7)
