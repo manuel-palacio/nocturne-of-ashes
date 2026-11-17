@@ -41,6 +41,12 @@ func use_mark_position() -> Vector3:
 	return Vector3(0.0, 0.0, USE_MARK_AHEAD * side)
 
 
+## Its ring shows for Álvar once the door is wired to the travel, barred or not: a barred door still
+## says why when used. A door nothing answers (as in the skirmish) shows none.
+func offers_use_to(unit: Unit) -> bool:
+	return can_be_used_by(unit) and use_allowed.is_valid()
+
+
 ## Only Álvar opens doors.
 func can_be_used_by(unit: Unit) -> bool:
 	return unit != null and unit.member_id == GameState.LEADER

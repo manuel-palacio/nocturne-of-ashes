@@ -2,9 +2,10 @@ class_name PlayerInput
 extends Node
 ## Turns mouse clicks and keys into orders for the controlled unit, Gift uses, selection requests, and
 ## moves for the camera rig. It never calls `Main`; selection goes out through its signals.
-## It also marks what the leader can use: the usable interactable under the mouse, and the nearest
-## usable one within `NEAR_USE` of the leader, show their use rings; none does while input is off, as
-## it is on the title, in a conversation and while the leader is down.
+## It also marks what the leader can use, one use ring at a time: the usable interactable under the
+## mouse if there is one, else the nearest usable one within `NEAR_USE` of the leader. None shows while
+## input is off, as it is on the title, in a conversation and while the leader is down, nor while the
+## mouse is outside the window or over the HUD.
 
 ## A click landed on a living friend of the controlled unit, or a party member was pressed.
 signal select_requested(unit: Unit)
@@ -13,8 +14,12 @@ signal select_next_requested
 ## Targeting opened for the Gift at `index`, or closed when `index` is −1.
 signal targeting_changed(index: int)
 
-## A usable interactable this near the leader, flat, in metres, shows its ring wherever the mouse is.
+## A usable interactable this near the leader, flat, in metres, shows its ring when the mouse is on
+## nothing usable.
 const NEAR_USE: float = 4.0
+## The nearest keeps its ring until another is this much nearer, so two at about the same distance do
+## not swap it while the leader walks.
+const NEAR_MARGIN: float = 0.5
 
 ## The controlled unit. Changing it closes targeting.
 var unit: Unit:
@@ -29,23 +34,43 @@ var leader: Unit
 var enabled: bool = true:
 	set(value):
 		enabled = value
+		_marks_stale = true
 		if not enabled:
 			cancel_targeting()
+			_pointing = false
 
 ## The index of the Gift waiting for a click on its target, or −1.
 var _targeting: int = -1
-## Where the mouse was last seen, once it has been.
+## Where the mouse is over the world, while it is.
 var _pointer: Vector2 = Vector2.ZERO
 var _pointing: bool = false
+## The interactable whose ring is lit, and the one that was nearest the leader.
+var _lit: Interactable
+var _nearest: Interactable
+## What the ring was last chosen from: pointer, leader's place, camera; and whether to choose again.
+var _marked_pointer: Vector2 = Vector2.ZERO
+var _marked_pointing: bool = false
+var _marked_leader_at: Vector3 = Vector3.INF
+var _marked_camera: Transform3D = Transform3D()
+var _marks_stale: bool = true
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_MOUSE_EXIT:
+		_pointing = false
+
+
+# Every motion first counts as off the world; it comes back in `_unhandled_input` unless the HUD took it.
 func _input(event: InputEvent) -> void:
-	var motion := event as InputEventMouseMotion
-	if motion != null:
-		point_at(motion.position)
+	if event is InputEventMouseMotion:
+		_pointing = false
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	var motion := event as InputEventMouseMotion
+	if motion != null:
+		point_at(motion.position)
+		return
 	var button := event as InputEventMouseButton
 	if button == null or not button.pressed:
 		return
@@ -192,31 +217,63 @@ func _set_targeting(index: int) -> void:
 	targeting_changed.emit(index)
 
 
-## Lights the use ring of the usable interactable under the mouse and of the nearest usable one
-## within `NEAR_USE` of the leader, and puts out every other; all are out while input is off.
+## Lights one use ring: the usable interactable's under the mouse, else the nearest usable one's within
+## `NEAR_USE` of the leader. Chosen again only when the pointer, the leader or the camera has moved, or
+## input was turned on or off; only the ring that changes is touched.
 func _show_use_marks() -> void:
-	var hovered: Interactable = null
-	var nearest: Interactable = null
-	if enabled and rig != null and leader != null and leader.is_alive():
+	var leader_at: Vector3 = leader.global_position if is_instance_valid(leader) else Vector3.INF
+	var camera: Transform3D = rig.camera().global_transform if rig != null else Transform3D()
+	if (not _marks_stale and _pointing == _marked_pointing and _pointer == _marked_pointer
+			and leader_at == _marked_leader_at and camera == _marked_camera):
+		return
+	_marks_stale = false
+	_marked_pointing = _pointing
+	_marked_pointer = _pointer
+	_marked_leader_at = leader_at
+	_marked_camera = camera
+	var chosen: Interactable = null
+	if enabled and rig != null and is_instance_valid(leader) and leader.is_alive():
 		if _pointing:
-			hovered = Picker.interactable_at(rig.camera(), _pointer)
-			if hovered != null and not _usable(hovered):
-				hovered = null
-		var best: float = NEAR_USE
-		for node: Node in get_tree().get_nodes_in_group(&"interactables"):
-			var thing := node as Interactable
-			if not _usable(thing):
-				continue
-			var gap: Vector3 = thing.global_position - leader.global_position
-			var distance: float = Vector2(gap.x, gap.z).length()
-			if distance <= best:
-				best = distance
-				nearest = thing
+			chosen = Picker.interactable_at(rig.camera(), _pointer)
+			if chosen != null and not _usable(chosen):
+				chosen = null
+		_nearest = _nearest_usable()
+		if chosen == null:
+			chosen = _nearest
+	if chosen != _lit:
+		if is_instance_valid(_lit):
+			_lit.set_use_mark(false)
+		if chosen != null:
+			chosen.set_use_mark(true)
+		_lit = chosen
+
+
+## The usable interactable nearest the leader within `NEAR_USE`; the one nearest before keeps that
+## place unless another is `NEAR_MARGIN` nearer.
+func _nearest_usable() -> Interactable:
+	var best: Interactable = null
+	var best_distance: float = NEAR_USE
+	var kept_distance: float = INF
 	for node: Node in get_tree().get_nodes_in_group(&"interactables"):
 		var thing := node as Interactable
-		thing.set_use_mark(thing == hovered or thing == nearest)
+		if not _usable(thing):
+			continue
+		var distance: float = _flat_distance(thing)
+		if thing == _nearest:
+			kept_distance = distance
+		if distance <= best_distance:
+			best_distance = distance
+			best = thing
+	if kept_distance <= NEAR_USE and best != _nearest and best_distance > kept_distance - NEAR_MARGIN:
+		return _nearest
+	return best
 
 
-## Whether the leader can use `thing` now: it is shown and it accepts him.
+func _flat_distance(thing: Interactable) -> float:
+	var gap: Vector3 = thing.global_position - leader.global_position
+	return Vector2(gap.x, gap.z).length()
+
+
+## Whether the leader may use `thing` now and its ring may show: it is shown and offers him its use.
 func _usable(thing: Interactable) -> bool:
-	return thing != null and thing.is_visible_in_tree() and thing.can_be_used_by(leader)
+	return thing != null and thing.is_visible_in_tree() and thing.offers_use_to(leader)

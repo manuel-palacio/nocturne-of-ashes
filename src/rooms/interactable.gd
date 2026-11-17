@@ -60,6 +60,11 @@ func has_use_mark() -> bool:
 	return _use_mark != null and _use_mark.visible
 
 
+## Whether its use ring may show for `unit`: it may use it now. Subclasses narrow it further.
+func offers_use_to(unit: Unit) -> bool:
+	return can_be_used_by(unit)
+
+
 ## Where its use ring lies, on the floor in its own frame: under it, unless a subclass says otherwise.
 func use_mark_position() -> Vector3:
 	return Vector3.ZERO
