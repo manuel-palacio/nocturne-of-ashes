@@ -7,7 +7,7 @@ extends Node
 ## state: a Gift learned is added to its member at once, and a member who joins is spawned in the room
 ## (the room only says where). It knows nothing of enemies.
 
-## A living member became the selected one.
+## A member became the selected one: a living one, or the leader when nobody lives.
 signal selection_changed(unit: Unit)
 ## A member fell.
 signal member_fell(unit: Unit)
@@ -129,11 +129,7 @@ func restore_entry_vitals(state: GameState) -> void:
 func select(unit: Unit) -> void:
 	if not leader_alive() or unit == null or not members.has(unit) or not unit.is_alive():
 		return
-	selected = unit
-	for member: Unit in members:
-		if member.is_alive():
-			_steer_brain(member)
-	selection_changed.emit(unit)
+	_make_selected(unit)
 
 
 ## Selects the next living member after the selected one, wrapping round. Ignored while the leader is down.
@@ -169,11 +165,28 @@ func _steer_brain(member: Unit) -> void:
 		brain.enabled = wanted
 
 
-## Selection goes back to the leader when the selected companion falls.
+func _make_selected(unit: Unit) -> void:
+	selected = unit
+	for member: Unit in members:
+		if member.is_alive():
+			_steer_brain(member)
+	selection_changed.emit(unit)
+
+
+## Selection goes back to the leader when the selected companion falls; while the leader is down it
+## goes to the first living member instead, or to the leader when nobody lives.
 func _on_member_died(unit: Unit) -> void:
 	member_fell.emit(unit)
-	if unit != leader and unit == selected:
+	if unit == leader or unit != selected:
+		return
+	if leader_alive():
 		select(leader)
+		return
+	for member: Unit in members:
+		if member.is_alive():
+			_make_selected(member)
+			return
+	_make_selected(leader)
 
 
 ## The Gifts of `member_id`'s scene that `state` says it knows, in the scene's order.

@@ -11,7 +11,7 @@ extends Node3D
 
 ## Emitted whenever a room is entered (also on a reload and a new game), once its units are in place.
 signal room_started
-## Emitted when a living party member becomes the selected one.
+## Emitted when a party member becomes the selected one, as `Party.selection_changed` describes.
 signal selection_changed(unit: Unit)
 ## Emitted once per round, when the last enemy falls; not when a room is entered already cleared.
 signal room_cleared
