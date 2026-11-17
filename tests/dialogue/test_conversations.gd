@@ -177,6 +177,23 @@ func test_a_missing_cue_ends_the_conversation_unsaved() -> void:
 	await _assert_play_goes_on()
 	assert_signal_not_emitted(main, "checkpoint_saved")
 
+const SLOW := preload("res://tests/fixtures/test_slow_talk.dialogue")
+
+func test_a_line_that_takes_over_two_seconds_ends_the_conversation_unsaved() -> void:
+	watch_signals(main)
+	main.talk(SLOW, "too_slow")
+	await wait_physics_frames(2)
+	await _tap(&"confirm")  # the add-on now waits 3 s for the next line
+	await wait_seconds(2.5)
+	assert_push_error("waited more than 2 s")
+	await _assert_play_goes_on()
+	assert_signal_not_emitted(main, "checkpoint_saved")
+	# Past the add-on's wait, so its suspended call has finished before the test ends; what it ran
+	# then changed nothing.
+	await wait_seconds(0.6)
+	assert_false(main.state.has_flag(&"late"))
+	assert_false(main.is_talking())
+
 func test_two_people_used_at_once_give_one_conversation_and_one_use() -> void:
 	var other: Npc = NPC.instantiate()
 	other.dialogue = TALK

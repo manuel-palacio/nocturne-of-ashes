@@ -4,3 +4,10 @@ do wait(0.2)
 do set_flag("late")
 Smith: There.
 => END
+
+~ too_slow
+Smith: Give me a moment.
+do wait(3)
+do set_flag("late")
+Smith: You should not hear this.
+=> END
