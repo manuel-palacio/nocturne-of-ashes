@@ -308,3 +308,30 @@ func test_a_conversation_that_changes_conscience_and_then_fails_leaves_no_trace(
 	main.checkpoint()
 	assert_eq(main.state.conscience, 7)
 	assert_eq(main.store.load_state().conscience, 7)
+
+func _hint() -> String:
+	return (_box().find_child("HintLabel") as Label).text
+
+func test_the_box_says_how_to_go_on() -> void:
+	main.talk(TALK, "start")
+	await wait_physics_frames(2)
+	assert_eq(_hint(), "Enter or click")
+	await _tap(&"confirm")
+	assert_eq(_hint(), "1–4 or click")
+	Language.apply("es")
+	await wait_physics_frames(1)
+	var spanish: String = _hint()
+	TranslationServer.set_locale("en")
+	await wait_physics_frames(2)  # the HUD rebuilt in English frees what it built in Spanish
+	assert_eq(spanish, "1–4 o clic")
+
+func test_space_advances_a_plain_line_and_does_not_take_a_choice() -> void:
+	main.talk(TALK, "start")
+	await wait_physics_frames(2)
+	await _tap(&"pause")
+	assert_string_contains(_box().find_child("TextLabel").text, "What will you do with the prisoner?")
+	await _tap(&"pause")
+	assert_string_contains(_box().find_child("TextLabel").text, "What will you do with the prisoner?")
+	assert_eq(main.state.conscience, 7)
+	assert_true(main.is_talking())
+	assert_false(main.is_paused())

@@ -80,3 +80,10 @@ msgstr "El último cerrojo no cede. Aún no."
 # People
 msgid "The captive"
 msgstr "El cautivo"
+
+# Dialogue box
+msgid "Enter or click"
+msgstr "Intro o clic"
+
+msgid "1–4 or click"
+msgstr "1–4 o clic"

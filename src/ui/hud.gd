@@ -7,7 +7,7 @@ extends CanvasLayer
 ## Texts: every control whose text is set here or in a panel or button has automatic translation off
 ## in its scene and gets its text from `tr()` in code, so reading `text` gives what is shown. When the
 ## language changes the HUD sets its prompts again and rebuilds its panels and Gift buttons. The
-## dialogue box shows conversations as written; it has no texts of its own.
+## dialogue box shows conversations as written; its only text of its own is its hint.
 
 ## A member's panel was clicked.
 signal member_pressed(unit: Unit)
