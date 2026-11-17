@@ -11,6 +11,13 @@ extends Node
 ## A conversation ran to its end; not emitted for one ended by `stop()` or by an error.
 signal ended
 
+## The conversation a new game opens on, at the cue `OPENING_CUE`, in the room `OPENING_ROOM`, until
+## the story flag `OPENING_DONE` is set.
+const OPENING: Resource = preload("res://dialogue/haven.dialogue")
+const OPENING_CUE: String = "waking"
+const OPENING_ROOM: StringName = &"haven"
+const OPENING_DONE: StringName = &"met_malakor"
+
 var _runner: DialogueRunner
 var _input: PlayerInput
 var _party: Party
@@ -42,6 +49,14 @@ func talk(resource: Resource, title: String) -> void:
 	# physics step, and a held unit leaves the physics space.
 	_hold_while_talking.call_deferred()
 	_runner.start(resource, title, StoryHooks.new(_state, func() -> Unit: return _party.leader))
+
+
+## Starts the opening conversation when `enabled`, the room just started is `OPENING_ROOM` and
+## `OPENING_DONE` is not set. Called once a room has started and the party is in place.
+func play_opening(enabled: bool) -> void:
+	if (enabled and is_instance_valid(_room) and _room.room_id == OPENING_ROOM
+			and not _state.has_flag(OPENING_DONE)):
+		talk(OPENING, OPENING_CUE)
 
 
 ## Whether a conversation may start now: a room is entered, no fight is on, Álvar is up and no one

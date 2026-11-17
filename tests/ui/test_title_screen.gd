@@ -15,6 +15,7 @@ func _boot_with_title(saved: GameState) -> void:
 	main.store.clear()
 	if saved != null:
 		main.store.save(saved)
+	main.opening_enabled = false
 	add_child_autofree(main)
 	await wait_physics_frames(3)
 

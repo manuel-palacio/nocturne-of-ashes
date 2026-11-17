@@ -65,7 +65,7 @@ var store: SaveStore
 ## Whether the story opens on the title screen. Set before entering the tree. While the title is open
 ## there is no room and no party, the world is held and input is off.
 var show_title: bool = true
-## Whether a new game opens with its first conversation. Not used yet.
+## Whether a new game opens with its first conversation, as `Conversation.play_opening()` describes.
 var opening_enabled: bool = true
 
 var _paused: bool = false
@@ -120,6 +120,7 @@ func _ready() -> void:
 	hud.bind_dialogue(dialogue)
 	# The end of a conversation is a checkpoint; a stopped one is not.
 	_conversation.ended.connect(checkpoint)
+	room_started.connect(func() -> void: _conversation.play_opening(opening_enabled))
 	_travel.setup(input, _party, _encounter, hud, enter_room)
 	if boot == Boot.STORY and store == null:
 		store = SaveStore.new()
