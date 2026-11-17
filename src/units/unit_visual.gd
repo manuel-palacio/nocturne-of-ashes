@@ -10,7 +10,8 @@ extends Node3D
 ## 4. stunned, which includes being fed on: `stagger`
 ## 5. a strike, a Gift or a hit just now: `attack`, `cast` or `hit`, for at most `ONE_SHOT_TIME`; a
 ##    hit does not cut a strike or a Gift short
-## 6. walking: `run` while hastened, else `walk`, at the speed that keeps the feet on the ground
+## 6. moving: `run` above `RUN_ABOVE` or while hastened, else `walk`, at the speed that keeps the
+##    feet on the ground
 ## 7. otherwise `idle`
 ##
 ## Anyone else plays `talk` while `speaking`, else `resting`. The model's animation runs in the
@@ -27,6 +28,9 @@ const ONE_SHOT_TIME: float = 0.7
 ## `STOPPED`, so a unit nudged at about one speed does not flicker between the two.
 const MOVING: float = 0.15
 const STOPPED: float = 0.05
+## Above this flat speed, in metres per second, a unit travels with `run`: played fast enough to keep
+## up, `walk` turns into a shuffle.
+const RUN_ABOVE: float = 2.2
 ## How fast a revived unit plays its fall backwards.
 const RISE_SPEED: float = 2.0
 ## The ground speed, in metres per second at scale 1, at which each clip's planted foot stays put:
@@ -147,7 +151,7 @@ func _choose() -> StringName:
 	if _one_shot_left > 0.0:
 		return _one_shot
 	if _moving:
-		return &"run" if _unit.speed_multiplier() > 1.0 else &"walk"
+		return &"run" if speed > RUN_ABOVE or _unit.speed_multiplier() > 1.0 else &"walk"
 	return &"idle"
 
 

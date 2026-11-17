@@ -17,20 +17,34 @@ func _visual(unit: Unit) -> UnitVisual:
 func test_standing_still_is_idle() -> void:
 	assert_eq(_visual(alvar).clip(), &"idle")
 
-func test_walking_shows_the_walk_and_stopping_returns_to_idle() -> void:
+func _player(unit: Unit) -> AnimationPlayer:
+	return _visual(unit).model().find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer
+
+func test_moving_shows_the_run_and_stopping_returns_to_idle() -> void:
 	alvar.order_move(Vector3(-6, 0, 0))
 	await wait_seconds(0.5)
-	assert_eq(_visual(alvar).clip(), &"walk")
+	assert_eq(_visual(alvar).clip(), &"run")
 	await wait_for_signal(alvar.arrived, 4.0)
 	await wait_seconds(0.3)
 	assert_eq(_visual(alvar).clip(), &"idle")
 
+func test_a_slow_unit_walks() -> void:
+	alvar.move_speed = 1.5
+	alvar.order_move(Vector3(-6, 0, 0))
+	await wait_seconds(0.5)
+	assert_eq(_visual(alvar).clip(), &"walk")
+
 func test_a_hastened_unit_runs() -> void:
-	(alvar.get_node("Gifts") as GiftUser).use(0)
-	await wait_seconds(0.8)  # let the cast show
 	alvar.order_move(Vector3(-8, 0, 0))
 	await wait_seconds(0.5)
+	var normal: float = _player(alvar).speed_scale
+	alvar.stop()
+	(alvar.get_node("Gifts") as GiftUser).use(0)
+	await wait_seconds(0.8)  # let the cast show
+	alvar.order_move(Vector3(8, 0, 0))
+	await wait_seconds(0.5)
 	assert_eq(_visual(alvar).clip(), &"run")
+	assert_gt(_player(alvar).speed_scale, normal)
 
 func test_a_strike_shows_the_attack() -> void:
 	alvar.order_attack(foe)
