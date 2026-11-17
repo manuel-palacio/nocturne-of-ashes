@@ -51,3 +51,22 @@ func test_no_two_palettes_are_the_same() -> void:
 		var key: String = image.get_data().hex_encode()
 		assert_false(seen.has(key), palette)
 		seen[key] = true
+
+func test_it_faces_minus_z() -> void:
+	var skeleton: Skeleton3D = human.find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
+	for side: String in ["L", "R"]:
+		var toe: Vector3 = skeleton.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone("DEF-toe." + side)).origin
+		var heel: Vector3 = skeleton.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone("DEF-foot." + side)).origin
+		assert_lt(toe.z, heel.z - 0.05, side)
+
+func test_its_material_samples_the_palette_with_nearest_filtering() -> void:
+	var material := _mesh().mesh.surface_get_material(0) as BaseMaterial3D
+	assert_not_null(material)
+	assert_eq(material.texture_filter, BaseMaterial3D.TEXTURE_FILTER_NEAREST)
+	assert_not_null(material.albedo_texture)
+
+func test_every_palette_is_uncompressed_without_mipmaps() -> void:
+	for palette: String in PALETTES:
+		var image: Image = (load("res://assets/characters/human/palette-%s.png" % palette) as Texture2D).get_image()
+		assert_false(image.has_mipmaps(), palette)
+		assert_false(image.is_compressed(), palette)
