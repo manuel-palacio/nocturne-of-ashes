@@ -50,13 +50,16 @@ const TURN_SPEED: float = 10.0
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 ## True while `take_hit()` deals its damage.
 var _taking_hit: bool = false
+## The marks asked for; the visual shows them while the unit stands.
+var _selected_mark: bool = false
+var _feed_mark: bool = false
 
 @onready var _mover: Mover = $Mover
 @onready var _orders: Orders = $Orders
 @onready var _effects: Effects = $Effects
 @onready var _feeder: Feeder = $Feeder
 @onready var _fury: Fury = $Fury
-@onready var _feed_mark: Node3D = $FeedMark
+@onready var _visual: UnitVisual = get_node_or_null(^"Visual") as UnitVisual
 
 
 func _ready() -> void:
@@ -138,11 +141,26 @@ func order_interact(target: Interactable, issuer: Issuer = Issuer.PLAYER) -> voi
 
 ## Shows or hides the mark that tells the player this unit is weak enough to feed on.
 func set_feed_mark(on: bool) -> void:
-	_feed_mark.visible = on
+	_feed_mark = on
+	if _visual != null:
+		_visual.show_feed_mark(on)
 
 
+## Whether the feed mark shows: asked for, and the unit standing.
 func has_feed_mark() -> bool:
-	return _feed_mark.visible
+	return _feed_mark and is_alive()
+
+
+## Shows or hides the ring that marks the party's selected member.
+func set_selected_mark(on: bool) -> void:
+	_selected_mark = on
+	if _visual != null:
+		_visual.show_selected_mark(on)
+
+
+## Whether the selected ring shows: asked for, and the unit standing.
+func has_selected_mark() -> bool:
+	return _selected_mark and is_alive()
 
 
 ## True while drinking from the target, after the walk there: the unit neither walks nor strikes.

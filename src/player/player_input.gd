@@ -2,6 +2,9 @@ class_name PlayerInput
 extends Node
 ## Turns mouse clicks and keys into orders for the controlled unit, Gift uses, selection requests, and
 ## moves for the camera rig. It never calls `Main`; selection goes out through its signals.
+## It also marks what the leader can use: the usable interactable under the mouse, and the nearest
+## usable one within `NEAR_USE` of the leader, show their use rings; none does while input is off, as
+## it is on the title, in a conversation and while the leader is down.
 
 ## A click landed on a living friend of the controlled unit, or a party member was pressed.
 signal select_requested(unit: Unit)
@@ -9,6 +12,9 @@ signal select_requested(unit: Unit)
 signal select_next_requested
 ## Targeting opened for the Gift at `index`, or closed when `index` is −1.
 signal targeting_changed(index: int)
+
+## A usable interactable this near the leader, flat, in metres, shows its ring wherever the mouse is.
+const NEAR_USE: float = 4.0
 
 ## The controlled unit. Changing it closes targeting.
 var unit: Unit:
@@ -28,6 +34,15 @@ var enabled: bool = true:
 
 ## The index of the Gift waiting for a click on its target, or −1.
 var _targeting: int = -1
+## Where the mouse was last seen, once it has been.
+var _pointer: Vector2 = Vector2.ZERO
+var _pointing: bool = false
+
+
+func _input(event: InputEvent) -> void:
+	var motion := event as InputEventMouseMotion
+	if motion != null:
+		point_at(motion.position)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -56,6 +71,7 @@ func _process(delta: float) -> void:
 	if Input.is_action_just_pressed(&"cancel"):
 		cancel_targeting()
 	_close_stale_targeting()
+	_show_use_marks()
 	if rig == null:
 		return
 	var turn: float = Input.get_action_strength(&"camera_right") - Input.get_action_strength(&"camera_left")
@@ -128,6 +144,13 @@ func click_at(screen_position: Vector2) -> void:
 		unit.order_move(on_ground)
 
 
+## The mouse is over `screen_position`: what lies under it there is marked if usable, from now on
+## as the camera moves.
+func point_at(screen_position: Vector2) -> void:
+	_pointer = screen_position
+	_pointing = true
+
+
 ## A party member was pressed outside the world, as on its HUD panel: while targeting a Gift that can
 ## be used on `member`, uses it on them and keeps the selection; otherwise asks to select them.
 ## Does nothing while input is off.
@@ -167,3 +190,33 @@ func _set_targeting(index: int) -> void:
 		return
 	_targeting = index
 	targeting_changed.emit(index)
+
+
+## Lights the use ring of the usable interactable under the mouse and of the nearest usable one
+## within `NEAR_USE` of the leader, and puts out every other; all are out while input is off.
+func _show_use_marks() -> void:
+	var hovered: Interactable = null
+	var nearest: Interactable = null
+	if enabled and rig != null and leader != null and leader.is_alive():
+		if _pointing:
+			hovered = Picker.interactable_at(rig.camera(), _pointer)
+			if hovered != null and not _usable(hovered):
+				hovered = null
+		var best: float = NEAR_USE
+		for node: Node in get_tree().get_nodes_in_group(&"interactables"):
+			var thing := node as Interactable
+			if not _usable(thing):
+				continue
+			var gap: Vector3 = thing.global_position - leader.global_position
+			var distance: float = Vector2(gap.x, gap.z).length()
+			if distance <= best:
+				best = distance
+				nearest = thing
+	for node: Node in get_tree().get_nodes_in_group(&"interactables"):
+		var thing := node as Interactable
+		thing.set_use_mark(thing == hovered or thing == nearest)
+
+
+## Whether the leader can use `thing` now: it is shown and it accepts him.
+func _usable(thing: Interactable) -> bool:
+	return thing != null and thing.is_visible_in_tree() and thing.can_be_used_by(leader)

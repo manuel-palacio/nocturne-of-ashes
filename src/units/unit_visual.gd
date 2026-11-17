@@ -22,6 +22,10 @@ extends Node3D
 ## coloured from the dress's palette and stretched round the legs by a `ClothFit`; everything else
 ## shares one material that shows the gear palette. Every one of these materials is the body's with
 ## another texture or offset, so the gear adds no shader to compile.
+##
+## A unit's marks are drawn here, unshaded so the room's light never changes them: a gold ring on
+## the floor while it is the selected member, and a pale drop over its head while it can be fed on.
+## The unit says which to show; a fallen unit shows neither.
 
 const HUMAN: PackedScene = preload("res://assets/characters/human/human.glb")
 ## The colours of every piece that is not cloth: steel, wood, leather.
@@ -54,6 +58,12 @@ const STRIDE_SPEED: Dictionary = {&"walk": 1.06, &"run": 5.4}
 ## turns red.
 const FURY_TINT: Color = Color(1.0, 0.5, 0.45)
 const FURY_GLOW: Color = Color(0.5, 0.03, 0.02)
+## The selected member's ring: its outer radius and width, in metres, and its colour.
+const SELECTED_RADIUS: float = 0.55
+const SELECTED_WIDTH: float = 0.035
+const SELECTED_COLOUR: Color = Color(0.95, 0.74, 0.22)
+## The drop's middle is this far above the top of the head.
+const DROP_ABOVE: float = 0.32
 ## Regions of the palette, which is this many squares wide.
 const PALETTE_SQUARES: int = 8
 
@@ -83,6 +93,11 @@ var _materials: Array[StandardMaterial3D] = []
 ## The pieces' attachments, under the skeleton.
 var _gear: Array[BoneAttachment3D] = []
 var _fits: Array[ClothFit] = []
+var _selected_ring: FloorRing
+var _feed_drop: FeedDrop
+## What the unit asked to show; shown only while it stands.
+var _selected_wanted: bool = false
+var _feed_wanted: bool = false
 ## What is playing, and whether it is the fall played backwards.
 var _clip: StringName = &""
 var _rising: bool = false
@@ -118,6 +133,14 @@ func _ready() -> void:
 	_emission = _material.emission
 	_mesh.material_override = _material
 	_materials.append(_material)
+	_selected_ring = FloorRing.new(SELECTED_RADIUS, SELECTED_WIDTH, SELECTED_COLOUR)
+	_selected_ring.name = &"SelectedRing"
+	_selected_ring.visible = false
+	add_child(_selected_ring)
+	_feed_drop = FeedDrop.new()
+	_feed_drop.name = &"FeedDrop"
+	_feed_drop.visible = false
+	add_child(_feed_drop)
 	_wear()
 	_unit = get_parent() as Unit
 	if _unit != null:
@@ -148,10 +171,37 @@ func model() -> Node3D:
 	return _model
 
 
+## Shows the selected member's ring, while the unit stands.
+func show_selected_mark(on: bool) -> void:
+	_selected_wanted = on
+	_show_marks()
+
+
+## Shows the drop over the head, while the unit stands.
+func show_feed_mark(on: bool) -> void:
+	_feed_wanted = on
+	_show_marks()
+
+
+func is_selected_mark_shown() -> bool:
+	return _selected_ring.visible
+
+
+func is_feed_mark_shown() -> bool:
+	return _feed_drop.visible
+
+
+func _show_marks() -> void:
+	var standing: bool = _unit != null and _unit.is_alive()
+	_selected_ring.visible = _selected_wanted and standing
+	_feed_drop.visible = _feed_wanted and standing
+
+
 func _wear() -> void:
 	if dress == null:
 		return
 	_model.scale = Vector3.ONE * (dress.height / MODEL_HEIGHT)
+	_feed_drop.position.y = dress.height + DROP_ABOVE
 	if dress.palette != null:
 		_material.albedo_texture = dress.palette
 	_hang_gear()
@@ -237,6 +287,8 @@ func _fit_cloth() -> void:
 func _follow(unit: Unit) -> void:
 	unit.was_hit.connect(_on_hit.unbind(2))
 	unit.revived.connect(_on_revived.unbind(1))
+	unit.died.connect(_show_marks.unbind(1))
+	unit.revived.connect(_show_marks.unbind(1))
 	var melee := unit.get_node_or_null(^"Melee") as MeleeAttack
 	if melee != null:
 		melee.hit.connect(_start_one_shot.bind(&"attack").unbind(2))

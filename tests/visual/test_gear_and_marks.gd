@@ -81,3 +81,87 @@ func test_gear_hangs_from_bones_and_stays_small() -> void:
 			for mesh: MeshInstance3D in meshes:
 				var triangles: int = mesh.mesh.surface_get_array_index_len(0) / 3
 				assert_lt(triangles, 600, "%s triangles" % attachment.name)
+
+func test_exactly_one_member_shows_the_selected_ring_and_it_follows_selection() -> void:
+	await _skirmish()
+	assert_eq(_lit(main.party), [main.player])
+	assert_true(_visual(main.player).is_selected_mark_shown())
+	var zahra: Unit = main.party[1]
+	main.select(zahra)
+	assert_eq(_lit(main.party), [zahra])
+	assert_true(_visual(zahra).is_selected_mark_shown())
+	assert_false(_visual(main.player).is_selected_mark_shown())
+	main.select_next()
+	assert_eq(_lit(main.party), [main.party[2]])
+
+func test_the_selected_ring_follows_a_companions_fall_and_a_restart() -> void:
+	await _skirmish()
+	var zahra: Unit = main.party[1]
+	main.select(zahra)
+	zahra.take_hit(999)
+	await wait_physics_frames(2)
+	assert_eq(_lit(main.party), [main.player], "back to Álvar when Zahra falls")
+	assert_false(_visual(zahra).is_selected_mark_shown())
+	main.select(main.party[2])
+	main.start_room()
+	await wait_physics_frames(2)
+	assert_eq(_lit(main.party), [main.player], "Álvar after a restart")
+	assert_true(_visual(main.player).is_selected_mark_shown())
+
+func test_the_feed_mark_is_a_drop_over_the_head_that_follows_can_feed_on() -> void:
+	await _skirmish()
+	var foe: Unit = _crusader()
+	assert_false(_visual(foe).is_feed_mark_shown())
+	foe.take_hit(40)
+	await wait_physics_frames(2)
+	assert_true(main.player.can_feed_on(foe))
+	assert_true(foe.has_feed_mark())
+	var drop: Node3D = _visual(foe).find_child("FeedDrop", false, false)
+	assert_true(drop.visible)
+	assert_gt(drop.global_position.y - foe.global_position.y, _visual(foe).dress.height)
+	assert_null(foe.get_node_or_null("FeedMark"), "the red sphere is gone")
+	foe.stats.heal(30)
+	await wait_physics_frames(2)
+	assert_false(drop.visible)
+
+func test_the_hover_mark_shows_for_an_npc_under_the_cursor_and_hides_when_it_leaves() -> void:
+	await _haven()
+	var malakor: Npc = _npc("Malakor")
+	# Over 4 m from Malakor, so only the cursor can light his ring.
+	await _place_alvar(malakor.global_position + Vector3(5.0, 0.3, 3.0))
+	assert_false(malakor.has_use_mark())
+	var camera: Camera3D = main.rig.camera()
+	main.input.point_at(camera.unproject_position(malakor.global_position + Vector3(0, 1.2, 0)))
+	await wait_physics_frames(2)
+	assert_true(malakor.has_use_mark())
+	main.input.point_at(camera.unproject_position(main.player.global_position + Vector3(1.5, 0, 0)))
+	await wait_physics_frames(2)
+	assert_false(malakor.has_use_mark())
+
+func test_the_nearest_usable_one_within_four_metres_shows_its_ring_but_not_while_talking() -> void:
+	await _haven()
+	var malakor: Npc = _npc("Malakor")
+	await _place_alvar(malakor.global_position + Vector3(0, 0.3, 2.0))
+	assert_true(malakor.has_use_mark())
+	var others: Array[Node] = get_tree().get_nodes_in_group(&"interactables").filter(
+			func(thing: Node) -> bool: return thing != malakor and (thing as Interactable).has_use_mark())
+	assert_eq(others, [], "only the nearest")
+	main.talk(HAVEN, "malakor")
+	await wait_physics_frames(2)
+	assert_true(main.is_talking())
+	assert_false(malakor.has_use_mark(), "none while talking")
+
+func test_a_fallen_unit_shows_no_marks() -> void:
+	await _skirmish()
+	var foe: Unit = _crusader()
+	foe.take_hit(40)
+	await wait_physics_frames(2)
+	foe.take_hit(999)
+	foe.set_feed_mark(true)
+	assert_false(foe.has_feed_mark())
+	assert_false(_visual(foe).is_feed_mark_shown())
+	main.player.take_hit(999)
+	await wait_physics_frames(2)
+	assert_eq(main.selected, main.player, "the fallen leader stays selected")
+	assert_false(main.player.has_selected_mark())
+	assert_false(_visual(main.player).is_selected_mark_shown())

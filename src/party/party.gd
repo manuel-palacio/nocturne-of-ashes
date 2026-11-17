@@ -196,6 +196,7 @@ func _steer_brain(member: Unit) -> void:
 func _make_selected(unit: Unit) -> void:
 	selected = unit
 	for member: Unit in members:
+		member.set_selected_mark(member == unit)
 		if member.is_alive():
 			_steer_brain(member)
 	selection_changed.emit(unit)

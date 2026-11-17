@@ -11,6 +11,9 @@ signal travel_requested(door: Door)
 ## Álvar used a door that leads nowhere: `text` should be shown.
 signal refused(text: String)
 
+## Its use ring lies this far in front of it, on the side facing the middle of its room.
+const USE_MARK_AHEAD: float = 0.9
+
 ## The room it leads to; empty for a door that never opens.
 @export var to_room: StringName
 ## The entry of `to_room` the party arrives at.
@@ -27,6 +30,15 @@ var use_allowed: Callable = Callable()
 
 func _init() -> void:
 	leader_only = true
+
+
+## In front of it, on the floor: on whichever side of it the room's origin lies.
+func use_mark_position() -> Vector3:
+	var room: Node3D = get_parent_node_3d()
+	var side: float = 1.0
+	if room != null and to_local(room.global_position).z < 0.0:
+		side = -1.0
+	return Vector3(0.0, 0.0, USE_MARK_AHEAD * side)
 
 
 ## Only Álvar opens doors.
