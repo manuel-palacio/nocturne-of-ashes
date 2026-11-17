@@ -10,9 +10,15 @@ The versions are pinned because the output is compared byte for byte: another py
 the JSON differently and another Pillow or zlib can compress the PNGs differently.
 
 The library's mannequin is a fully animated human with no clothes. This tool dresses it with
-colour alone: every triangle is given one body region from the bone that moves it most and its
-height, and its texture coordinates point at that region's square in an 8 x 1 palette image. A
-character's look is then a palette, `assets/characters/human/palette-<name>.png`.
+colour alone: every triangle is given one body region, and its texture coordinates point at that
+region's square in an 8 x 1 palette image. A character's look is then a palette,
+`assets/characters/human/palette-<name>.png`.
+
+The mannequin is built of rigid pieces: segments (head and chest, upper arm, forearm, thigh, shin,
+foot...) and small joint pieces between them (neck, elbow, wrist, waist, hip, knee, ankle). Region
+borders are put on the borders between pieces wherever possible, because a border drawn through a
+piece follows its triangles and comes out ragged. A segment's vertices take the region of the bone
+that moves them; a joint piece takes one region as a whole. Only the hair is cut by height.
 
 The model keeps only the clips in CLIPS, renamed; `stagger` is made here from `Hit_Head`. Clips
 that loop are written with a `_loop` ending, which Godot's importer reads as looping and removes,
@@ -34,19 +40,14 @@ SKIN, HAIR, TUNIC, SLEEVES, SKIRT, HOSE, BOOTS, TRIM = range(len(REGION_NAMES))
 # Heights in metres on the 1.83 m mannequin, in its own frame (y up, facing +z before the turn).
 CROWN = 1.745          # hair above this on the head
 NAPE = 1.60            # and down to here at the back of the head
-COLLAR_TOP = 1.52      # the neck below this is a collar band,
-COLLAR_FOOT = 1.44     # running down onto the chest and back to here,
-COLLAR_HALF = 0.12     # this far either side of the middle
-BELT = (0.99, 1.05)    # a band round the waist
-WAIST = 1.05           # tunic above, skirt below
-KNEE = 0.50            # skirt above, hose below
-BOOT_TOP = 0.28        # hose above, boots below
+SEGMENTS, JOINTS = "M_Main", "M_Joints"  # the library's materials for the two kinds of piece
+BELT = (0.99, 1.12)    # segment pieces wholly inside this band (the rims round the waist joint) are belt
 
 PALETTES = {
     # skin, hair, tunic, sleeves, skirt, hose, boots, trim
-    # Brother Alvar: the white habit and mantle of a knight-friar, red trim.
+    # Brother Alvar: the white habit and mantle of a knight-friar, a red belt.
     "alvar": ["#d8aa88", "#4a3324", "#ece8de", "#e2ddd0", "#dcd6c8", "#2a2a30", "#5e3d22", "#b0201e"],
-    # Zahra: a deep teal robe, ochre sleeves, dark hair, a pale veil at the collar.
+    # Zahra: a deep teal robe, ochre sleeves, dark hair.
     "zahra": ["#b78462", "#1a1412", "#17625e", "#c8902a", "#145651", "#124a46", "#4a3020", "#e0d2b0"],
     # Gonzalo: grey wool, a brown leather apron, bare forearms, iron-grey hair.
     "gonzalo": ["#cf9e7a", "#8e8e8c", "#7a7c7c", "#cf9e7a", "#7a4a26", "#5c5e5e", "#3a2a1e", "#3c2616"],
@@ -54,8 +55,8 @@ PALETTES = {
     "crusader": ["#d6a684", "#4e3826", "#7c1616", "#9aa0a4", "#761414", "#8c9296", "#2e2620", "#d8d0bc"],
     # Sergeants: the same, with a bronze surcoat and a darker trim.
     "sergeant": ["#d2a07c", "#3a2a1e", "#9a7230", "#9aa0a4", "#8e6a2c", "#8c9296", "#2e2620", "#2a1e14"],
-    # Malakor: black, with a crimson trim, pale skin.
-    "malakor": ["#e8ddd2", "#141214", "#242026", "#201c22", "#1e1a20", "#1a171c", "#121012", "#a8102a"],
+    # Malakor: the darkest figure, a cold charcoal, with a crimson belt and pale skin.
+    "malakor": ["#e8ddd2", "#141214", "#363b44", "#30353e", "#2c3038", "#333842", "#16171b", "#c8102e"],
     # Inigo the smith: brown, a soot-dark apron, bare forearms.
     "smith": ["#c69270", "#2e2018", "#6e4a2a", "#c69270", "#2a2624", "#4e3824", "#2c2018", "#1a1614"],
     # The captive: a torn, dirty undershirt, bare lower legs and feet.
@@ -87,31 +88,41 @@ ARRAY_BUFFER, ELEMENT_ARRAY_BUFFER = 34962, 34963
 NEAREST, CLAMP_TO_EDGE = 9728, 33071
 
 
-def region_of(bone: str, x: float, y: float, z: float) -> int | None:
-    """The region of a vertex moved most by `bone`, at (`x`, `y`, `z`); `z` < 0 is the back."""
+def segment_region(bone: str, y: float, z: float) -> int | None:
+    """The region of a segment vertex moved most by `bone`, at height `y`; `z` < 0 is the back."""
     if "head" in bone:
         return HAIR if y > CROWN or (y > NAPE and z < -0.02) else SKIN
-    if any(b in bone for b in ("neck", "spine.003", "shoulder")) and abs(x) < COLLAR_HALF \
-            and COLLAR_FOOT < y < COLLAR_TOP:
-        return TRIM
-    if "neck" in bone:
-        return SKIN
-    if "hand" in bone or "f_" in bone or "thumb" in bone:
+    if "neck" in bone or "hand" in bone or "f_" in bone or "thumb" in bone:
         return SKIN
     if "forearm" in bone:
         return SLEEVES
-    if "upper_arm" in bone or "shoulder" in bone:
+    if "upper_arm" in bone or "shoulder" in bone or "spine" in bone:
         return TUNIC
+    if "hips" in bone or "thigh" in bone:
+        return SKIRT
+    if "shin" in bone:
+        return HOSE
     if "foot" in bone or "toe" in bone:
         return BOOTS
-    if "shin" in bone or "thigh" in bone:
-        if y < BOOT_TOP:
-            return BOOTS
-        return HOSE if y < KNEE else SKIRT
-    if "hips" in bone or "spine" in bone:
-        if BELT[0] <= y <= BELT[1]:
-            return TRIM
-        return TUNIC if y > WAIST else SKIRT
+    return None
+
+
+def joint_region(bones: set[str]) -> int | None:
+    """The region of a whole joint piece whose vertices are moved most by `bones`."""
+    def has(*parts: str) -> bool:
+        return any(part in bone for bone in bones for part in parts)
+    if has("head", "neck", "hand", "f_", "thumb"):
+        return SKIN  # the neck, the wrists and the knuckles
+    if has("forearm", "upper_arm"):
+        return SLEEVES  # the elbow
+    if has("spine.001"):
+        return TRIM  # the waist: the belt, with the rims either side of it
+    if has("spine", "shoulder"):
+        return TUNIC  # the chest
+    if has("foot", "toe"):
+        return BOOTS  # the ankle
+    if has("thigh", "hips"):
+        return SKIRT  # the hip and the knee: the skirt's hem falls below the knee
     return None
 
 
@@ -166,10 +177,13 @@ def main(source: str) -> None:
     # The mesh: both of the library's primitives joined into one, one region per triangle.
     assert len(gltf.meshes) == 1 and len(gltf.skins) == 1, "expected the library's one mesh and one skin"
     bones = [gltf.nodes[j].name for j in gltf.skins[0].joints]
-    parts = {"position": [], "normal": [], "joints": [], "weights": [], "triangles": []}
+    parts = {"position": [], "normal": [], "joints": [], "weights": [], "triangles": [], "joint_piece": []}
     base = 0
-    for primitive in gltf.meshes[0].primitives:
+    kinds = [gltf.materials[p.material].name for p in gltf.meshes[0].primitives]
+    assert sorted(kinds) == sorted([SEGMENTS, JOINTS]), f"expected one {SEGMENTS} and one {JOINTS} part, got {kinds}"
+    for primitive, kind in zip(gltf.meshes[0].primitives, kinds):
         position = read(primitive.attributes.POSITION)
+        parts["joint_piece"].append(np.full(len(position), kind == JOINTS))
         parts["position"].append(position)
         parts["normal"].append(read(primitive.attributes.NORMAL))
         assert old_accessors[primitive.attributes.WEIGHTS_0].componentType == FLOAT, "weights are not floats"
@@ -179,13 +193,31 @@ def main(source: str) -> None:
         parts["weights"].append(read(primitive.attributes.WEIGHTS_0))
         parts["triangles"].append(read(primitive.indices).reshape(-1, 3).astype(np.int64) + base)
         base += len(position)
-    position, normal, joints, weights, triangles = (np.concatenate(parts[k]) for k in
-                                                    ("position", "normal", "joints", "weights", "triangles"))
+    position, normal, joints, weights, triangles, joint_piece = (np.concatenate(parts[k]) for k in (
+        "position", "normal", "joints", "weights", "triangles", "joint_piece"))
     lead = joints[np.arange(len(joints)), weights.argmax(axis=1)]
-    unmapped = sorted({bones[b] for b in lead if region_of(bones[b], 0.0, 1.0, 0.0) is None})
+    of_vertex = np.full(len(position), -1)
+    unmapped = set()
+    for i in np.flatnonzero(~joint_piece):
+        region = segment_region(bones[lead[i]], position[i, 1], position[i, 2])
+        if region is None:
+            unmapped.add(bones[lead[i]])
+        else:
+            of_vertex[i] = region
+    # The rims of the abdomen and the pelvis on either side of the waist joint widen the belt.
+    for piece in pieces(triangles[~joint_piece[triangles[:, 0]]], len(position)):
+        heights = position[piece, 1]
+        if BELT[0] <= heights.min() and heights.max() <= BELT[1] and abs(position[piece, 0]).max() < 0.2:
+            of_vertex[piece] = TRIM
+    for piece in pieces(triangles[joint_piece[triangles[:, 0]]], len(position)):
+        piece_bones = {bones[lead[i]] for i in piece}
+        region = joint_region(piece_bones)
+        if region is None:
+            unmapped.add(" + ".join(sorted(piece_bones)))
+        else:
+            of_vertex[piece] = region
     if unmapped:
-        sys.exit(f"make_character: no region for the bones {', '.join(unmapped)}")
-    of_vertex = np.array([region_of(bones[lead[i]], *position[i]) for i in range(len(position))])
+        sys.exit(f"make_character: no region for the bones {', '.join(sorted(unmapped))}")
     # A triangle takes the commonest region among its corners (the lowest on a tie), and a vertex
     # is copied once for each region that uses it, so no triangle spans two palette squares.
     remap: dict[tuple[int, int], int] = {}
@@ -254,6 +286,26 @@ def main(source: str) -> None:
     print("wrote human.glb:", len(faces) // 3, "triangles,", len(order), "vertices,",
           round(len(blob) / 1e6, 2), "MB of data")
     write_palettes()
+
+
+def pieces(triangles, count: int) -> list[list[int]]:
+    """The connected pieces of a mesh, as lists of vertex indices, in order of their first vertex."""
+    parent = list(range(count))
+
+    def root(v: int) -> int:
+        while parent[v] != v:
+            parent[v] = parent[parent[v]]
+            v = parent[v]
+        return v
+
+    for a, b, c in triangles:
+        parent[root(int(b))] = root(int(a))
+        parent[root(int(c))] = root(int(a))
+    used = sorted({int(v) for v in triangles.reshape(-1)})
+    groups: dict[int, list[int]] = {}
+    for v in used:
+        groups.setdefault(root(v), []).append(v)
+    return sorted(groups.values(), key=lambda group: group[0])
 
 
 def make_stagger(animation, read, add, copy) -> None:
