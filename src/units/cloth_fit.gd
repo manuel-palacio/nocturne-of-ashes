@@ -38,12 +38,11 @@ var _keys: Array[Dictionary] = []
 ## The `flat` key's blend shape index, or −1.
 var _flat: int = -1
 
-static var _measured: Dictionary = {}  # ArrayMesh -> what `_measure()` found
-
 
 ## `hang` is where the mesh lies relative to `bone`'s pose; `clearance` is how far it keeps from the
-## legs beyond their thickness.
-func _init(mesh: MeshInstance3D, skeleton: Skeleton3D, bone: int, hang: Transform3D, clearance: float) -> void:
+## legs beyond their thickness; `shape` holds the piece's measured tables. Nothing is read from the mesh.
+func _init(mesh: MeshInstance3D, skeleton: Skeleton3D, bone: int, hang: Transform3D, clearance: float,
+		shape: ClothShape) -> void:
 	_mesh = mesh
 	_skeleton = skeleton
 	_bone = bone
@@ -54,36 +53,14 @@ func _init(mesh: MeshInstance3D, skeleton: Skeleton3D, bone: int, hang: Transfor
 		for bone_name: StringName in leg:
 			bones.append(skeleton.find_bone(bone_name))
 		_legs.append(bones)
-	var array_mesh := mesh.mesh as ArrayMesh
-	if array_mesh == null:
+	if shape == null:
 		return
-	# Every wearer of a piece shares its mesh, so its rings are worked out once.
-	if not _measured.has(array_mesh):
-		_measured[array_mesh] = _measure(array_mesh)
-	var measured: Dictionary = _measured[array_mesh]
-	_flat = measured["flat"]
-	_keys = measured["keys"]
-
-
-## The `flat` key's index (or −1) and the stretching keys of `array_mesh`, as `_keys` holds them.
-static func _measure(array_mesh: ArrayMesh) -> Dictionary:
-	var flat: int = -1
-	var keys: Array[Dictionary] = []
-	var rest: PackedVector3Array = array_mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	var shapes: Array = array_mesh.surface_get_blend_shape_arrays(0)
-	for index: int in array_mesh.get_blend_shape_count():
-		if array_mesh.get_blend_shape_name(index) == &"flat":
-			flat = index
-			continue
-		var way: Variant = DIRECTIONS.get(array_mesh.get_blend_shape_name(index))
-		if way == null:
-			continue
-		var shaped: PackedVector3Array = shapes[index][Mesh.ARRAY_VERTEX]
-		if array_mesh.blend_shape_mode == Mesh.BLEND_SHAPE_MODE_RELATIVE:
-			for i: int in shaped.size():
-				shaped[i] += rest[i]
-		keys.append({"index": index, "way": way, "rings": _rings(rest, shaped, way)})
-	return {"flat": flat, "keys": keys}
+	if shape.flattens:
+		_flat = mesh.find_blend_shape_by_name(&"flat")
+	for k: int in shape.keys.size():
+		var index: int = mesh.find_blend_shape_by_name(StringName(shape.keys[k]))
+		if index >= 0 and DIRECTIONS.has(StringName(shape.keys[k])):
+			_keys.append({"index": index, "way": DIRECTIONS[StringName(shape.keys[k])], "rings": shape.rings[k]})
 
 
 func is_fitting() -> bool:
@@ -158,26 +135,6 @@ func _push(point: Vector4, wanted: PackedFloat32Array) -> void:
 	for k: int in _keys.size():
 		if facing[k] > 0.0:
 			wanted[k] = maxf(wanted[k], need * facing[k] / shared)
-
-
-## Per height of the mesh's rings, lowest first: (height, reach along `way` at rest, extra reach of the
-## key at full weight).
-static func _rings(rest: PackedVector3Array, shaped: PackedVector3Array, way: Vector3) -> PackedVector3Array:
-	var by_height: Dictionary = {}  # int millimetres -> Vector2(reach, extra)
-	for i: int in rest.size():
-		var height: int = roundi(rest[i].y * 1000.0)
-		var reach: float = rest[i].dot(way)
-		var extra: float = (shaped[i] - rest[i]).dot(way)
-		var known: Vector2 = by_height.get(height, Vector2(-INF, 0.0))
-		if reach > known.x:
-			by_height[height] = Vector2(reach, extra)
-	var heights: Array = by_height.keys()
-	heights.sort()
-	var rings := PackedVector3Array()
-	for height: int in heights:
-		var ring: Vector2 = by_height[height]
-		rings.append(Vector3(height / 1000.0, ring.x, ring.y))
-	return rings
 
 
 static func _ring_at(rings: PackedVector3Array, height: float) -> Vector3:

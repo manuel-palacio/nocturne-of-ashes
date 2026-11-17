@@ -40,6 +40,10 @@ striding leg stays inside the skirt and a running figure's mantle swings back. S
 The output is byte-identical from one run to the next: the mesh is built in a fixed order, and the
 exporter's generator string (which names the Blender version) is replaced by this tool's name.
 Every piece stays under 600 triangles.
+
+For each cloth piece with shape keys it also writes `assets/gear/<piece>_cloth.tres`, a `ClothShape`:
+per key and per ring of the mesh, how far the piece reaches that way at rest and how much further the
+key takes it. The game fits the cloth from these tables and never reads the mesh back.
 """
 import json
 import math
@@ -472,6 +476,35 @@ def fix_generator(path: Path) -> None:
     path.write_bytes(out)
 
 
+def write_shape(piece: Piece) -> None:
+    """The piece's `ClothShape`: for each stretching key and each ring height (to the millimetre),
+    the reach of the ring's furthest vertex that way at rest and that vertex's extra reach under the
+    key, in the piece's frame."""
+    origin = BONES[piece.bone]
+    names = [name for name in KEY_DIRECTIONS if name in piece.keys]
+    tables = []
+    for name in names:
+        way = KEY_DIRECTIONS[name]
+        by_height: dict[int, tuple[float, float]] = {}
+        for v, offset in zip(piece.verts, piece.keys[name]):
+            local = sub(v, origin)
+            height = round(local[1] * 1000)
+            reach, extra = dot(local, way), dot(offset, way)
+            if height not in by_height or reach > by_height[height][0]:
+                by_height[height] = (reach, extra)
+        rows = ", ".join("%.5f, %.5f, %.5f" % (h / 1000, r, e) for h, (r, e) in sorted(by_height.items()))
+        tables.append(f"PackedVector3Array({rows})")
+    text = "\n".join([
+        '[gd_resource type="Resource" script_class="ClothShape" load_steps=2 format=3]', "",
+        '[ext_resource type="Script" path="res://src/units/cloth_shape.gd" id="1_shape"]', "",
+        "[resource]", 'script = ExtResource("1_shape")',
+        "keys = PackedStringArray(%s)" % ", ".join(f'"{n}"' for n in names),
+        "rings = Array[PackedVector3Array]([%s])" % ", ".join(tables),
+        "flattens = %s" % ("true" if "flat" in piece.keys else "false"), ""])
+    (OUT / f"{piece.name}_cloth.tres").write_text(text)
+    print(f"wrote {piece.name}_cloth.tres")
+
+
 def write_palette() -> None:
     """The gear palette as an 8 x 1 RGB PNG, written byte by byte so it never changes."""
     row = b"\x00" + b"".join(bytes(int(c[i:i + 2], 16) for i in (1, 3, 5)) for c in GEAR_PALETTE)
@@ -497,6 +530,8 @@ def main() -> None:
         if triangles >= MAX_TRIANGLES:
             sys.exit(f"gear: {piece.name} has {triangles} triangles, at most {MAX_TRIANGLES - 1} allowed")
         build(piece)
+        if piece.cloth and piece.keys:
+            write_shape(piece)
         print(f"wrote {piece.name}.glb: {triangles} triangles")
 
 

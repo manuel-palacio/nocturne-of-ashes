@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ClothShape" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/units/cloth_shape.gd" id="1_shape"]
+
+[resource]
+script = ExtResource("1_shape")
+keys = PackedStringArray("fore", "aft", "left", "right")
+rings = Array[PackedVector3Array]([PackedVector3Array(-0.41700, 0.29500, 0.35000, -0.16700, 0.25500, 0.21516, 0.00300, 0.21500, 0.06893, 0.11300, 0.18500, 0.00000), PackedVector3Array(-0.41700, 0.19500, 0.35000, -0.16700, 0.15500, 0.21516, 0.00300, 0.11500, 0.06893, 0.11300, 0.08500, 0.00000), PackedVector3Array(-0.41700, 0.28500, 0.35000, -0.16700, 0.24500, 0.21516, 0.00300, 0.20500, 0.06893, 0.11300, 0.17500, 0.00000), PackedVector3Array(-0.41700, 0.28500, 0.35000, -0.16700, 0.24500, 0.21516, 0.00300, 0.20500, 0.06893, 0.11300, 0.17500, 0.00000)])
+flattens = true
