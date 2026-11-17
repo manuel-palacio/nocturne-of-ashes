@@ -2,8 +2,8 @@ class_name Conversation
 extends Node
 ## The conversations of `Main`: starts one through the runner when it is allowed, holds the world and
 ## turns player input off while it runs (which closes targeting and silences the Gift keys), and gives
-## both back when it ends. Shows or hides the room's characters by the story flags and starts their
-## conversations when they are used.
+## both back when it ends. Shows or hides the room's characters by the story flags, starts their
+## conversations when they are used and tells them when the line on show is theirs.
 ##
 ## A conversation is refused while a fight is on, while Álvar is down and while another one runs.
 ## It reaches the game only through a `StoryHooks` on the state of the current room.
@@ -40,6 +40,7 @@ func setup(runner: DialogueRunner, input: PlayerInput, party: Party, encounter: 
 	_encounter = encounter
 	_world_hold = world_hold
 	runner.finished.connect(_on_finished)
+	runner.line_shown.connect(_on_line_shown)
 
 
 ## Starts the conversation at the cue `title` of `resource`, unless it is refused.
@@ -120,7 +121,20 @@ func _on_talk_requested(npc: Npc, _by: Unit) -> void:
 	talk(npc.dialogue, npc.title)
 
 
+## Tells each character of the room whether `speaker`, a line's speaker as written, is them.
+func _show_speaker(speaker: String) -> void:
+	if not is_instance_valid(_room):
+		return
+	for npc: Npc in _room.npcs():
+		npc.set_speaking(not speaker.is_empty() and npc.label == speaker)
+
+
+func _on_line_shown(speaker: String, _text: String, _choices: Array[String]) -> void:
+	_show_speaker(speaker)
+
+
 func _on_finished() -> void:
+	_show_speaker("")
 	_world_hold.set_held(&"talk", false)
 	_input.enabled = true
 	if _runner.ended_in_error():

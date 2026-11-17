@@ -15,13 +15,16 @@ signal talk_requested(npc: Npc, by: Unit)
 @export var shown_if: StringName = &""
 ## When set, they are hidden while this story flag is set.
 @export var hidden_if: StringName = &""
-@export var colour: Color = Color(0.55, 0.5, 0.45)
+## What they wear.
+@export var dress: Dress
+## Whether they sit while no one speaks to them.
+@export var sitting: bool = false
 
 ## Asked, with no arguments, at each use; when set and it answers false, the use is refused. Set by
 ## whoever answers `talk_requested`, so a talk that would be refused is not a use.
 var talk_allowed: Callable = Callable()
 
-@onready var _body: MeshInstance3D = $Body
+@onready var _visual: UnitVisual = $Visual
 
 
 func _init() -> void:
@@ -29,9 +32,13 @@ func _init() -> void:
 
 
 func _ready() -> void:
-	var material := StandardMaterial3D.new()
-	material.albedo_color = colour
-	_body.material_override = material
+	_visual.dress = dress
+	_visual.resting = &"sit" if sitting else &"idle"
+
+
+## Shows them speaking, or not. The conversation tells each character whether the line on show is theirs.
+func set_speaking(on: bool) -> void:
+	_visual.speaking = on
 
 
 ## Only Álvar, and only while shown and with something to say.

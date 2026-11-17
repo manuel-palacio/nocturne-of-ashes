@@ -4,6 +4,11 @@
 [ext_resource type="PackedScene" path="res://scenes/rooms/door.tscn" id="2_door"]
 [ext_resource type="PackedScene" path="res://scenes/rooms/npc.tscn" id="4_lt12a"]
 [ext_resource type="Resource" path="res://dialogue/haven.dialogue" id="6_nf4cx"]
+[ext_resource type="Resource" path="res://resources/dress/malakor.tres" id="dress_malakor"]
+[ext_resource type="Resource" path="res://resources/dress/smith.tres" id="dress_smith"]
+[ext_resource type="Resource" path="res://resources/dress/captive.tres" id="dress_captive"]
+[ext_resource type="Resource" path="res://resources/dress/zahra.tres" id="dress_zahra"]
+[ext_resource type="Resource" path="res://resources/dress/gonzalo.tres" id="dress_gonzalo"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_klwib"]
 vertices = PackedVector3Array(1.5, 0.3, -3.25, 2, 0.3, -3.5, 2, 0.3, -4.25, -1.75, 0.3, -4.25, -6.75, 0.3, 5, -6.75, 0.3, 4, -8.25, 0.3, 4, -8.25, 0.3, 5.5, -5.5, 0.3, 5.25, 1.25, 0.3, 5.5, -2, 0.3, -5.25, -8.25, 0.3, -5.25, -8.25, 0.3, 2.75, -5.25, 0.3, 3, 1.5, 0.3, -2.25, 3.5, 0.3, -3.5, 5, 0.3, -4.75, 4.75, 0.3, -5.25, 2.25, 0.3, -5.25, 1.75, 0.3, -1.75, 8.5, 0.3, 5.5, 8.5, 0.3, -5.25, 8, 0.3, -4.75, 3.75, 0.3, -2)
@@ -479,14 +484,14 @@ locked_text = "The stair is barred until Malakor says otherwise"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.2, 0, -4.2)
 dialogue = ExtResource("6_nf4cx")
 title = "malakor"
-colour = Color(0.3, 0.12, 0.42, 1)
+dress = ExtResource("dress_malakor")
 label = "Malakor"
 
 [node name="Smith" parent="." unique_id=165754568 instance=ExtResource("4_lt12a")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 0, -3.5)
 dialogue = ExtResource("6_nf4cx")
 title = "smith"
-colour = Color(0.46, 0.52, 0.2, 1)
+dress = ExtResource("dress_smith")
 label = "Íñigo"
 
 [node name="Captive" parent="." unique_id=997634522 instance=ExtResource("4_lt12a")]
@@ -494,7 +499,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6, 0, 4.7)
 dialogue = ExtResource("6_nf4cx")
 title = "captive"
 hidden_if = &"captive_dead"
-colour = Color(0.74, 0.68, 0.5, 1)
+dress = ExtResource("dress_captive")
+sitting = true
 label = "The captive"
 
 [node name="ZahraNpc" parent="." unique_id=1155358755 instance=ExtResource("4_lt12a")]
@@ -502,7 +508,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 4.4)
 dialogue = ExtResource("6_nf4cx")
 title = "zahra"
 hidden_if = &"zahra_joined"
-colour = Color(0.16, 0.24, 0.62, 1)
+dress = ExtResource("dress_zahra")
 label = "Zahra"
 
 [node name="GonzaloNpc" parent="." unique_id=511026306 instance=ExtResource("4_lt12a")]
@@ -510,5 +516,5 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 0, -4.3)
 dialogue = ExtResource("6_nf4cx")
 title = "gonzalo"
 hidden_if = &"gonzalo_joined"
-colour = Color(0.78, 0.42, 0.12, 1)
+dress = ExtResource("dress_gonzalo")
 label = "Gonzalo"
