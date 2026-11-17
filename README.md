@@ -53,7 +53,7 @@ The browser tests start the game with query parameters in the page address (for 
 - `title=1` — with `probe=1`: shows the title anyway.
 - `fresh=1` — with `probe=1`: clears the save first; ignored without it.
 - `calm=1` — with `probe=1`: the enemies stand still.
-- `frail=1` — with `probe=1`: Álvar starts each room with enemies at 1 health.
+- `frail=1` — with `probe=1`: Álvar's health is set to 1 when a room with enemies starts.
 - `at=vault` — with `probe=1` and `fresh=1`: starts in the vault as if the haven were finished.
 - `skirmish=1` — plays the vault skirmish with the whole party, with no title and no save.
 - `lang=es` — shows the game in Spanish.
