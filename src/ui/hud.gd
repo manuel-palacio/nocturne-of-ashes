@@ -13,6 +13,8 @@ extends CanvasLayer
 signal member_pressed(unit: Unit)
 ## A Gift button was pressed.
 signal gift_chosen(index: int)
+## The fallen prompt was clicked: the player asks to rise, as with Enter.
+signal fallen_pressed
 
 const PANEL: PackedScene = preload("res://scenes/ui/party_member_panel.tscn")
 const GIFT_BUTTON: PackedScene = preload("res://scenes/ui/gift_button.tscn")
@@ -44,6 +46,7 @@ var _notice_left: float = 0.0
 
 
 func _ready() -> void:
+	_fallen_label.gui_input.connect(_on_fallen_label_input)
 	_show_texts()
 	hide_fallen()
 	hide_cleared()
@@ -187,6 +190,13 @@ func _show_texts() -> void:
 func _show_conscience() -> void:
 	if _state != null:
 		_conscience_label.text = "%s %d/%d" % [tr("Conscience"), _state.conscience, GameState.CONSCIENCE_MAX]
+
+
+## The prompt covers the screen while it shows and takes every mouse button; a left press is a click.
+func _on_fallen_label_input(event: InputEvent) -> void:
+	var button := event as InputEventMouseButton
+	if button != null and button.pressed and button.button_index == MOUSE_BUTTON_LEFT:
+		fallen_pressed.emit()
 
 
 func _on_conscience_changed(_value: int) -> void:

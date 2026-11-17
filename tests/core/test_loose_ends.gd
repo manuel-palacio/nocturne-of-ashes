@@ -130,3 +130,30 @@ func test_the_left_button_on_panels_and_buttons_gives_no_order_in_the_world() ->
 	assert_true(main.hud.gift_buttons()[0].disabled)
 	await _click(main.hud.gift_buttons()[0])
 	assert_eq(main.player.current_order(), Unit.Order.NONE, "the disabled button's click gave no order")
+
+# 6. A click on the fallen prompt does what Enter does.
+
+func test_a_click_on_the_fallen_prompt_restarts_the_skirmish_once() -> void:
+	await _skirmish()
+	main.player.take_hit(999)
+	await wait_physics_frames(2)
+	assert_true(main.hud.is_fallen_shown())
+	watch_signals(main)
+	await _click(main.hud.find_child("FallenLabel") as Control)
+	assert_signal_emit_count(main, "room_started", 1)
+	assert_true(main.player.is_alive())
+	assert_false(main.hud.is_fallen_shown())
+
+func test_a_click_on_the_fallen_prompt_reloads_the_story_checkpoint_once() -> void:
+	var state := GameState.skirmish()
+	state.change_conscience(-2)
+	main = Story.boot(self, state)
+	await wait_physics_frames(3)
+	main.state.change_conscience(-3)
+	main.player.take_hit(999)
+	await wait_physics_frames(2)
+	watch_signals(main)
+	await _click(main.hud.find_child("FallenLabel") as Control)
+	assert_signal_emit_count(main, "room_started", 1)
+	assert_true(main.player.is_alive())
+	assert_eq(main.state.conscience, GameState.CONSCIENCE_START - 2, "the checkpoint's Conscience")

@@ -112,6 +112,7 @@ func _ready() -> void:
 	input.targeting_changed.connect(hud.show_targeting)
 	hud.member_pressed.connect(input.press_member)
 	hud.gift_chosen.connect(input.press_gift)
+	hud.fallen_pressed.connect(reload_checkpoint)
 	selection_changed.connect(hud.show_selected)
 	pause_changed.connect(hud.set_paused)
 	room_cleared.connect(hud.show_cleared)
@@ -140,10 +141,7 @@ func _process(_delta: float) -> void:
 		return
 	# Polled rather than read from events, so presses made with Input.action_press count too.
 	if not player.is_alive() and Input.is_action_just_pressed(&"confirm"):
-		if store != null:
-			reload_checkpoint()
-		else:
-			start_room()
+		reload_checkpoint()
 	if Input.is_action_just_pressed(&"pause"):
 		set_paused(not _paused)
 
