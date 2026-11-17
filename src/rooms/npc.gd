@@ -46,6 +46,11 @@ func can_be_used_by(unit: Unit) -> bool:
 	return unit != null and unit.member_id == GameState.LEADER and visible and dialogue != null
 
 
+## Their ring shows only while a talk with them would be allowed now.
+func offers_use_to(unit: Unit) -> bool:
+	return can_be_used_by(unit) and (not talk_allowed.is_valid() or talk_allowed.call())
+
+
 func use(by: Unit) -> bool:
 	if talk_allowed.is_valid() and not talk_allowed.call():
 		return false
