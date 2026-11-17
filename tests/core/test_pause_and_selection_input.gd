@@ -103,3 +103,60 @@ func test_tab_does_nothing_while_input_is_off() -> void:
 	main.input.enabled = false
 	await _tap(&"select_next")
 	assert_eq(main.selected, main.player)
+
+func _click_unit(unit: Unit) -> void:
+	main.input.click_at(_screen(unit.global_position + Vector3(0, 0.9, 0)))
+
+func _without_brains() -> void:
+	for enemy: Unit in main.enemies:
+		var brain: Node = enemy.get_node("Brain")
+		enemy.remove_child(brain)
+		brain.free()
+
+func test_a_click_on_an_enemy_while_paused_orders_an_attack_that_begins_on_unpause() -> void:
+	_without_brains()
+	var foe: Unit = main.enemies[0]
+	foe.global_position = main.player.global_position + Vector3(4, 0, 0)
+	await wait_physics_frames(2)
+	main.set_paused(true)
+	await wait_physics_frames(2)
+	_click_unit(foe)
+	assert_eq(main.player.current_order(), Unit.Order.ATTACK)
+	assert_eq(main.player.attack_target(), foe)
+	var from: Vector3 = main.player.global_position
+	await wait_seconds(0.3)
+	assert_lt(Arena.flat(main.player.global_position, from), 0.05)
+	main.set_paused(false)
+	await wait_seconds(0.5)
+	assert_lt(Arena.flat(main.player.global_position, foe.global_position), Arena.flat(from, foe.global_position) - 0.3)
+
+func test_a_click_on_a_companion_while_paused_selects_it() -> void:
+	main.set_paused(true)
+	await wait_physics_frames(2)
+	_click_unit(main.party[1])
+	assert_eq(main.selected, main.party[1])
+
+func test_a_baleful_eye_awaiting_its_target_is_used_on_a_click_while_paused() -> void:
+	_without_brains()
+	var foe: Unit = main.enemies[0]
+	foe.global_position = main.player.global_position + Vector3(4, 0, 0)
+	await wait_physics_frames(2)
+	main.set_paused(true)
+	await wait_physics_frames(2)
+	main.input.press_gift(1)
+	assert_eq(main.input.targeting_gift(), 1)
+	_click_unit(foe)
+	assert_true(foe.is_stunned())
+	assert_eq(main.player.stats.blood, 45)
+	assert_eq(main.input.targeting_gift(), -1)
+
+func test_a_mend_flesh_awaiting_its_target_heals_a_hurt_ally_clicked_while_paused() -> void:
+	main.select(main.party[1])
+	main.party[2].take_hit(60)
+	main.set_paused(true)
+	await wait_physics_frames(2)
+	main.input.press_gift(0)
+	assert_eq(main.input.targeting_gift(), 0)
+	_click_unit(main.party[2])
+	assert_eq(main.party[2].stats.health, 140)
+	assert_eq(main.input.targeting_gift(), -1)

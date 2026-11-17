@@ -45,9 +45,9 @@ func talk(resource: Resource, title: String) -> void:
 	if not can_talk():
 		return
 	_input.enabled = false
-	# Held at the end of the frame: a unit using someone asks for the talk in the middle of its
-	# physics step, and a held unit leaves the physics space.
-	_hold_while_talking.call_deferred()
+	# Held at once, even from the physics step of the unit using someone: held units stay in the
+	# physics space. Held before the start, so a conversation that ends at once releases it.
+	_world_hold.set_held(&"talk", true)
 	_runner.start(resource, title, StoryHooks.new(_state, func() -> Unit: return _party.leader))
 
 
@@ -103,10 +103,6 @@ func _show_characters() -> void:
 		return
 	for npc: Npc in _room.npcs():
 		npc.show_by(_state)
-
-
-func _hold_while_talking() -> void:
-	_world_hold.set_held(&"talk", _runner.is_running())
 
 
 func _on_room_child_entered(child: Node) -> void:
