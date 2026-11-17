@@ -48,6 +48,8 @@ const RISEN_HEALTH: float = 0.3
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _standing: Transform3D
 var _fallen: Transform3D
+## True while `take_hit()` deals its damage.
+var _taking_hit: bool = false
 
 @onready var _mover: Mover = $Mover
 @onready var _orders: Orders = $Orders
@@ -189,14 +191,19 @@ func walk_speed() -> float:
 
 
 ## Deals `amount`, scaled by the damage this unit takes, and never less than 1. Returns the health
-## removed, which `was_hit` also carries; 0 for amounts of 0 or less and for the dead.
+## removed, which `was_hit` also carries; 0 for amounts of 0 or less and for the dead. A killing blow
+## is announced as a hit before the death.
 func take_hit(amount: int, source: Unit = null) -> int:
 	if amount <= 0 or not is_alive():
 		return 0
 	var health_before: int = stats.health
+	_taking_hit = true
 	stats.take_damage(maxi(roundi(amount * damage_taken_multiplier()), 1))
+	_taking_hit = false
 	var removed: int = health_before - stats.health
 	was_hit.emit(removed, source)
+	if not is_alive():
+		_fall()
 	return removed
 
 
@@ -276,6 +283,12 @@ func is_hostile_to(other: Unit) -> bool:
 
 
 func _on_stats_died() -> void:
+	# A hit in progress announces the fall once it has announced the hit.
+	if not _taking_hit:
+		_fall()
+
+
+func _fall() -> void:
 	_fury.end()
 	_orders.clear()
 	clear_effects()

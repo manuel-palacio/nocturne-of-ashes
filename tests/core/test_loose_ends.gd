@@ -58,3 +58,15 @@ func test_effects_are_not_added_to_the_fallen() -> void:
 	zahra.add_effect(stun)
 	assert_false(zahra.has_effect(&"stun"))
 	assert_eq(zahra.effect_ids(), [] as Array[StringName])
+
+# 3. `was_hit` before `died` on a killing blow.
+
+func test_a_killing_blow_is_heard_as_a_hit_before_the_death() -> void:
+	var arena := Arena.new(self)
+	var foe: Unit = arena.spawn(Arena.CRUSADER, Vector3.ZERO)
+	await wait_physics_frames(2)
+	var heard: Array[String] = []
+	foe.was_hit.connect(func(_amount: int, _source: Unit) -> void: heard.append("was_hit"))
+	foe.died.connect(func(_unit: Unit) -> void: heard.append("died"))
+	foe.take_hit(999)
+	assert_eq(heard, ["was_hit", "died"] as Array[String])
