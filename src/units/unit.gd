@@ -78,6 +78,10 @@ func _ready() -> void:
 	_orders.fury_started.connect(fury_started.emit)
 	_orders.fury_ended.connect(fury_ended.emit)
 	_fury.watch(stats)
+	# Marks asked for before the unit was ready reach the visual now.
+	if _visual != null:
+		_visual.show_selected_mark(_selected_mark)
+		_visual.show_feed_mark(_feed_mark)
 
 
 func _physics_process(delta: float) -> void:
