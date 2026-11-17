@@ -6,7 +6,7 @@ extends Node3D
 ##
 ## 1. fallen: `death`, held on its last frame
 ## 2. just revived: `death` backwards at double speed
-## 3. drinking: `feed`
+## 3. drinking: `feed`, the model drawn shifted towards the victim so the two figures meet
 ## 4. stunned, which includes being fed on: `stagger`
 ## 5. a strike, a Gift or a hit just now: `attack`, `cast` or `hit`, for at most `ONE_SHOT_TIME`; a
 ##    hit does not cut a strike or a Gift short
@@ -32,6 +32,11 @@ const STOPPED: float = 0.05
 ## Above this flat speed, in metres per second, a unit travels with `run`: played fast enough to keep
 ## up, `walk` turns into a shuffle.
 const RUN_ABOVE: float = 2.2
+## While drinking, the model is drawn up to `FEED_REACH` metres towards the victim, stopping
+## `FEED_GAP` from it, easing in and out over `FEED_EASE` seconds. The unit itself stays where it is.
+const FEED_REACH: float = 0.8
+const FEED_GAP: float = 0.55
+const FEED_EASE: float = 0.2
 ## How fast a revived unit plays its fall backwards.
 const RISE_SPEED: float = 2.0
 ## The ground speed, in metres per second at scale 1, at which each clip's planted foot stays put:
@@ -67,6 +72,10 @@ var _one_shot_left: float = 0.0
 var _rising_left: float = 0.0
 var _tinted: bool = false
 var _moving: bool = false
+## How far the feed's lean towards the victim has eased in, from 0 to 1.
+var _lean: float = 0.0
+## Where the lean goes, flat in world space, as of the last frame of drinking.
+var _lean_offset: Vector3 = Vector3.ZERO
 ## The material's own colours, which the Fury's tint leaves and gives back.
 var _albedo: Color
 var _emission: Color
@@ -98,6 +107,8 @@ func _process(delta: float) -> void:
 	_one_shot_left = maxf(_one_shot_left - delta, 0.0)
 	_rising_left = maxf(_rising_left - delta, 0.0)
 	_show(_choose(), _is_rising())
+	if _unit != null:
+		_lean_towards_victim(delta)
 	var tinted: bool = _unit != null and _unit.is_in_fury()
 	if tinted != _tinted:
 		_tinted = tinted
@@ -157,6 +168,20 @@ func _choose() -> StringName:
 	if _moving:
 		return &"run" if speed > RUN_ABOVE or _unit.speed_multiplier() > 1.0 else &"walk"
 	return &"idle"
+
+
+## Eases the model towards the victim while drinking, and back once the drinking ends.
+func _lean_towards_victim(delta: float) -> void:
+	var victim: Unit = _unit.feed_target() if _unit.is_feeding() else null
+	_lean = move_toward(_lean, 1.0 if victim != null else 0.0, delta / FEED_EASE)
+	if victim != null:
+		var gap: Vector3 = victim.global_position - global_position
+		gap.y = 0.0
+		var reach: float = clampf(gap.length() - FEED_GAP, 0.0, FEED_REACH)
+		_lean_offset = gap.normalized() * reach
+	if _lean == 0.0:
+		_lean_offset = Vector3.ZERO
+	_model.position = to_local(global_position + _lean_offset * _lean)
 
 
 func _is_rising() -> bool:

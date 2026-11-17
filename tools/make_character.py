@@ -21,8 +21,8 @@ piece follows its triangles and comes out ragged. A segment's vertices take the 
 that moves them; a joint piece takes one region as a whole. Only the hair is cut by height.
 
 The model keeps only the clips in CLIPS, renamed; `stagger` is made here from `Hit_Head` and `feed`
-from `Push_Loop` (the library has no feeding clip: the figure leans in with both arms out at a
-victim's shoulders, swaying a little, its feet still). Clips
+from `PickUp_Table` (the library has no feeding clip: the figure bows its head and leans in, as over
+someone's neck, swaying a little, its feet still). Clips
 that loop are written with a `_loop` ending, which Godot's importer reads as looping and removes,
 so the game sees exactly the names in CLIPS. The mesh is turned to face -Z, Godot's forward, and
 the binary buffer is rebuilt to hold only what the model uses. The output is byte-identical from
@@ -80,14 +80,14 @@ CLIPS = {
     "talk": ("Idle_Talking_Loop", True),
     "sit": ("Sitting_Idle_Loop", True),
     "sit_talk": ("Sitting_Talking_Loop", True),
-    "feed": ("Push_Loop", True),
+    "feed": ("PickUp_Table", True),
 }
 # Loops made from a stretch of a library clip: game name: (first key, last key, slowed by). The keys
 # are played forward then back, so the ends meet. `stagger` reels on the blow of Hit_Head; `feed`
-# holds the lean of Push_Loop's first keys, where its feet barely move, as a slow sway.
+# holds PickUp_Table's deepest bow, head down and leaning in, as a slow sway.
 PINGPONG = {
     "stagger": (2, 10, 1.5),
-    "feed": (0, 4, 4.0),
+    "feed": (5, 8, 4.0),
 }
 
 WIDTH = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT4": 16}
