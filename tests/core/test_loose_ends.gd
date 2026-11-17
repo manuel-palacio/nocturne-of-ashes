@@ -70,3 +70,22 @@ func test_a_killing_blow_is_heard_as_a_hit_before_the_death() -> void:
 	foe.died.connect(func(_unit: Unit) -> void: heard.append("died"))
 	foe.take_hit(999)
 	assert_eq(heard, ["was_hit", "died"] as Array[String])
+
+# 4. An order on a map that never becomes ready warns once and is dropped.
+
+func test_an_order_on_a_map_that_never_becomes_ready_warns_once_and_is_dropped() -> void:
+	var arena := Arena.new(self)
+	# The room's only region holds no navmesh, so no point is ever on the map.
+	(arena.room.get_node("NavigationRegion3D") as NavigationRegion3D).navigation_mesh = null
+	var alvar: Unit = arena.spawn(Arena.ALVAR, Vector3.ZERO)
+	await wait_physics_frames(3)
+	alvar.order_move(Vector3(3, 0, 0))
+	await wait_seconds(4.5)
+	assert_eq(alvar.current_order(), Unit.Order.MOVE, "still waiting before 5 s")
+	assert_push_warning_count(0)
+	await wait_seconds(1.0)
+	assert_eq(alvar.current_order(), Unit.Order.NONE)
+	assert_false(alvar.is_moving())
+	assert_push_warning("could not plan its move order")
+	await wait_seconds(1.0)
+	assert_push_warning_count(1)

@@ -10,6 +10,9 @@ signal stalled
 ## A walk that has moved the unit less than this in `_STALL_TIME` is dropped with a warning.
 const _STALL_DISTANCE: float = 0.1
 const _STALL_TIME: float = 1.0
+## A walk still waiting to be planned after this many seconds is dropped with a warning: its map
+## never became ready, or the unit never landed.
+const _PLAN_TIME: float = 5.0
 
 ## When false, a walk that makes no progress carries on: a chase re-aims on its own instead.
 var stall_check: bool = true
@@ -22,17 +25,21 @@ var _heading: Vector3
 var _steered: bool = false
 var _stall_from: Vector3
 var _stall_timer: float = 0.0
+## Seconds the walk has waited to be planned.
+var _waiting_for: float = 0.0
 
 @onready var _unit: Unit = get_parent()
 @onready var _agent: NavigationAgent3D = $"../Agent"
 
 
 ## Walks to the reachable navmesh point nearest to `target`.
-## A walk started before the navigation map has synced, or in the air, is held until it can be planned.
+## A walk started before the navigation map has synced, or in the air, is held until it can be planned,
+## for at most `_PLAN_TIME` seconds of the unit's physics; then it is dropped with a warning.
 func walk_to(target: Vector3) -> void:
 	_destination = target
 	_pending = true
 	_walking = true
+	_waiting_for = 0.0
 	_plan()
 
 
@@ -65,6 +72,9 @@ func steer() -> bool:
 		return false
 	if _pending:
 		_plan()
+		if _pending:
+			# Only frames that tried to plan count, so a stun or a hold does not use the time up.
+			_wait_for_plan(get_physics_process_delta_time())
 		return false
 	if _agent.is_navigation_finished():
 		halt()
@@ -105,8 +115,17 @@ func _plan() -> void:
 	var on_mesh: Vector3 = NavigationServer3D.map_get_closest_point(map, _destination)
 	_agent.target_position = on_mesh - Vector3(0.0, _agent.path_height_offset, 0.0)
 	_pending = false
+	_waiting_for = 0.0
 	_stall_from = _unit.global_position
 	_stall_timer = 0.0
+
+
+func _wait_for_plan(delta: float) -> void:
+	_waiting_for += delta
+	if _waiting_for >= _PLAN_TIME:
+		push_warning("Unit %s could not plan its move order in %.0f s; stopping." % [_unit.name, _PLAN_TIME])
+		halt()
+		stalled.emit()
 
 
 func _check_progress(delta: float) -> void:
