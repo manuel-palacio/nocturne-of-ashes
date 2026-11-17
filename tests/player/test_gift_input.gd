@@ -7,7 +7,7 @@ var main: Main
 var foe: Unit
 
 func before_each() -> void:
-	main = add_child_autofree(MAIN.instantiate())
+	main = add_child_autoqfree(MAIN.instantiate())
 	await wait_physics_frames(3)
 	for enemy: Unit in main.enemies:
 		var brain: Node = enemy.get_node("Brain")

@@ -7,7 +7,7 @@ var main: Main
 var hud: Hud
 
 func before_each() -> void:
-	main = add_child_autofree(MAIN.instantiate())
+	main = add_child_autoqfree(MAIN.instantiate())
 	await wait_physics_frames(3)
 	hud = main.hud
 

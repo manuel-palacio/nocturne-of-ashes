@@ -9,7 +9,7 @@ var main: Main
 func before_each() -> void:
 	main = MAIN.instantiate()
 	watch_signals(main)
-	add_child_autofree(main)
+	add_child_autoqfree(main)
 	await wait_physics_frames(3)
 
 

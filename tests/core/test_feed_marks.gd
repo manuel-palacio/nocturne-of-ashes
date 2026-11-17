@@ -6,7 +6,7 @@ const MAIN := preload("res://scenes/main.tscn")
 var main: Main
 
 func before_each() -> void:
-	main = add_child_autofree(MAIN.instantiate())
+	main = add_child_autoqfree(MAIN.instantiate())
 	await wait_physics_frames(3)
 
 ## A crusader of the room (60 health); the first enemy spawned.

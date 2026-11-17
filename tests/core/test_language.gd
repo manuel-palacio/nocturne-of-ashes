@@ -29,7 +29,7 @@ func test_every_gift_and_unit_name_has_spanish() -> void:
 		assert_ne(tr(english), english, english)
 
 func test_the_hud_follows_a_language_change() -> void:
-	var main: Main = add_child_autofree(MAIN.instantiate())
+	var main: Main = add_child_autoqfree(MAIN.instantiate())
 	await wait_physics_frames(3)
 	Language.apply("es")
 	await wait_physics_frames(2)
@@ -42,7 +42,7 @@ func test_the_hud_follows_a_language_change() -> void:
 
 func test_controls_built_after_the_switch_are_spanish_too() -> void:
 	Language.apply("es")
-	var main: Main = add_child_autofree(MAIN.instantiate())
+	var main: Main = add_child_autoqfree(MAIN.instantiate())
 	await wait_physics_frames(3)
 	main.select(main.party[2])
 	assert_eq(main.hud.gift_buttons()[1].text, "2 Martillazo (25)")
