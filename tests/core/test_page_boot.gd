@@ -44,3 +44,22 @@ func test_fresh_with_probe_clears_the_save() -> void:
 	assert_false(main.store.has_save())
 	assert_null(main.state)
 	main.free()
+
+func test_skirmish_leaves_a_save_untouched_even_with_fresh_and_probe() -> void:
+	var main: Main = _story_with_a_save()
+	var store: SaveStore = main.store
+	PageBoot.configure(main, {"skirmish": "1", "fresh": "1", "probe": "1"})
+	assert_eq(main.boot, Main.Boot.SKIRMISH)
+	assert_true(store.has_save())
+	store.clear()
+	main.free()
+
+func test_at_vault_without_probe_does_nothing() -> void:
+	var main: Main = _story_with_a_save()
+	PageBoot.configure(main, {"at": "vault", "fresh": "1"})
+	assert_null(main.state)
+	assert_true(main.show_title)
+	assert_true(main.opening_enabled)
+	assert_true(main.store.has_save())
+	main.store.clear()
+	main.free()
