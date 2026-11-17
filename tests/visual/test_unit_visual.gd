@@ -68,12 +68,15 @@ func test_a_fallen_unit_shows_the_death_clip() -> void:
 	assert_eq(_visual(foe).clip(), &"death")
 	await wait_seconds(2.5)
 	assert_eq(_visual(foe).clip(), &"death")
-	var box: AABB = AABB()
-	for node: Node in _visual(foe).model().find_children("*", "MeshInstance3D", true, false):
-		var mesh := node as MeshInstance3D
-		var mesh_box: AABB = mesh.global_transform * mesh.get_aabb()
-		box = mesh_box if box.size == Vector3.ZERO else box.merge(mesh_box)
-	assert_lt(absf(box.position.y - foe.global_position.y), 0.3)
+	var skeleton: Skeleton3D = _visual(foe).model().find_children("*", "Skeleton3D", true, false)[0]
+	var height := func(bone: int) -> float:
+		return (skeleton.global_transform * skeleton.get_bone_global_pose(bone).origin).y - foe.global_position.y
+	assert_lt(height.call(skeleton.find_bone("DEF-head")), 0.5)
+	assert_lt(height.call(skeleton.find_bone("DEF-spine.002")), 0.5)
+	var lowest: float = INF
+	for bone: int in skeleton.get_bone_count():
+		lowest = minf(lowest, height.call(bone))
+	assert_gt(lowest, -0.1)
 
 func test_dying_mid_swing_falls_at_once() -> void:
 	alvar.order_attack(foe)
