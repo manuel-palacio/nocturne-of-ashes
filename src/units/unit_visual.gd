@@ -146,6 +146,8 @@ func _show(clip_name: StringName, rising: bool) -> void:
 			_player.play(clip_name, blend, -RISE_SPEED, true)
 		else:
 			_player.play(clip_name, blend)
+		# Posed at once: a unit spawned or revived while held does not process, and would show its rest pose.
+		_player.advance(0.0)
 	_player.speed_scale = 1.0
 	if STRIDE_SPEED.has(clip_name):
 		_player.speed_scale = _flat_speed() / (STRIDE_SPEED[clip_name] * _model.scale.x)

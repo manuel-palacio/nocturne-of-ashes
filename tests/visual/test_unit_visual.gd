@@ -113,3 +113,32 @@ func test_animation_holds_while_the_units_are_not_processing() -> void:
 	await wait_seconds(0.4)
 	assert_almost_eq(player.current_animation_position, at, 0.001)
 	arena.room.process_mode = Node.PROCESS_MODE_INHERIT
+
+func _bone_poses(model: Node3D) -> Array[Transform3D]:
+	var skeleton: Skeleton3D = model.find_children("*", "Skeleton3D", true, false)[0]
+	var poses: Array[Transform3D] = []
+	for bone: int in skeleton.get_bone_count():
+		poses.append(skeleton.get_bone_pose(bone))
+	return poses
+
+func test_a_unit_spawned_while_held_shows_the_idle_pose() -> void:
+	var held := Node3D.new()
+	held.process_mode = Node.PROCESS_MODE_DISABLED
+	arena.room.add_child(held)
+	var zahra: Unit = Arena.ZAHRA.instantiate()
+	zahra.remove_child(zahra.get_node("Brain"))
+	held.add_child(zahra)
+	await wait_physics_frames(3)
+	var reference: Node3D = add_child_autofree(UnitVisual.HUMAN.instantiate())
+	var player: AnimationPlayer = reference.find_children("*", "AnimationPlayer", true, false)[0]
+	player.play(&"idle")
+	player.advance(0.0)
+	var skeleton: Skeleton3D = reference.find_children("*", "Skeleton3D", true, false)[0]
+	var shown: Array[Transform3D] = _bone_poses(_visual(zahra).model())
+	var idle: Array[Transform3D] = _bone_poses(reference)
+	var moved_from_rest: int = 0
+	for bone: int in shown.size():
+		assert_true(shown[bone].is_equal_approx(idle[bone]), skeleton.get_bone_name(bone))
+		if not shown[bone].is_equal_approx(skeleton.get_bone_rest(bone)):
+			moved_from_rest += 1
+	assert_gt(moved_from_rest, 0)
