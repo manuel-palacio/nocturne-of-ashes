@@ -87,3 +87,19 @@ func test_no_selection_changes_while_alvar_is_down() -> void:
 	assert_eq(main.selected, main.player)
 	main.select_next()
 	assert_eq(main.selected, main.player)
+
+func test_the_calm_timer_does_not_advance_while_paused() -> void:
+	(main.party[1].get_node("Brain") as CombatBrain).uses_gifts = false
+	main.calm_time = 0.5
+	main.set_paused(true)
+	main.party[1].take_hit(999)
+	await wait_seconds(1.0)
+	assert_false(main.party[1].is_alive(), "still down after the calm time, paused")
+	main.set_paused(false)
+	await wait_seconds(1.0)
+	assert_true(main.party[1].is_alive())
+
+func test_tab_does_nothing_while_input_is_off() -> void:
+	main.input.enabled = false
+	await _tap(&"select_next")
+	assert_eq(main.selected, main.player)

@@ -123,3 +123,29 @@ func test_starting_the_room_closes_targeting() -> void:
 	main.input.press_gift(1)
 	main.start_room()
 	assert_eq(main.input.targeting_gift(), -1)
+
+func _tap(action: StringName) -> void:
+	Input.action_press(action)
+	await wait_physics_frames(2)
+	Input.action_release(action)
+	await wait_physics_frames(2)
+
+func test_the_gift_keys_and_cancel_do_what_the_buttons_do() -> void:
+	await _tap(&"gift_1")
+	assert_true(main.player.has_effect(&"iron_sinew"), "gift_1 uses the first Gift")
+	await _tap(&"gift_2")
+	assert_eq(main.input.targeting_gift(), 1, "gift_2 opens targeting for the second")
+	await _tap(&"cancel")
+	assert_eq(main.input.targeting_gift(), -1, "cancel closes it")
+
+func test_a_right_click_in_the_world_cancels_targeting() -> void:
+	main.input.press_gift(1)
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_RIGHT
+	click.position = _screen(main.player.global_position + Vector3(2, 0, 2))
+	click.pressed = true
+	# Handed to the input node as the world gets it: the test runner's own window lies over the
+	# middle of the screen and would take a click sent through the viewport.
+	main.input._unhandled_input(click)
+	assert_eq(main.input.targeting_gift(), -1)
+	assert_eq(main.player.current_order(), Unit.Order.NONE)

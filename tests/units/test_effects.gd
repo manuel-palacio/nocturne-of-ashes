@@ -93,3 +93,14 @@ func test_death_clears_effects() -> void:
 	alvar.add_effect(_effect(&"test", 5.0))
 	alvar.take_hit(999)
 	assert_false(alvar.has_effect(&"test"))
+
+func test_a_stunned_unit_resumes_its_attack_when_the_stun_ends() -> void:
+	var stun := _effect(&"stun", 0.6)
+	stun.stuns = true
+	alvar.add_effect(stun)
+	alvar.order_attack(foe)
+	await wait_seconds(0.4)
+	assert_eq(foe.stats.health, 60, "no strike while stunned")
+	assert_eq(alvar.current_order(), Unit.Order.ATTACK)
+	await wait_until(func() -> bool: return foe.stats.health < 60, 2.0)
+	assert_lt(foe.stats.health, 60, "struck once the stun ended")
