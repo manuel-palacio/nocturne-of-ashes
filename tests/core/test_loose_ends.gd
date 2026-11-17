@@ -89,3 +89,44 @@ func test_an_order_on_a_map_that_never_becomes_ready_warns_once_and_is_dropped()
 	assert_push_warning("could not plan its move order")
 	await wait_seconds(1.0)
 	assert_push_warning_count(1)
+
+# 5. Right click and the wheel pass through HUD panels and Gift buttons; only the left button is consumed.
+
+func test_a_right_click_on_a_party_panel_cancels_targeting() -> void:
+	await _skirmish()
+	main.input.press_gift(1)  # Baleful Eye waits for a target
+	assert_eq(main.input.targeting_gift(), 1)
+	await _click(main.hud.panels()[1], MOUSE_BUTTON_RIGHT)
+	assert_eq(main.input.targeting_gift(), -1)
+	assert_eq(main.selected, main.player)
+
+func test_a_right_click_on_a_gift_button_cancels_targeting() -> void:
+	await _skirmish()
+	main.input.press_gift(1)
+	await _click(main.hud.gift_buttons()[0], MOUSE_BUTTON_RIGHT)
+	assert_eq(main.input.targeting_gift(), -1)
+	assert_false(main.player.has_effect(&"iron_sinew"))
+
+func test_the_wheel_zooms_over_panels_and_gift_buttons() -> void:
+	await _skirmish()
+	var start: float = main.rig.distance
+	await _click(main.hud.panels()[0], MOUSE_BUTTON_WHEEL_UP)
+	assert_lt(main.rig.distance, start)
+	var closer: float = main.rig.distance
+	await _click(main.hud.gift_buttons()[1], MOUSE_BUTTON_WHEEL_DOWN)
+	assert_gt(main.rig.distance, closer)
+
+func test_the_left_button_on_panels_and_buttons_gives_no_order_in_the_world() -> void:
+	await _skirmish()
+	await _click(main.hud.panels()[1])
+	assert_eq(main.selected, main.party[1])
+	assert_ne(main.party[1].order_issuer(), Unit.Issuer.PLAYER, "the panel's click gave no order")
+	main.select(main.player)
+	await wait_physics_frames(2)
+	await _click(main.hud.gift_buttons()[0])
+	assert_true(main.player.has_effect(&"iron_sinew"))
+	assert_eq(main.player.current_order(), Unit.Order.NONE, "the button's click gave no order")
+	# Now cooling down, so disabled.
+	assert_true(main.hud.gift_buttons()[0].disabled)
+	await _click(main.hud.gift_buttons()[0])
+	assert_eq(main.player.current_order(), Unit.Order.NONE, "the disabled button's click gave no order")

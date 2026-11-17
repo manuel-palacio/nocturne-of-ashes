@@ -42,7 +42,7 @@ font_color = Color(0.95, 0.7, 0.35, 1)
 [node name="PartyMemberPanel" type="PanelContainer"]
 custom_minimum_size = Vector2(220, 0)
 focus_mode = 0
-mouse_filter = 0
+mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_normal")
 script = ExtResource("1_panel")
 normal_style = SubResource("StyleBoxFlat_normal")

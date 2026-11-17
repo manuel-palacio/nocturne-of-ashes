@@ -1,7 +1,8 @@
 class_name GiftButton
 extends Button
 ## One Gift of the selected member: key, name and Blood cost, the cooldown left, and a mark while the
-## Gift waits for a target. Disabled whenever the Gift is not ready apart from its target.
+## Gift waits for a target. Disabled whenever the Gift is not ready apart from its target. The left
+## button is consumed, enabled or not; the right button and the wheel pass through to the world.
 
 ## The button was pressed.
 signal chosen(index: int)
@@ -19,6 +20,17 @@ var _targeting: bool = false
 
 func _ready() -> void:
 	pressed.connect(func() -> void: chosen.emit(_index))
+	# The button lets mouse events through; it takes the left button once it has handled it. Taken
+	# here, before the button sees it, the press would never reach it.
+	button_down.connect(accept_event)
+	button_up.connect(accept_event)
+
+
+func _gui_input(event: InputEvent) -> void:
+	# A disabled button does not handle the left button, so it is taken here.
+	var button := event as InputEventMouseButton
+	if disabled and button != null and button.button_index == MOUSE_BUTTON_LEFT:
+		accept_event()
 
 
 func _process(_delta: float) -> void:

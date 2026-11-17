@@ -1,7 +1,8 @@
 class_name PartyMemberPanel
 extends PanelContainer
 ## One party member in the HUD: a swatch in the body's colour, the name, health and Blood bars, and
-## whether the member is fallen, in the Fury or feeding. A left click asks to select the member.
+## whether the member is fallen, in the Fury or feeding. A left click asks to select the member. The
+## left button is consumed; the right button and the wheel pass through to the world.
 
 ## The panel was clicked; the click is consumed, so it gives no order in the world.
 signal pressed(unit: Unit)
@@ -31,10 +32,11 @@ func _process(_delta: float) -> void:
 
 func _gui_input(event: InputEvent) -> void:
 	var button := event as InputEventMouseButton
-	if button != null and button.pressed and button.button_index == MOUSE_BUTTON_LEFT:
-		accept_event()
-		if is_instance_valid(_unit):
-			pressed.emit(_unit)
+	if button == null or button.button_index != MOUSE_BUTTON_LEFT:
+		return
+	accept_event()
+	if button.pressed and is_instance_valid(_unit):
+		pressed.emit(_unit)
 
 
 ## Follows `unit` from now on. A panel is bound once; the HUD makes new panels for a new party.
