@@ -253,3 +253,47 @@ func test_someone_hidden_by_a_flag_has_no_collider_and_is_not_picked() -> void:
 	await wait_physics_frames(2)
 	assert_true((smith.find_child("CollisionShape3D") as CollisionShape3D).disabled)
 	assert_null(Picker.interactable_at(cam, at))
+
+func _gonzalo_joins() -> Unit:
+	main.state.join(&"gonzalo")
+	await wait_physics_frames(3)
+	return main.party.filter(func(u: Unit) -> bool: return u.member_id == &"gonzalo")[0]
+
+func _smith_on_screen() -> Vector2:
+	var cam: Camera3D = main.rig.camera()
+	var at: Vector2 = cam.unproject_position(smith.global_position + Vector3(0, 0.9, 0))
+	assert_null(Picker.unit_at(cam, at))
+	assert_eq(Picker.interactable_at(cam, at), smith)
+	return at
+
+func test_a_click_on_someone_with_a_companion_selected_sends_alvar_to_talk() -> void:
+	var gonzalo: Unit = await _gonzalo_joins()
+	main.select(gonzalo)
+	main.rig.snap_to_target()
+	await wait_physics_frames(2)
+	main.input.click_at(_smith_on_screen())
+	assert_eq(main.player.current_order(), Unit.Order.INTERACT)
+	assert_eq(main.selected, gonzalo)
+	await wait_for_signal(main.dialogue.line_shown, 5.0)
+	assert_true(main.is_talking())
+	assert_string_contains(_box().find_child("TextLabel").text, "The forge is cold tonight.")
+
+func test_a_companion_cannot_be_sent_to_talk() -> void:
+	var gonzalo: Unit = await _gonzalo_joins()
+	watch_signals(smith)
+	assert_false(smith.can_be_used_by(gonzalo))
+	gonzalo.order_interact(smith)
+	assert_ne(gonzalo.current_order(), Unit.Order.INTERACT)
+	await wait_seconds(1.0)
+	assert_signal_not_emitted(smith, "used")
+	assert_false(main.is_talking())
+
+func test_a_click_on_someone_while_alvar_is_in_the_fury_does_nothing() -> void:
+	main.player.stats.spend_blood(main.player.stats.blood - 5)
+	assert_true(main.player.is_in_fury())
+	watch_signals(smith)
+	main.input.click_at(_smith_on_screen())
+	assert_ne(main.player.current_order(), Unit.Order.INTERACT)
+	await wait_seconds(1.0)
+	assert_signal_not_emitted(smith, "used")
+	assert_false(main.is_talking())

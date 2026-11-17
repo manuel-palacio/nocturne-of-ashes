@@ -367,6 +367,7 @@ func _load_room(room_id: StringName) -> void:
 func _on_selection_changed(unit: Unit) -> void:
 	rig.target = unit
 	input.unit = unit
+	input.leader = player
 	selection_changed.emit(unit)
 
 

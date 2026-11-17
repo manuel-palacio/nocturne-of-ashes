@@ -1,7 +1,7 @@
 class_name Npc
 extends Interactable
-## Someone in a room to talk to: a unit walks up to them and uses them, which asks for their
-## conversation. A use that `talk_allowed` refuses does not count: nothing is emitted. Story flags can show or hide them; a hidden one has its collider disabled, so it is
+## Someone in a room to talk to: Álvar walks up to them and uses them, which asks for their
+## conversation; a click on them sends him, whoever is selected. A use that `talk_allowed` refuses does not count: nothing is emitted. Story flags can show or hide them; a hidden one has its collider disabled, so it is
 ## neither clicked nor used.
 
 ## A unit used them: the conversation `dialogue` at the cue `title` should start.
@@ -24,15 +24,19 @@ var talk_allowed: Callable = Callable()
 @onready var _body: MeshInstance3D = $Body
 
 
+func _init() -> void:
+	leader_only = true
+
+
 func _ready() -> void:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = colour
 	_body.material_override = material
 
 
-## Only while shown and with something to say.
-func can_be_used_by(_unit: Unit) -> bool:
-	return visible and dialogue != null
+## Only Álvar, and only while shown and with something to say.
+func can_be_used_by(unit: Unit) -> bool:
+	return unit != null and unit.member_id == GameState.LEADER and visible and dialogue != null
 
 
 func use(by: Unit) -> bool:

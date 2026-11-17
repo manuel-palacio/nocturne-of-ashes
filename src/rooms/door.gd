@@ -25,6 +25,10 @@ signal refused(text: String)
 var use_allowed: Callable = Callable()
 
 
+func _init() -> void:
+	leader_only = true
+
+
 ## Only Álvar opens doors.
 func can_be_used_by(unit: Unit) -> bool:
 	return unit != null and unit.member_id == GameState.LEADER

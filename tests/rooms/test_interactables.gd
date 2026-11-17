@@ -197,7 +197,7 @@ func test_within_reach_while_processing_is_off_it_waits_to_use_it() -> void:
 	assert_signal_emit_count(thing, "used", 1)
 
 
-func test_a_click_on_one_the_unit_may_not_use_walks_up_to_it_without_a_stall() -> void:
+func test_a_click_on_one_the_unit_may_not_use_gives_no_order() -> void:
 	var picky := arena.add_interactable(Vector3(-5, 0, 3), func(_u: Unit) -> bool: return false)
 	var cam: Camera3D = await _camera_on_alvar()
 	var input := PlayerInput.new()
@@ -206,14 +206,8 @@ func test_a_click_on_one_the_unit_may_not_use_walks_up_to_it_without_a_stall() -
 	input.unit = alvar
 	var at: Vector2 = cam.unproject_position(picky.global_position + Vector3(0, 0.9, 0))
 	assert_eq(Picker.interactable_at(cam, at), picky)
-	watch_signals(picky)
 	input.click_at(at)
-	assert_eq(alvar.current_order(), Unit.Order.MOVE)
-	await wait_until(func() -> bool: return alvar.current_order() == Unit.Order.NONE, 5.0)
 	assert_eq(alvar.current_order(), Unit.Order.NONE)
-	assert_lt(Arena.flat(alvar.global_position, picky.global_position), 1.5)
-	assert_signal_not_emitted(picky, "used")
-	assert_push_warning_count(0)
 
 
 func _camera_on_alvar() -> Camera3D:

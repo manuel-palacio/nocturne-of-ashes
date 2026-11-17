@@ -11,6 +11,8 @@ signal used(by: Unit)
 @export var label: String = ""
 ## A unit uses it from this flat distance or nearer, in metres.
 @export var reach: float = 2.0
+## Whether only the party's leader uses it: a click on it sends the leader, whoever is selected.
+@export var leader_only: bool = false
 
 
 # Set on entering the tree through `_notification`, which runs for every class in the hierarchy,

@@ -136,31 +136,6 @@ func test_no_leaving_while_a_member_feeds() -> void:
 	assert_eq(main.room.room_id, &"vault")
 	assert_eq(main.hud.notice(), "Not while they are upon you")
 
-func test_a_companion_sent_to_a_door_walks_there_and_stops() -> void:
-	await _boot_in_a_calm_vault()
-	var door: Door = _door("WestDoor")
-	var zahra: Unit = main.party[1]
-	main.select(zahra)
-	var map := main.get_world_3d().navigation_map
-	var inward: Vector3 = main.player.global_position - door.global_position
-	inward.y = 0.0
-	zahra.global_position = NavigationServer3D.map_get_closest_point(map, door.global_position + inward.normalized() * 4.0)
-	main.rig.snap_to_target()
-	await wait_physics_frames(3)
-	var cam: Camera3D = main.rig.camera()
-	var at: Vector2 = cam.unproject_position(door.global_position + Vector3(0, 1.0, 0))
-	assert_eq(Picker.interactable_at(cam, at), door)
-	watch_signals(door)
-	main.input.click_at(at)
-	assert_eq(zahra.current_order(), Unit.Order.MOVE)
-	await wait_until(func() -> bool: return zahra.current_order() == Unit.Order.NONE, 5.0)
-	assert_eq(zahra.current_order(), Unit.Order.NONE)
-	assert_lt(Arena.flat(zahra.global_position, door.global_position), door.reach + 1.0)
-	await wait_physics_frames(3)
-	assert_eq(main.room.room_id, &"vault")
-	assert_signal_not_emitted(door, "used")
-	assert_push_warning_count(0)
-
 func test_a_door_is_inert_during_a_conversation() -> void:
 	await _boot(GameState.skirmish())
 	main.talk(preload("res://tests/fixtures/test_talk.dialogue"), "start")
@@ -200,3 +175,27 @@ func test_a_door_used_just_before_the_fight_starts_does_not_travel() -> void:
 	main.enemies[0].order_attack(main.player)
 	await wait_physics_frames(3)
 	assert_eq(main.room.room_id, &"vault")
+
+func test_a_click_on_a_door_with_a_companion_selected_sends_alvar() -> void:
+	var state := GameState.new_game()
+	state.join(&"zahra")
+	state.set_flag(&"order_given")
+	await _boot(state)
+	var zahra: Unit = main.party[1]
+	main.select(zahra)
+	main.rig.snap_to_target()
+	await wait_physics_frames(3)
+	var door: Door = _door("StairDoor")
+	var cam: Camera3D = main.rig.camera()
+	var at: Vector2 = cam.unproject_position(door.global_position + Vector3(0, 1.0, 0))
+	assert_eq(Picker.interactable_at(cam, at), door)
+	main.input.click_at(at)
+	assert_eq(main.player.current_order(), Unit.Order.INTERACT)
+	assert_ne(zahra.current_order(), Unit.Order.INTERACT)
+	await wait_physics_frames(5)
+	assert_eq(main.selected, zahra)
+	assert_eq(main.rig.target, zahra)
+	await wait_for_signal(main.room_started, 10.0)
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"vault")
+	assert_eq(main.selected, main.player)

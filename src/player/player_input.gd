@@ -16,6 +16,9 @@ var unit: Unit:
 		unit = value
 		cancel_targeting()
 var rig: CameraRig
+## The party's leader, who uses whatever is `Interactable.leader_only`, whoever is controlled. Set by
+## the party's owner whenever the party or the selection changes.
+var leader: Unit
 ## When false, clicks and keys give no orders and targeting closes.
 var enabled: bool = true:
 	set(value):
@@ -91,9 +94,10 @@ func cancel_targeting() -> void:
 ## While targeting, uses the Gift on a unit under the point that it can target, else does nothing;
 ## targeting whose Gift is no longer ready is closed first, and the click counts as a plain one.
 ## Otherwise asks to select a living friend under the point; feeds on a living hostile there when the
-## unit can and is short of Blood, else attacks it; else walks up to an interactable under it and uses
-## it, or only walks there when the unit may not use it; else walks to the ground under it. A click on
-## the controlled unit itself does nothing.
+## unit can and is short of Blood, else attacks it; else has an interactable under it used, by the
+## leader when it is leader-only, which leaves the selection as it is, else by the unit, and does
+## nothing when that one may not use it; else walks to the ground under it. A click on the controlled
+## unit itself does nothing.
 func click_at(screen_position: Vector2) -> void:
 	if not enabled or unit == null or not unit.is_alive():
 		return
@@ -115,10 +119,9 @@ func click_at(screen_position: Vector2) -> void:
 		return
 	var thing: Interactable = Picker.interactable_at(cam, screen_position)
 	if thing != null:
-		if thing.can_be_used_by(unit):
-			unit.order_interact(thing)
-		else:
-			unit.order_move(thing.global_position)
+		var user: Unit = leader if thing.leader_only else unit
+		if user != null and user.is_alive() and thing.can_be_used_by(user):
+			user.order_interact(thing)
 		return
 	var on_ground: Variant = Picker.ground_at(cam, screen_position)
 	if on_ground != null:
