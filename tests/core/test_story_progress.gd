@@ -93,7 +93,8 @@ func test_a_join_closes_targeting() -> void:
 ## Puts a character labelled `label` at `at` in the room; hidden unless `shown`. The room's own Zahra,
 ## the member these tests have join, is taken out first, so only the test's character can place her.
 func _character(label: String, at: Vector3, shown: bool = true) -> Npc:
-	for resident: Npc in main.room.npcs():
+	# Over a copy, as the loop takes characters out of the room.
+	for resident: Npc in main.room.npcs().duplicate():
 		if resident.label == "Zahra":
 			main.room.remove_child(resident)
 			resident.free()
