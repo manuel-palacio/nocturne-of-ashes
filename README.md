@@ -40,7 +40,8 @@ the same model and palettes with different bytes, so keep the pins when running 
 
 The gear and cloth hung on the model (swords, shields, helmets, skirts, mantles, veils...) are made
 by `tools/blender/gear.py`, one `assets/gear/<piece>.glb` each, plus `assets/gear/palette-gear.png`
-for the colours of steel, wood and leather. Run it from the repository root with Blender:
+for the colours of steel, wood and leather. Run it from the repository root with Blender 5.3 (it
+refuses other versions, whose exporter may write other bytes):
 `blender -b --factory-startup -P tools/blender/gear.py`. Its docstring has the table of which bone
 each piece hangs from; `resources/gear/<piece>.tres` holds the same for the game, and each
 character's `resources/dress/<name>.tres` lists what it wears. It too writes the same bytes on every run.

@@ -2,6 +2,9 @@
 
     blender -b --factory-startup -P tools/blender/gear.py
 
+Written for Blender 5.3, and it refuses to run with any other version: another version's glTF
+exporter may write different bytes.
+
 Each piece is modelled in the model's own frame (`assets/characters/human/human.glb`): metres, y up,
 the figure facing -z, in its rest pose (a T-pose, palms down). A piece's origin is the rest-pose
 head of the bone it hangs from (`BONES`), so a piece needs no per-character offset: `UnitVisual`
@@ -48,6 +51,7 @@ from pathlib import Path
 import bmesh
 import bpy
 
+BLENDER = (5, 3)  # the version the output is pinned to
 OUT = Path(__file__).resolve().parents[2] / "assets/gear"
 MAX_TRIANGLES = 600
 
@@ -482,6 +486,9 @@ def write_palette() -> None:
 
 
 def main() -> None:
+    if tuple(bpy.app.version[:2]) != BLENDER:
+        sys.exit("gear: written for Blender %d.%d, not %s; its exporter may write other bytes"
+                 % (BLENDER + (bpy.app.version_string,)))
     OUT.mkdir(parents=True, exist_ok=True)
     write_palette()
     for make in PIECES:
