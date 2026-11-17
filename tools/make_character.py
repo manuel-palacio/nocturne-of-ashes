@@ -79,6 +79,7 @@ CLIPS = {
     "stagger": ("Hit_Head", True),
     "talk": ("Idle_Talking_Loop", True),
     "sit": ("Sitting_Idle_Loop", True),
+    "sit_talk": ("Sitting_Talking_Loop", True),
     "feed": ("Push_Loop", True),
 }
 # Loops made from a stretch of a library clip: game name: (first key, last key, slowed by). The keys

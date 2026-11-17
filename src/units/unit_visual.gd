@@ -14,8 +14,9 @@ extends Node3D
 ##    feet on the ground
 ## 7. otherwise `idle`
 ##
-## Anyone else plays `talk` while `speaking`, else `resting`. The model's animation runs in the
-## parent's subtree, so it stops whenever the parent stops processing.
+## Anyone else plays `talk` while `speaking` (`sit_talk` when `resting` is `sit`), else `resting`.
+## The model's animation runs in the parent's subtree, so it stops whenever the parent stops
+## processing.
 
 const HUMAN: PackedScene = preload("res://assets/characters/human/human.glb")
 ## The model's height in metres at scale 1.
@@ -134,7 +135,10 @@ func _follow(unit: Unit) -> void:
 
 func _choose() -> StringName:
 	if _unit == null:
-		return &"talk" if speaking else resting
+		if not speaking:
+			return resting
+		# A seated character stays seated to speak.
+		return &"sit_talk" if resting == &"sit" else &"talk"
 	var speed: float = _flat_speed()
 	_moving = speed > (STOPPED if _moving else MOVING)
 	var higher: StringName = &""

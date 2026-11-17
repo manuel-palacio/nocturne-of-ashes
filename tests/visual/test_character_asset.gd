@@ -2,7 +2,7 @@
 extends GutTest
 
 const HUMAN := preload("res://assets/characters/human/human.glb")
-const CLIPS: Array[StringName] = [&"idle", &"walk", &"run", &"attack", &"hit", &"death", &"cast", &"interact", &"stagger", &"talk", &"sit", &"feed"]
+const CLIPS: Array[StringName] = [&"idle", &"walk", &"run", &"attack", &"hit", &"death", &"cast", &"interact", &"stagger", &"talk", &"sit", &"feed", &"sit_talk"]
 const PALETTES: Array[String] = ["alvar", "zahra", "gonzalo", "crusader", "sergeant", "malakor", "smith", "captive"]
 
 var human: Node3D
@@ -26,7 +26,7 @@ func test_it_has_exactly_the_clips_we_use() -> void:
 func test_looping_clips_loop_and_the_others_do_not() -> void:
 	for clip: StringName in CLIPS:
 		var loops: bool = _player().get_animation(clip).loop_mode != Animation.LOOP_NONE
-		assert_eq(loops, clip in [&"idle", &"walk", &"run", &"stagger", &"talk", &"sit", &"feed"], clip)
+		assert_eq(loops, clip in [&"idle", &"walk", &"run", &"stagger", &"talk", &"sit", &"feed", &"sit_talk"], clip)
 
 func test_it_is_one_mesh_with_one_surface_under_the_triangle_budget() -> void:
 	assert_eq(human.find_children("*", "MeshInstance3D", true, false).size(), 1)

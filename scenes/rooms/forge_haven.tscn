@@ -209,6 +209,14 @@ size = Vector3(0.15, 0.3, 0.15)
 material = SubResource("StandardMaterial3D_jwoew")
 size = Vector3(0.15, 0.3, 0.15)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_stool"]
+albedo_color = Color(0.3, 0.2, 0.13, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="BoxMesh_stool"]
+material = SubResource("StandardMaterial3D_stool")
+size = Vector3(0.42, 0.42, 0.38)
+
 [sub_resource type="Environment" id="Environment_lmdco"]
 background_mode = 1
 ambient_light_source = 2
@@ -502,6 +510,10 @@ hidden_if = &"captive_dead"
 dress = ExtResource("dress_captive")
 sitting = true
 label = "The captive"
+
+[node name="Stool" type="MeshInstance3D" parent="Captive"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.21, 0.3)
+mesh = SubResource("BoxMesh_stool")
 
 [node name="ZahraNpc" parent="." unique_id=1155358755 instance=ExtResource("4_lt12a")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 4.4)
