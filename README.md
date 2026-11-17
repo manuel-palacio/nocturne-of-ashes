@@ -19,6 +19,22 @@ The Chromium run opens a browser window, because headless Chromium renders WebGL
 - Design: [docs/superpowers/specs/2026-11-15-vertical-slice-design.md](docs/superpowers/specs/2026-11-15-vertical-slice-design.md)
 - Plans: [docs/superpowers/plans/2026-11-15-milestone-1-first-room.md](docs/superpowers/plans/2026-11-15-milestone-1-first-room.md), [docs/superpowers/plans/2026-11-16-milestone-2-party-and-blood.md](docs/superpowers/plans/2026-11-16-milestone-2-party-and-blood.md), [docs/superpowers/plans/2026-11-16-milestone-3-talk-and-choose.md](docs/superpowers/plans/2026-11-16-milestone-3-talk-and-choose.md)
 
+## Making the art
+
+Every character is one human model, `assets/characters/human/human.glb`, coloured by an 8 × 1
+pixel palette image (`palette-<name>.png`, squares left to right: skin, hair, tunic, sleeves,
+skirt, hose, boots, trim). `tools/make_character.py` makes the model and the palettes from
+Quaternius's Universal Animation Library (CC0), which is not kept in the repository:
+
+1. Download the standard edition from https://quaternius.com/packs/universalanimationlibrary.html
+   (or https://opengameart.org/content/universal-animation-library) and unpack it outside the
+   project's tracked files.
+2. Run, from the repository root, with the path to its Godot file:
+   `uv run --with pygltflib --with numpy --with pillow python3 tools/make_character.py "<unpacked>/Animation Library[Standard]/Godot/AnimationLibrary_Godot_Standard.glb"`
+3. A palette change needs no library: edit `PALETTES` in the tool and run it with `--palettes-only`.
+
+The tool writes the same bytes on every run, so an unchanged input leaves `git status` clean.
+
 ## Story so far
 
 Brother Álvar wakes after his Turning in the forge-haven of the Blood-Forged, under Toledo, and
