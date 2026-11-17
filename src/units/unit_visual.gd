@@ -64,6 +64,8 @@ const SELECTED_WIDTH: float = 0.035
 const SELECTED_COLOUR: Color = Color(0.95, 0.74, 0.22)
 ## The drop's middle is this far above the top of the head.
 const DROP_ABOVE: float = 0.32
+## Clips in which the legs barely move, so cloth settled in one stays settled.
+const STILL_CLIPS: Array[StringName] = [&"idle", &"talk", &"sit", &"sit_talk", &"death"]
 ## Regions of the palette, which is this many squares wide.
 const PALETTE_SQUARES: int = 8
 
@@ -93,6 +95,14 @@ var _materials: Array[StandardMaterial3D] = []
 ## The pieces' attachments, under the skeleton.
 var _gear: Array[BoneAttachment3D] = []
 var _fits: Array[ClothFit] = []
+## Tells whether the figure is on screen, for the cloth fit.
+var _on_screen: VisibleOnScreenNotifier3D
+## Cloth fitting: whether this pose is the skipped one of two, the time since the last fit, whether
+## the last fit moved nothing, and the clip it was in.
+var _fit_turn: bool = false
+var _fit_time: float = 0.0
+var _cloth_settled: bool = false
+var _settled_clip: StringName = &""
 var _selected_ring: FloorRing
 var _feed_drop: FeedDrop
 ## What the unit asked to show; shown only while it stands.
@@ -133,6 +143,10 @@ func _ready() -> void:
 	_emission = _material.emission
 	_mesh.material_override = _material
 	_materials.append(_material)
+	_on_screen = VisibleOnScreenNotifier3D.new()
+	_on_screen.name = &"OnScreen"
+	_on_screen.aabb = AABB(Vector3(-1.0, 0.0, -1.0), Vector3(2.0, 2.3, 2.0))
+	add_child(_on_screen)
 	_selected_ring = FloorRing.new(SELECTED_RADIUS, SELECTED_WIDTH, SELECTED_COLOUR)
 	_selected_ring.name = &"SelectedRing"
 	_selected_ring.visible = false
@@ -214,6 +228,7 @@ func _hang_gear() -> void:
 		attachment.queue_free()
 	_gear.clear()
 	_fits.clear()
+	_cloth_settled = false
 	_materials.resize(1)
 	for piece: GearPiece in dress.gear:
 		var bone: int = _skeleton.find_bone(piece.bone)
@@ -276,13 +291,28 @@ static func _shared_own_colours(body: StandardMaterial3D) -> StandardMaterial3D:
 	return _own_colours
 
 
-## Fits the cloth to the pose just set. A fallen figure's skirt lies flat: hung rigidly from the hips,
-## it would stand up off the floor round the legs.
+## Fits the cloth to the pose just set, every second pose, and only while the figure is on screen. A
+## figure settled in a still clip (one that barely moves the legs, or a fall held on its last frame)
+## with its cloth settled is not fitted again until its clip changes. A fallen figure's skirt lies
+## flat: hung rigidly from the hips, it would stand up off the floor round the legs.
 func _fit_cloth() -> void:
-	var delta: float = get_process_delta_time()
+	if _fits.is_empty():
+		return
+	_fit_time += get_process_delta_time()
+	_fit_turn = not _fit_turn
+	if _fit_turn or not _on_screen.is_on_screen():
+		return
+	var still: bool = STILL_CLIPS.has(_clip) and not _rising
+	if still and _cloth_settled and _clip == _settled_clip:
+		_fit_time = 0.0
+		return
 	var lying: bool = _clip == &"death" and not _rising
+	var moved: bool = false
 	for fit: ClothFit in _fits:
-		fit.fit(delta, lying)
+		moved = fit.fit(_fit_time, lying) or moved
+	_fit_time = 0.0
+	_cloth_settled = not moved
+	_settled_clip = _clip
 
 
 func _follow(unit: Unit) -> void:
