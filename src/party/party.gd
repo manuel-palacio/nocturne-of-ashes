@@ -155,6 +155,14 @@ func leader_alive() -> bool:
 	return leader != null and leader.is_alive()
 
 
+## Whether something under way would be broken by leaving the room now: the leader is in the Fury, or
+## a member feeds or walks to a feed.
+func is_busy() -> bool:
+	if leader != null and leader.is_in_fury():
+		return true
+	return members.any(func(member: Unit) -> bool: return member.feed_target() != null)
+
+
 ## The selected member's brain is off; every other member's follows the selected one.
 ## The setter forgets the brain's chosen target, so `enabled` is only written when it changes.
 func _steer_brain(member: Unit) -> void:

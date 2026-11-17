@@ -94,3 +94,44 @@ func test_doors_do_nothing_in_the_skirmish() -> void:
 	await wait_physics_frames(2)
 	assert_eq(main.room.room_id, &"vault")
 	assert_eq(main.hud.notice(), "")
+
+## The skirmish's state in the story, with the enemies' brains taken out, so no fight starts.
+func _boot_in_a_calm_vault() -> void:
+	await _boot(GameState.skirmish())
+	for enemy: Unit in main.enemies:
+		var brain: Node = enemy.get_node("Brain")
+		enemy.remove_child(brain)
+		brain.free()
+
+func test_no_leaving_while_alvar_is_in_the_fury() -> void:
+	await _boot_in_a_calm_vault()
+	main.player.stats.spend_blood(main.player.stats.blood - 5)
+	assert_true(main.player.is_in_fury())
+	_door("WestDoor").use(main.player)
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"vault")
+	assert_eq(main.hud.notice(), "Not while they are upon you")
+
+func test_no_leaving_while_a_member_walks_to_a_feed() -> void:
+	await _boot_in_a_calm_vault()
+	var meal: Unit = main.enemies[0]
+	meal.take_hit(40)
+	main.party[1].order_feed(meal)
+	assert_eq(main.party[1].feed_target(), meal)
+	_door("WestDoor").use(main.player)
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"vault")
+	assert_eq(main.hud.notice(), "Not while they are upon you")
+
+func test_no_leaving_while_a_member_feeds() -> void:
+	await _boot_in_a_calm_vault()
+	var meal: Unit = main.enemies[0]
+	meal.take_hit(40)
+	meal.global_position = main.party[1].global_position + Vector3(1.2, 0, 0)
+	main.party[1].order_feed(meal)
+	await wait_until(func() -> bool: return main.party[1].is_feeding(), 3.0)
+	assert_true(main.party[1].is_feeding())
+	_door("WestDoor").use(main.player)
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"vault")
+	assert_eq(main.hud.notice(), "Not while they are upon you")
