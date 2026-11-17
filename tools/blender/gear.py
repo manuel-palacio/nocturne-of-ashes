@@ -14,7 +14,7 @@ characters scale the whole model, gear and all.
 | sword, hammer, staff | DEF-hand.R | own (steel, wood, leather) |
 | shield, shield_large | DEF-hand.L | own |
 | helmet, mail_coif | DEF-head | own |
-| hood, veil | DEF-head | the wearer's palette (`tunic`, `trim`) |
+| veil | DEF-head | the wearer's palette (`trim`) |
 | skirt_long, skirt_short, apron | DEF-hips | the wearer's palette (`skirt`) |
 | mantle | DEF-spine.003 | the wearer's palette (`tunic`) |
 
@@ -339,15 +339,6 @@ def mail_coif() -> Piece:
     return p
 
 
-def hood() -> Piece:
-    p = Piece("hood", "DEF-head", True)
-    p.lathe([(1.895, 0.04, 0.05, 0.03, 175), (1.86, 0.095, 0.115, 0.015, 165), (1.80, 0.118, 0.145, 0.0, 150),
-             (1.70, 0.123, 0.148, 0.0, 140), (1.60, 0.128, 0.143, 0.005, 140), (1.52, 0.155, 0.15, 0.015, 145),
-             (1.45, 0.245, 0.195, 0.02, 160)], 14, closed=False, cap=True)
-    p.two_sided()
-    return p
-
-
 def veil() -> Piece:
     p = Piece("veil", "DEF-head", True)
     p.lathe([(1.875, 0.03, 0.035, -0.005, 178), (1.85, 0.072, 0.088, -0.005, 172), (1.80, 0.1, 0.128, -0.005, 150),
@@ -412,7 +403,7 @@ def mantle() -> Piece:
 
 
 PIECES = [sword, hammer, staff, lambda: shield("shield", 0.85, 0.5), lambda: shield("shield_large", 1.05, 0.58),
-          helmet, mail_coif, hood, veil, skirt_long, skirt_short, apron, mantle]
+          helmet, mail_coif, veil, skirt_long, skirt_short, apron, mantle]
 
 
 # ---- writing them ------------------------------------------------------------------------------
