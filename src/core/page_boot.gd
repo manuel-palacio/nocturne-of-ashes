@@ -4,9 +4,10 @@ extends RefCounted
 ## there are none, and `Main` starts as it was set up.
 ##
 ## - `skirmish=1`: the vault skirmish, with no title and no save, whatever scene holds `Main`.
-## - `fresh=1`: in a story, the save is cleared before anything reads it.
 ## - `probe=1`: in a story, the title is skipped, unless `title=1`: the game goes on from a usable
-##   save, else starts new.
+##   save, else starts new. The parameters below take effect only with it.
+## - `fresh=1`: the save is cleared before anything reads it. Without `probe=1` it is ignored, so a
+##   shared or bookmarked link cannot wipe a player's progress.
 ## - `at=vault`, with `probe=1` and `fresh=1`: the story starts as `haven_finished()`, with no opening.
 
 ## The story flags set by the end of the haven.
@@ -15,21 +16,22 @@ const HAVEN_FLAGS: Array[StringName] = [
 ]
 
 
-static func configure(main: Main) -> void:
-	if PageParams.is_on("skirmish"):
+## Sets up `main` by `params`, the page's parameters by name (as `PageParams.all()` gives them).
+static func configure(main: Main, params: Dictionary = PageParams.all()) -> void:
+	if params.get("skirmish") == "1":
 		main.boot = Main.Boot.SKIRMISH
 		main.state = GameState.skirmish()
 		main.store = null
 		return
 	if main.boot != Main.Boot.STORY:
 		return
-	var fresh: bool = PageParams.is_on("fresh")
+	if params.get("probe") != "1":
+		return
+	var fresh: bool = params.get("fresh") == "1"
 	if fresh:
 		_store(main).clear()
-	if not PageParams.is_on("probe"):
-		return
-	main.show_title = PageParams.is_on("title")
-	if fresh and PageParams.value("at") == "vault":
+	main.show_title = params.get("title") == "1"
+	if fresh and params.get("at") == "vault":
 		main.state = haven_finished()
 		main.opening_enabled = false
 	elif main.state == null:

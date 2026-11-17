@@ -23,3 +23,24 @@ func test_a_finished_haven_enters_the_vault_with_everyone() -> void:
 	for flag: StringName in [&"met_malakor", &"zahra_joined", &"gonzalo_joined", &"captive_done", &"order_given"]:
 		assert_true(state.has_flag(flag), String(flag))
 	assert_eq(state.conscience, GameState.CONSCIENCE_START)
+
+func _story_with_a_save() -> Main:
+	var main: Main = preload("res://scenes/game.tscn").instantiate()
+	main.store = SaveStore.new()
+	main.store.path = "user://test_page_boot_%d.json" % randi()
+	main.store.save(GameState.new_game())
+	return main
+
+func test_fresh_without_probe_clears_nothing() -> void:
+	var main: Main = _story_with_a_save()
+	PageBoot.configure(main, {"fresh": "1"})
+	assert_true(main.store.has_save())
+	main.store.clear()
+	main.free()
+
+func test_fresh_with_probe_clears_the_save() -> void:
+	var main: Main = _story_with_a_save()
+	PageBoot.configure(main, {"fresh": "1", "probe": "1"})
+	assert_false(main.store.has_save())
+	assert_null(main.state)
+	main.free()

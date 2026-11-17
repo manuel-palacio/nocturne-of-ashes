@@ -9,9 +9,14 @@ static var _values: Variant = null
 
 ## The value of `key`, or "" when absent.
 static func value(key: String) -> String:
+	return all().get(key, "")
+
+
+## Every parameter given, by name; empty off the web.
+static func all() -> Dictionary:
 	if _values == null:
 		_values = _read()
-	return (_values as Dictionary).get(key, "")
+	return _values
 
 
 ## Whether `key` is given as "1".
