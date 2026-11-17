@@ -44,6 +44,8 @@ enum Issuer { NONE, PLAYER, BRAIN, SYSTEM }
 
 ## The share of its maximum health a fallen unit rises with, wherever it rises.
 const RISEN_HEALTH: float = 0.3
+## How fast a walking unit turns to face where it goes, in radians per second.
+const TURN_SPEED: float = 10.0
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 ## True while `take_hit()` deals its damage.
@@ -162,12 +164,16 @@ func stop() -> void:
 	_orders.stop(Issuer.PLAYER)
 
 
-## For `Orders` only: walks this frame in the flat unit `direction` at `walk_speed()`; `Vector3.ZERO`
-## stands still. Only the horizontal velocity is set, so a fall in progress carries on.
+## For `Orders` only: walks this frame in the flat unit `direction` at `walk_speed()`, turning towards
+## it by at most `TURN_SPEED`; `Vector3.ZERO` stands still. Only the horizontal velocity is set, so a
+## fall in progress carries on.
 func drive(direction: Vector3) -> void:
 	var step: Vector3 = direction * walk_speed()
 	velocity.x = step.x
 	velocity.z = step.z
+	if Vector2(step.x, step.z).length() > 0.01:
+		var heading: float = atan2(-step.x, -step.z)
+		rotation.y = rotate_toward(rotation.y, heading, TURN_SPEED * get_physics_process_delta_time())
 
 
 ## For `Orders` only: turns to face `point`, flat on XZ; a point at the unit's feet leaves the facing as it is.

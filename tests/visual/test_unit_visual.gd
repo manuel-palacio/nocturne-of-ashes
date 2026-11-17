@@ -89,6 +89,12 @@ func test_rising_returns_to_idle() -> void:
 	await wait_seconds(2.0)
 	assert_eq(_visual(alvar).clip(), &"idle")
 
+func test_a_walking_unit_faces_where_it_goes() -> void:
+	alvar.order_move(Vector3(6, 0, 0))
+	await wait_seconds(0.8)
+	var forward: Vector3 = -alvar.global_transform.basis.z
+	assert_gt(forward.dot(Vector3(1, 0, 0)), 0.9)
+
 func test_the_visual_never_moves_the_unit() -> void:
 	var at: Vector3 = alvar.global_position
 	var layer: int = alvar.collision_layer
