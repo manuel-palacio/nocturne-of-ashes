@@ -2,7 +2,7 @@ class_name FeedDrop
 extends Node3D
 ## The mark over a figure that can be fed on: a pale drop with a dark outline, bobbing slowly. It is
 ## unshaded, so it reads in the dark and against any body colour, and it casts no shadow; it shares
-## the marks' one material. It bobs while its figure processes, so it stops with the world.
+## the marks' one material. It bobs while shown and its figure processes, so it stops with the world.
 
 const COLOUR: Color = Color(0.98, 0.93, 0.9)
 const OUTLINE: Color = Color(0.12, 0.0, 0.02)
@@ -25,6 +25,13 @@ func _ready() -> void:
 	_drop.mesh = _shared_mesh()
 	_drop.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_drop)
+	set_process(visible)
+
+
+func _notification(what: int) -> void:
+	# It bobs only while shown.
+	if what == NOTIFICATION_VISIBILITY_CHANGED and is_node_ready():
+		set_process(visible)
 
 
 func _process(delta: float) -> void:
