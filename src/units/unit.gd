@@ -218,8 +218,10 @@ func revive() -> void:
 	revived.emit(self)
 
 
-## Adds a copy of `effect`; one with the same id is replaced, which restarts its time.
+## Adds a copy of `effect`; one with the same id is replaced, which restarts its time. Ignored once dead.
 func add_effect(effect: StatusEffect) -> void:
+	if not is_alive():
+		return
 	_effects.add(effect)
 
 

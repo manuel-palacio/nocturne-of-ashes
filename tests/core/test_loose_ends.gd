@@ -44,3 +44,17 @@ func test_selection_stays_on_alvar_when_nobody_lives() -> void:
 	main.party[2].take_hit(999)
 	main.party[1].take_hit(999)
 	assert_eq(main.selected, main.player)
+
+# 2. Effects are not added to the fallen.
+
+func test_effects_are_not_added_to_the_fallen() -> void:
+	await _skirmish()
+	var zahra: Unit = main.party[1]
+	zahra.take_hit(999)
+	var stun := StatusEffect.new()
+	stun.id = &"stun"
+	stun.duration = 1.0
+	stun.stuns = true
+	zahra.add_effect(stun)
+	assert_false(zahra.has_effect(&"stun"))
+	assert_eq(zahra.effect_ids(), [] as Array[StringName])
