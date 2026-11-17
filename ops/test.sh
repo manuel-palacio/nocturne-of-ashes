@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Runs the GUT suite headless. Godot exits 0 when a test script fails to parse (GUT skips it),
-# so this also fails on script errors and on any tests/**/test_*.gd missing from the run.
+# so this also fails on script errors and on any tests/**/test_*.gd missing from the run. It also
+# fails when GUT reports orphan nodes, after any test, after any script or at the end of the run.
 # The locale is forced to English, the source language, so tests read the English texts.
 # With arguments, they replace the suite selection, e.g. ops/test.sh -gtest=res://tests/units/test_stats.gd
 set -uo pipefail
@@ -22,6 +23,9 @@ if grep -qE 'SCRIPT ERROR|Parse Error|Failed to load script' "$log"; then
 fi
 if grep -qE '^Failing Tests +[1-9]' "$log"; then
   echo "ops/test.sh: failing tests" >&2; fail=1
+fi
+if grep -qE '[0-9]+ [Oo]rphans|Orphans +[1-9]' "$log"; then
+  echo "ops/test.sh: orphan nodes reported" >&2; fail=1
 fi
 if ! grep -qE '^Passing Tests +[1-9]' "$log"; then
   echo "ops/test.sh: no passing tests reported" >&2; fail=1
