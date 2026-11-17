@@ -179,3 +179,44 @@ func test_a_restart_writes_no_vitals_for_members_who_have_not_joined() -> void:
 	await wait_physics_frames(3)
 	var vitals: Dictionary = main.state.to_dict()["vitals"]
 	assert_eq(vitals.keys(), ["alvar", "zahra"])
+
+func test_wounds_from_the_vault_heal_in_the_haven_and_blood_does_not() -> void:
+	await _boot(GameState.skirmish())
+	main.player.take_hit(50)
+	main.player.stats.spend_blood(20)
+	main.party[1].take_hit(30)
+	(main.room.find_child("WestDoor") as Door).use(main.player)
+	await wait_for_signal(main.room_started, 2.0)
+	await wait_physics_frames(2)
+	assert_eq(main.room.room_id, &"haven")
+	for member: Unit in main.party:
+		assert_eq(member.stats.health, member.stats.max_health, member.member_id)
+	assert_eq(main.player.stats.blood, 40)
+	var saved: GameState = main.store.load_state()
+	for member: Unit in main.party:
+		assert_eq(saved.vitals(member.member_id).x, member.stats.max_health, member.member_id)
+	assert_eq(saved.vitals(&"alvar").y, 40)
+
+func test_a_fallen_companion_arrives_in_the_haven_risen_at_full_health() -> void:
+	await _boot(GameState.skirmish())
+	main.party[1].take_hit(999)
+	await wait_physics_frames(2)
+	assert_false(main.party[1].is_alive())
+	main.enter_room(&"haven")
+	await wait_physics_frames(3)
+	assert_true(main.party[1].is_alive())
+	assert_eq(main.party[1].stats.health, main.party[1].stats.max_health)
+
+func test_a_cleared_vault_re_entered_restores_health() -> void:
+	var state := GameState.new_game()
+	state.join(&"zahra")
+	state.set_flag(&"vault_cleared")
+	await _boot(state)
+	main.player.take_hit(50)
+	main.party[1].take_hit(30)
+	main.enter_room(&"vault")
+	await wait_physics_frames(3)
+	assert_eq(main.enemies.size(), 0)
+	assert_eq(main.player.stats.health, main.player.stats.max_health)
+	assert_eq(main.party[1].stats.health, main.party[1].stats.max_health)
+	assert_eq(main.store.load_state().vitals(&"alvar").x, main.player.stats.max_health)

@@ -159,7 +159,8 @@ func start_room() -> void:
 
 ## Takes the party to `room_id`, arriving at its entry `entry` (or at its start, with a warning, when
 ## it has none), with each member's health and Blood as they leave; a fallen member arrives risen at
-## `Unit.risen_health()`. An unknown room is refused with a warning.
+## `Unit.risen_health()`, and in a room without living enemies everyone's health is full. An unknown
+## room is refused with a warning.
 ## It removes physics bodies from the tree at once, so from a physics callback such as `body_entered`
 ## call it deferred.
 func enter_room(room_id: StringName, entry: StringName = Room.START) -> void:
@@ -280,8 +281,8 @@ func _play(from: GameState) -> void:
 
 
 ## Stops any conversation, clears the last room's units, loads `room_id`, spawns the party at
-## `entry_name` and starts the room's fight and characters, with Álvar selected and nothing paused or
-## targeted.
+## `entry_name`, rested when the room has no living enemies, and starts the room's fight and
+## characters, with Álvar selected and nothing paused or targeted.
 func _enter(room_id: StringName, entry_name: StringName) -> void:
 	_conversation.stop()
 	set_paused(false)
@@ -290,6 +291,8 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	_load_room(room_id)
 	var arrived_at: StringName = _spawn_party(entry_name)
 	_encounter.begin(room, state, _units)
+	# A room without living enemies is where the party rests.
+	_party.arrive(_encounter.is_cleared())
 	_conversation.begin_room(room, state)
 	if boot == Boot.STORY:
 		_travel.begin_room(room, state)

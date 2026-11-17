@@ -110,6 +110,17 @@ func record(state: GameState) -> void:
 		state.set_vitals(member.member_id, health, member.stats.blood)
 
 
+## Called on entering a room, once the members are spawned. In a `restful` room, one without living
+## enemies, the party rests: every member's health is restored to its maximum, the fallen raised first.
+## Blood is not changed. Elsewhere nothing changes.
+func arrive(restful: bool) -> void:
+	if not restful:
+		return
+	for member: Unit in members:
+		member.revive()
+		member.stats.heal(member.stats.max_health - member.stats.health)
+
+
 ## Remembers the members' vitals in `state` as the room is entered.
 func remember_entry_vitals(state: GameState) -> void:
 	_entry_vitals.clear()
