@@ -49,6 +49,12 @@ test('progress survives a page reload', async ({ page }) => {
   const errors = await open(page, 'probe=1&fresh=1');
   await until(page, () => { window.nocturneProbe(); return window.nocturneState.talking; });
   await talkThrough(page, '1');
+  // A second conversation, so the save is replaced more than once before the reload.
+  const at = (await state(page)).people['The captive'];
+  const box = await page.locator('canvas').boundingBox();
+  await page.mouse.click(box.x + at[0], box.y + at[1]);
+  await until(page, () => { window.nocturneProbe(); return window.nocturneState.talking; }, null, 20000);
+  await talkThrough(page, '3');
   await page.goto('/?probe=1');
   await page.waitForFunction(() => window.nocturneStarted === true, null, { timeout: 60000 });
   await page.waitForTimeout(1500);
@@ -56,6 +62,8 @@ test('progress survives a page reload', async ({ page }) => {
   expect(s.room).toBe('haven');
   expect(s.talking).toBe(false);
   expect(s.flags).toContain('met_malakor');
+  expect(s.flags).toContain('captive_done');
+  expect(s.conscience).toBe(8);
   expect(errors).toEqual([]);
 });
 

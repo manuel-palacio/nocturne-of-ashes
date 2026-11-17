@@ -44,4 +44,18 @@ crusaders wait; its last lock does not open yet.
 Progress is saved in the browser: on entering a room, at the end of each conversation and when a room
 is cleared. The title offers Continue when there is a save, and New game.
 
+## Test parameters
+
+The browser tests start the game with query parameters in the page address (for example
+`/?probe=1&fresh=1`). They exist for those tests; players need none of them.
+
+- `probe=1` — lets the tests read the game, and skips the title: Continue when there is a save, else New game.
+- `title=1` — with `probe=1`: shows the title anyway.
+- `fresh=1` — with `probe=1`: clears the save first; ignored without it.
+- `calm=1` — with `probe=1`: the enemies stand still.
+- `frail=1` — with `probe=1`: Álvar starts each room with enemies at 1 health.
+- `at=vault` — with `probe=1` and `fresh=1`: starts in the vault as if the haven were finished.
+- `skirmish=1` — plays the vault skirmish with the whole party, with no title and no save.
+- `lang=es` — shows the game in Spanish.
+
 Deploy to Fly.io (needs the fly CLI, logged in): `ops/deploy-fly.sh`

@@ -4,8 +4,9 @@ extends Node
 ## is ready and installs `window.nocturneProbe()`, which writes the game's state to
 ## `window.nocturneState`. Two test aids go with it: with `calm=1` the enemies' brains are removed at
 ## every room start, so a test can walk without being attacked; with `frail=1` Álvar's health is set
-## to 1 whenever a room with enemies starts, after that room entry's checkpoint, so the save keeps his
-## real health. Elsewhere `watch()` does nothing.
+## to 1 whenever a room with enemies starts, after that room entry's checkpoint, so that save keeps his
+## real health; a later checkpoint in the room (the end of a conversation, a cleared room) can save his
+## low health. Elsewhere `watch()` does nothing.
 
 ## How high up a character or door its screen point is taken, in metres.
 const PERSON_HEIGHT: float = 0.9
@@ -108,7 +109,7 @@ func _member_state(member: Unit) -> Dictionary:
 
 ## Each visible character's and door's screen point, `PERSON_HEIGHT` up, in CSS pixels relative to the
 ## canvas, whose size is `view`: a character under its untranslated label, a door under its node name.
-## Those behind the camera are left out.
+## A point off screen is reported as it is, outside the canvas; only those behind the camera are left out.
 func _people(view: Vector2) -> Dictionary:
 	var people: Dictionary = {}
 	var camera: Camera3D = get_viewport().get_camera_3d()
