@@ -153,8 +153,11 @@ func hide_cleared() -> void:
 
 
 ## Shows `text`, an English source text, in the middle of the screen for `notice_time` seconds, in
-## place of any notice on show.
+## place of any notice on show. An empty text hides the notice.
 func show_notice(text: String) -> void:
+	if text.is_empty():
+		hide_notice()
+		return
 	_notice = text
 	_notice_left = notice_time
 	_notice_label.text = tr(text)

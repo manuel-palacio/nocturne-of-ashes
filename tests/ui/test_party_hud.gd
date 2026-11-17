@@ -167,3 +167,11 @@ func test_an_allys_panel_selects_while_an_enemy_gift_is_targeting() -> void:
 	_panel(1).pressed.emit(main.party[1])
 	assert_eq(main.selected, main.party[1])
 	assert_eq(main.input.targeting_gift(), -1)
+
+func test_an_empty_notice_hides_the_notice() -> void:
+	var label: Label = hud.find_child("NoticeLabel")
+	hud.show_notice("Not while they are upon you")
+	assert_true(label.visible)
+	hud.show_notice("")
+	assert_false(label.visible)
+	assert_eq(hud.notice(), "")
