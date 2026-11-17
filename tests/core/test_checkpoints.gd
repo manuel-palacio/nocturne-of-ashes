@@ -61,14 +61,13 @@ func test_reload_restores_the_room_the_save_names() -> void:
 	assert_eq(main.room.room_id, &"haven")
 	assert_eq(main.state.entry, &"from_vault")
 
-func test_reload_with_an_unusable_save_starts_a_new_game() -> void:
+func test_reload_ignores_an_unusable_save_while_a_checkpoint_is_in_memory() -> void:
 	await _boot()
 	var file := FileAccess.open(main.store.path, FileAccess.WRITE)
 	file.store_string("garbage")
 	file.close()
 	main.reload_checkpoint()
 	await wait_physics_frames(3)
-	assert_push_warning("save")
 	assert_eq(main.room.room_id, &"haven")
 	assert_eq(main.state.conscience, 7)
 	assert_true(main.store.has_save())

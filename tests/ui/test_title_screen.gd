@@ -95,3 +95,21 @@ func test_a_reload_closes_the_title_and_turns_input_on() -> void:
 	assert_false(_title().is_open())
 	assert_true(main.input.enabled)
 	assert_eq(main.room.room_id, &"vault")
+
+func test_a_reload_from_the_title_over_an_unusable_save_warns_once_and_starts_a_new_game() -> void:
+	main = GAME.instantiate()
+	main.store = SaveStore.new()
+	main.store.path = "user://test_title_%d.json" % randi()
+	var file := FileAccess.open(main.store.path, FileAccess.WRITE)
+	file.store_string("garbage")
+	file.close()
+	add_child_autofree(main)
+	await wait_physics_frames(3)
+	assert_push_warning_count(0)  # finding a save at boot does not read it
+	main.reload_checkpoint()  # nothing in memory yet: the store is read
+	await wait_physics_frames(3)
+	assert_push_warning("save")
+	assert_push_warning_count(1)
+	assert_eq(main.room.room_id, &"haven")
+	assert_eq(main.state.conscience, 7)
+	assert_true(main.store.has_save())
