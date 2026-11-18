@@ -16,11 +16,19 @@ signal fury_ended
 
 ## While chasing, the walk is re-aimed once the target has moved this far from where it was headed.
 const _CHASE_RETARGET: float = 0.5
+## A chaser standing where its path ended short walks to the target again once it has been moved
+## this far from where it stood, as a crowd's push can move it.
+const _CHASE_DISPLACED: float = 0.3
 
 var _order: Unit.Order = Unit.Order.NONE
 var _issuer: Unit.Issuer = Unit.Issuer.NONE
 var _attack_target: Unit
 var _interact_target: Interactable
+## Where the chaser last came to a stand during this chase, while `_standing`, and whether that was
+## in melee range.
+var _stood_at: Vector3
+var _standing: bool = false
+var _stood_in_range: bool = false
 
 @onready var _unit: Unit = get_parent()
 @onready var _mover: Mover = $"../Mover"
@@ -152,6 +160,7 @@ func _break_off() -> void:
 	_feeder.cancel()
 	_attack_target = null
 	_interact_target = null
+	_standing = false
 	_end()
 	_halt()
 
@@ -225,22 +234,43 @@ func _in_reach(target: Interactable) -> bool:
 ## Starts a chase towards `target`. A chase re-aims on its own, and a blocked chaser keeps trying.
 func _close_in(target: Unit) -> void:
 	_mover.stall_check = false
-	_mover.walk_to(target.global_position)
+	_chase(target.global_position)
+
+
+## Walks towards `target_at` for a chase, which no longer stands anywhere.
+func _chase(target_at: Vector3) -> void:
+	_standing = false
+	_mover.walk_to(target_at)
 
 
 ## One frame of a chase: re-aims while `target` is out of melee range and returns false; in range,
-## halts facing it and returns true.
+## halts facing it and returns true. A chaser standing still out of range walks again when it last
+## stood in range, as a target nudged off by its friends leaves it, or when it has been moved away
+## from where its path ended short; a path that simply ends short is not walked again.
 func _reach(target: Unit) -> bool:
 	var target_at: Vector3 = target.global_position
+	var here: Vector3 = _unit.global_position
 	if not _melee.in_range(target):
 		var drift: Vector3 = target_at - _mover.destination()
 		# Re-aim only when the target has moved, so a path ending short of it does not re-path each frame.
 		if Vector2(drift.x, drift.z).length() > _CHASE_RETARGET:
-			_mover.walk_to(target_at)
+			_chase(target_at)
+		elif not _mover.is_walking():
+			if not _standing:
+				_stand(here, false)
+			elif _stood_in_range or Vector2(here.x - _stood_at.x, here.z - _stood_at.z).length() > _CHASE_DISPLACED:
+				_chase(target_at)
 		return false
 	_halt()
+	_stand(here, true)
 	_unit.face(target_at)
 	return true
+
+
+func _stand(at: Vector3, in_range: bool) -> void:
+	_standing = true
+	_stood_at = at
+	_stood_in_range = in_range
 
 
 func _on_feed_finished(target: Unit) -> void:
