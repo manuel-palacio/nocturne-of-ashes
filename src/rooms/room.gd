@@ -14,6 +14,9 @@ const BESIDE_NPC: float = 2.0
 @export var room_id: StringName
 ## The enemy markers that get a sergeant instead of a crusader.
 @export var sergeant_spawns: Array[StringName] = []
+## The walkable floor inside the walls, in the room's own x and z (a `Rect2`'s y is z): the camera
+## keeps its focus inside it. Without area the camera is not held in.
+@export var floor_rect: Rect2 = Rect2()
 
 
 ## The entry called `entry_name`; `Entry_start`, with a warning, when the room has no such entry; null,
@@ -60,6 +63,11 @@ func arrival_point(display_name: String, fallback: Node3D) -> Vector3:
 			return spot
 		return NavigationServer3D.map_get_closest_point(map, spot)
 	return fallback.global_position
+
+
+## `floor_rect` in world x and z. Rooms are placed without turning, so only the room's position counts.
+func floor_bounds() -> Rect2:
+	return Rect2(floor_rect.position + Vector2(global_position.x, global_position.z), floor_rect.size)
 
 
 ## The characters to talk to that are children of the room, in scene order.
