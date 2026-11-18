@@ -267,6 +267,8 @@ func _reach(target: Unit) -> bool:
 	return true
 
 
+## Records that the chaser has come to a stand at `at` during this chase, and whether in melee range,
+## for `_reach` to tell a push or a nudged target from a path that ended short.
 func _stand(at: Vector3, in_range: bool) -> void:
 	_standing = true
 	_stood_at = at
