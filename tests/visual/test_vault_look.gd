@@ -126,3 +126,26 @@ func test_the_arcade_between_the_camera_and_the_nave_is_cut_at_each_turn() -> vo
 		await wait_process_frames(2)
 		assert_eq([north.visible, south.visible], expected[turn], "turn %d: north and south arcades drawn" % turn)
 		main.rig.rotate_by(PI / 2)
+
+
+## Clear of the gift bar (56 px, bottom-anchored) with room for a unit's rings, on a 720 px frame.
+const BOTTOM_CLEAR_PX: float = 80.0
+
+
+func test_a_unit_at_the_camera_side_wall_stands_clear_of_the_gift_bar_at_each_turn() -> void:
+	var main: Main = add_child_autofree(MAIN.instantiate())
+	await wait_physics_frames(3)
+	for enemy: Unit in main.enemies:
+		enemy.get_node("Brain").free()
+	var view: Vector2 = main.get_viewport().get_visible_rect().size
+	var lowest: float = view.y - BOTTOM_CLEAR_PX * view.y / 720.0
+	# The walkable edge 0.4 m inside the wall nearest the camera, as the camera looks north, west,
+	# south and east.
+	var edges: Array[Vector3] = [Vector3(0, 0, 7.6), Vector3(11.6, 0, 0), Vector3(0, 0, -7.6), Vector3(-11.6, 0, 0)]
+	for turn: int in 4:
+		main.player.global_position = edges[turn]
+		main.rig.snap_to_target()
+		var feet: Vector2 = main.rig.camera().unproject_position(edges[turn])
+		assert_true(Rect2(Vector2.ZERO, view).has_point(feet), "turn %d: the feet at %s are on screen" % [turn, feet])
+		assert_lte(feet.y, lowest, "turn %d: the feet are %.0f px above the bottom" % [turn, view.y - feet.y])
+		main.rig.rotate_by(PI / 2)

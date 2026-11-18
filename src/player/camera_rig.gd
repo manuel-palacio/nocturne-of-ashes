@@ -5,8 +5,9 @@ extends Node3D
 ## shrunk by a margin, so the view never centres on the dark beyond a wall. The margins follow the view,
 ## at any zoom and turn: from the walls at the screen's sides, `side_fraction` of the view's half-width
 ## on the floor; from the wall at its bottom, nearest the camera, `near_fraction` of how far the floor
-## is seen toward the camera; from the wall at its top, `far_fraction` of that, less, so the wall ahead
-## and its doors stay in sight. At a fraction of 1 a wall comes to the screen's edge and no further in.
+## is seen toward the camera, which leaves room for the HUD along the bottom edge; from the wall at its
+## top, `far_fraction` of that, less, so the wall ahead and its doors stay in sight. At a fraction of 1
+## a wall comes to the screen's edge and no further in.
 
 @export var pitch_degrees: float = 50.0
 @export var distance: float = 12.0
@@ -18,8 +19,9 @@ extends Node3D
 @export var follow_sharpness: float = 8.0
 ## The margin from the walls at the screen's left and right, as a fraction of the view's half-width.
 @export var side_fraction: float = 0.85
-## The margin from the wall at the screen's bottom, as a fraction of the view's reach toward the camera.
-@export var near_fraction: float = 1.0
+## The margin from the wall at the screen's bottom, as a fraction of the view's reach toward the camera:
+## under 1, so a unit at that wall stands clear of the gift bar along the screen's bottom edge.
+@export var near_fraction: float = 0.8
 ## The margin from the wall at the screen's top, as a fraction of the view's reach toward the camera.
 @export var far_fraction: float = 0.5
 
@@ -81,7 +83,9 @@ func view_reach() -> Vector2:
 	var aspect: float = view.x / view.y if view.y > 0.0 else 1.0
 	var pitch: float = deg_to_rad(pitch_degrees)
 	var across: float = distance * tan(half_fov) * aspect
-	var toward: float = distance * cos(pitch) - distance * sin(pitch) / tan(pitch + half_fov)
+	# Past straight down the bottom edge would look back toward the camera; hold it just short.
+	var lowest: float = minf(pitch + half_fov, deg_to_rad(89.0))
+	var toward: float = distance * cos(pitch) - distance * sin(pitch) / tan(lowest)
 	return Vector2(across, toward)
 
 
