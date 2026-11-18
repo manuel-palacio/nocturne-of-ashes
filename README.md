@@ -46,6 +46,17 @@ refuses other versions, whose exporter may write other bytes):
 each piece hangs from; `resources/gear/<piece>.tres` holds the same for the game, and each
 character's `resources/dress/<name>.tres` lists what it wears. It too writes the same bytes on every run.
 
+The rooms are built from a stone kit made by `tools/blender/kit.py`, one `assets/kit/<piece>.glb`
+each: floor slabs, stone and brick walls, a pier, horseshoe and round arch bays, a barrel vault, a
+door and its frame, a stair going down, the forge, props, a grille, a sconce and the sealed lock.
+Run it the same way: `blender -b --factory-startup -P tools/blender/kit.py`; it writes the same bytes
+on every run. Its docstring has the table of pieces: footprint on the 2 m grid, what each blocks and
+on which physics layer. The pieces carry no textures: each face names one of five shared materials
+(`resources/materials/stone|brick|plaster|wood|iron.tres`), and `tools/kit_import.gd`, the pieces'
+import script, swaps those names for the materials and puts the collision bodies on their layers. The
+materials' tiling textures, colour and normal map at 1024 px, are CC0 sets from Poly Haven in
+`assets/textures/` (see `CREDITS.md`), imported VRAM-compressed with mipmaps, the normal maps at 512 px.
+
 ## Story so far
 
 Brother Álvar wakes after his Turning in the forge-haven of the Blood-Forged, under Toledo, and
