@@ -21,6 +21,13 @@ const _FOLLOW_RETARGET: float = 1.0
 @export var switch_margin: float = 2.0
 ## How far short of the leader a follow walk ends.
 @export var follow_distance: float = 3.0
+## An idle follower starts a follow walk only once farther than `follow_distance` plus this from a
+## leader standing still, so followers spaced apart around it, a little beyond `follow_distance`, stay
+## at rest when nudged.
+@export var follow_slack: float = 2.0
+## As `follow_slack`, while the leader walks (`is_moving()`), so a leader walking away is followed
+## promptly. A follow walk under way is carried out whichever band applies.
+@export var follow_slack_moving: float = 1.0
 ## Whether the brain feeds and uses its unit's Gifts.
 @export var uses_gifts: bool = false
 ## With `uses_gifts`, the unit feeds on a weakened hostile within `aggro_radius` while its Blood is below this.
@@ -129,7 +136,8 @@ func _follow() -> void:
 	var following: bool = _is_following()
 	if following and _flat(leader.global_position, _leader_was_at) <= _FOLLOW_RETARGET:
 		return
-	if not following and _flat_to(leader) <= follow_distance + 1.0:
+	var slack: float = follow_slack_moving if leader.is_moving() else follow_slack
+	if not following and _flat_to(leader) <= follow_distance + slack:
 		return
 	var away: Vector3 = _unit.global_position - leader.global_position
 	away.y = 0.0

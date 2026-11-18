@@ -213,3 +213,53 @@ func test_an_attacker_put_out_of_range_comes_back_and_strikes() -> void:
 	assert_lte(Arena.flat(attacker.global_position, target.global_position), 1.6)
 	assert_gt(struck[0], 0)
 	assert_push_warning_count(0)
+
+
+func test_a_follower_nudged_a_little_beyond_its_place_stays_and_one_far_off_walks_back() -> void:
+	var leader: Unit = arena.spawn(Arena.ALVAR, Vector3(-4, 0, 4))
+	var followers: Array[Unit] = [
+		arena.spawn(Arena.ZAHRA, Vector3(-4.6, 0, 7.2), true),
+		arena.spawn(Arena.GONZALO, Vector3(-3.4, 0, 7.2), true),
+		arena.spawn(Arena.ZAHRA, Vector3(-4, 0, 7.6), true),
+	]
+	for follower: Unit in followers:
+		(follower.get_node("Brain") as CombatBrain).leader = leader
+	await wait_seconds(3.0)
+	for follower: Unit in followers:
+		assert_eq(follower.current_order(), Unit.Order.NONE, "%s at rest" % follower.name)
+	var nudged: Unit = followers[2]
+	var bearing: Vector3 = nudged.global_position - leader.global_position
+	bearing.y = 0.0
+	bearing = bearing.normalized()
+	nudged.global_position = leader.global_position + bearing * 4.5
+	for i: int in 8:
+		await wait_seconds(0.25)
+		assert_eq(nudged.current_order(), Unit.Order.NONE, "no order at 4.5 m")
+	assert_almost_eq(Arena.flat(nudged.global_position, leader.global_position), 4.5, 0.05)
+	nudged.global_position = leader.global_position + bearing * 5.5
+	await wait_seconds(0.5)
+	assert_true(nudged.is_moving(), "walks back from 5.5 m")
+	await wait_seconds(2.5)
+	assert_lt(Arena.flat(nudged.global_position, leader.global_position), 4.0)
+
+
+func test_a_follow_walk_begun_behind_a_walking_leader_is_finished_after_it_stops() -> void:
+	var leader: Unit = arena.spawn(Arena.ALVAR, Vector3(-4, 0, 4))
+	var follower: Unit = arena.spawn(Arena.ZAHRA, Vector3(-4, 0, 4.85), true)
+	(follower.get_node("Brain") as CombatBrain).leader = leader
+	await wait_seconds(1.0)
+	assert_eq(follower.current_order(), Unit.Order.NONE)
+	# Slow enough that the brain thinks at least once while the gap is past 4 m and the leader still
+	# walks, and the follow walk is still under way when the leader stops.
+	leader.move_speed = 1.0
+	follower.move_speed = 1.0
+	leader.order_move(Vector3(-4, 0, 0.15))
+	await wait_for_signal(leader.arrived, 6.0)
+	# The leader stops within its arrival distance of the point, about 4.4 m from where the follower
+	# stood: inside the 5 m band for a leader standing still.
+	assert_eq(follower.current_order(), Unit.Order.MOVE, "the follow walk began while the leader walked")
+	await wait_seconds(3.0)
+	assert_eq(follower.current_order(), Unit.Order.NONE)
+	assert_lte(Arena.flat(follower.global_position, leader.global_position), 4.0)
+	assert_gte(Arena.flat(follower.global_position, leader.global_position), 2.5)
+	assert_push_warning_count(0)

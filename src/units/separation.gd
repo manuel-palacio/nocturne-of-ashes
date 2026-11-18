@@ -6,9 +6,10 @@ extends Node
 ## pair parts once and then rests. A unit walking or attacking is pushed at most `WALK_SHARE` of its
 ## walk speed, so its walk always gains and the stall check never sees it held; an attacker is never
 ## pushed out of melee range, nor farther from its target when already out of it. Dead, stunned and
-## feeding units are never pushed (stunned covers a meal held by a feed); every living unit pushes. Two units on the very same
-## spot part along X, the one that entered the tree later towards +X, the same way every time. Units
-## still do not collide with each other: walls stop a pushed unit as they stop a walking one.
+## feeding units are never pushed (stunned covers a meal held by a feed); every living unit pushes.
+## Two units on the very same spot part along X, the one that entered the tree later towards +X, the
+## same way every time. Units still do not collide with each other: walls stop a pushed unit as they
+## stop a walking one.
 
 ## Overlaps smaller than this are left alone, so two units at rest do not nudge each other for ever.
 const DEAD_BAND: float = 0.05
