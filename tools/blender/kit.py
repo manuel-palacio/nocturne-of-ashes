@@ -24,6 +24,7 @@ for the camera to see from above; the vault is drawn only from below, so the cam
 | door_leaf | 1.4 x 0.1, 2.4 | planked door with iron straps, studs and a ring | nothing (the door scene's body does) |
 | stair_down | 2 x 4, 2.4 below the floor | a flight going down toward -z under a lintel | walls (a low barrier round its mouth and sides) |
 | forge | 2.6 x 1.4, 4 | hearth with a fire pan, a plastered hood and flue | world (hearth) |
+| embers | 1.5 x 0.7, from 0.72 to 0.81 | a bed of glowing coals that fills the forge's fire pan | nothing |
 | anvil, rack, barrel, bench | props | | world |
 | bars | 2 x 0.06, 2.4 | an iron grille | walls (blocks units, not clicks) |
 | sconce | 0.16 x 0.4, from 1.9 to 2.6 | an iron torch bracket; its back is flat at z = -0.2 | nothing |
@@ -35,7 +36,8 @@ pillar. A segmental arch is a third of a circle, so it rises 1.5 m over its 5.2 
 under the bay's top. A horseshoe arch's curve continues a third of its radius below its centre line, so the opening
 is narrower at the impost (1.2 m) than at its widest (1.27 m).
 
-Materials: each face uses one of five shared materials, by name: stone, brick, plaster, wood, iron.
+Materials: each face uses one of six shared materials, by name: stone, brick, plaster, wood, iron, and
+ember (the glowing coals, which light themselves).
 The pieces carry no textures; `tools/kit_import.gd` (the pieces' import script) swaps each named
 material for `resources/materials/<name>.tres`, whose textures are in `assets/textures/`. Texture
 coordinates are set here, at world scale: flat faces are box-mapped (`SCALE` gives the metres per
@@ -68,7 +70,8 @@ OUT = Path(__file__).resolve().parents[2] / "assets/kit"
 MAX_TRIANGLES = 2000
 
 # The shared materials, and the metres per texture repeat along u and v.
-SCALE = {"stone": (2.0, 2.0), "brick": (2.0, 1.0), "plaster": (2.0, 2.0), "wood": (1.0, 1.0), "iron": (1.0, 1.0)}
+SCALE = {"stone": (2.0, 2.0), "brick": (2.0, 1.0), "plaster": (2.0, 2.0), "wood": (1.0, 1.0), "iron": (1.0, 1.0),
+         "ember": (0.5, 0.5)}
 MATERIALS = list(SCALE)
 
 IMPOST = 2.0  # height of the capitals that arches spring from
@@ -551,6 +554,25 @@ def forge() -> Piece:
     return p
 
 
+def embers() -> Piece:
+    """The coals in the forge's fire pan: placed where the forge is, they fill its pan, a bed with
+    lumps of differing heights standing a little above the rim, so the glow shows from above."""
+    p = Piece("embers")
+    bed = 0.72
+    p.face([(-0.75, bed, -0.35), (0.75, bed, -0.35), (0.75, bed, 0.35), (-0.75, bed, 0.35)], (0, 1, 0), "ember")
+    half = 0.1
+    for i in range(7):
+        for j in range(3):
+            x, z = -0.6 + 0.2 * i, -0.2 + 0.2 * j
+            height = 0.04 + 0.05 * ((i * 7 + j * 3) % 5) / 4  # a fixed scatter, the same on every run
+            lean = 0.03 * (((i + 2 * j) % 3) - 1)
+            base = [(x - half, bed, z - half), (x + half, bed, z - half), (x + half, bed, z + half), (x - half, bed, z + half)]
+            tip = (x + lean, bed + height, z - lean)
+            for a, b in zip(base, base[1:] + base[:1]):
+                p.face([a, b, tip], sub(mul(add(a, b), 0.5), (x, bed - 0.1, z)), "ember")
+    return p
+
+
 def anvil() -> Piece:
     p = Piece("anvil")
     p.lathe([(0.0, 0.24), (0.5, 0.24)], 8, "wood", turn=22.5, top=True)  # the stump
@@ -650,7 +672,7 @@ def sconce() -> Piece:
 
 
 PIECES = [floor_slab, lambda: wall("wall", "stone"), lambda: wall("wall_brick", "brick"), wall_corner, pillar, arch_horseshoe,
-          arch_round, arch_segmental, vault_barrel, door_frame, door_leaf, stair_down, forge, anvil, rack, barrel, bench, bars,
+          arch_round, arch_segmental, vault_barrel, door_frame, door_leaf, stair_down, forge, embers, anvil, rack, barrel, bench, bars,
           sconce, lock_seal]
 
 

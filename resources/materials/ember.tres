@@ -1,0 +1,18 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" uid="uid://csd1hyt1k82qq" path="res://assets/textures/stone_color.jpg" id="1_color"]
+[ext_resource type="Texture2D" uid="uid://bwy8e1lkt8hjo" path="res://assets/textures/stone_normal.jpg" id="2_normal"]
+
+[resource]
+resource_name = "ember"
+albedo_color = Color(0.25, 0.06, 0.02, 1)
+albedo_texture = ExtResource("1_color")
+roughness = 1.0
+normal_enabled = true
+normal_texture = ExtResource("2_normal")
+emission_enabled = true
+emission = Color(1, 0.38, 0.08, 1)
+emission_energy_multiplier = 2.5
+emission_operator = 1
+emission_texture = ExtResource("1_color")
+texture_filter = 5

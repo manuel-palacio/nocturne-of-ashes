@@ -1,7 +1,7 @@
 # tests/visual/test_kit.gd
 extends GutTest
 ## The stone kit made by `tools/blender/kit.py`: every piece loads, stays under the triangle cap, fills
-## the footprint it is made for, blocks movement only where it should, and is drawn only with the five
+## the footprint it is made for, blocks movement only where it should, and is drawn only with the six
 ## shared materials.
 
 const KIT_DIR: String = "res://assets/kit/"
@@ -23,6 +23,7 @@ const BOUNDS: Dictionary = {
 	"door_leaf": [Vector3(-0.7, 0, -0.05), Vector3(0.7, 2.4, 0.09)],
 	"stair_down": [Vector3(-1, -2.4, -2), Vector3(1, 0, 2)],
 	"forge": [Vector3(-1.3, 0, -0.7), Vector3(1.3, 4, 0.7)],
+	"embers": [Vector3(-0.75, 0.72, -0.35), Vector3(0.75, 0.81, 0.35)],
 	"anvil": [Vector3(-0.42, 0, -0.25), Vector3(0.3, 0.82, 0.25)],
 	"rack": [Vector3(-1, 0, -0.25), Vector3(1, 1.9, 0.25)],
 	"barrel": [Vector3(-0.33, 0, -0.33), Vector3(0.33, 0.9, 0.33)],
@@ -31,9 +32,9 @@ const BOUNDS: Dictionary = {
 	"sconce": [Vector3(-0.08, 1.9, -0.2), Vector3(0.08, 2.6, 0.2)],
 	"lock_seal": [Vector3(-0.7, 0, -0.15), Vector3(0.7, 2.4, 0.15)],
 }
-## Pieces that block nothing: the vault is overhead, the sconce and the seal lie flat on a wall, and a
-## door's own body (`scenes/rooms/door.tscn`) does the door's blocking.
-const OPEN: Array[String] = ["vault_barrel", "door_leaf", "sconce", "lock_seal"]
+## Pieces that block nothing: the vault is overhead, the sconce and the seal lie flat on a wall, the
+## embers lie in the forge's pan, and a door's own body (`scenes/rooms/door.tscn`) does the door's blocking.
+const OPEN: Array[String] = ["vault_barrel", "door_leaf", "sconce", "lock_seal", "embers"]
 ## Blocking pieces a click passes through, to whatever lies beyond: the wall nearest the camera is
 ## not drawn, a grille is seen through, and a click on the stairwell means the floor. The others stop a
 ## click where they stand.
@@ -47,7 +48,7 @@ const UNIT_RADIUS: float = 0.35
 const UNIT_HEIGHT: float = 1.8
 ## Where the pieces stand in the physics tests, one per spot, far enough apart not to touch.
 const SPACING: float = 12.0
-const MATERIALS: Array[String] = ["stone", "brick", "plaster", "wood", "iron"]
+const MATERIALS: Array[String] = ["stone", "brick", "plaster", "wood", "iron", "ember"]
 const MAX_TEXTURE: int = 1024
 
 
