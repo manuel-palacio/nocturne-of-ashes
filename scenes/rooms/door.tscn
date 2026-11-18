@@ -1,16 +1,9 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://src/rooms/door.gd" id="1_door"]
+[ext_resource type="PackedScene" uid="uid://qiilkoewphql" path="res://assets/kit/door_leaf.glb" id="2_leaf"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_door"]
-size = Vector3(1.4, 2.4, 0.2)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_door"]
-albedo_color = Color(0.12, 0.09, 0.07, 1)
-roughness = 0.9
-
-[sub_resource type="BoxMesh" id="BoxMesh_door"]
-material = SubResource("StandardMaterial3D_door")
 size = Vector3(1.4, 2.4, 0.2)
 
 [node name="Door" type="StaticBody3D"]
@@ -22,6 +15,4 @@ script = ExtResource("1_door")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
 shape = SubResource("BoxShape3D_door")
 
-[node name="Body" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
-mesh = SubResource("BoxMesh_door")
+[node name="Leaf" parent="." instance=ExtResource("2_leaf")]

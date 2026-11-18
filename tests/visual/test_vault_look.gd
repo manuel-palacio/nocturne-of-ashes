@@ -1,0 +1,128 @@
+# tests/visual/test_vault_look.gd
+extends GutTest
+## The vault built from the stone kit: its gameplay positions stay where they were, it is drawn with
+## kit pieces only, clicks between its piers reach the floor, and it keeps within its light and
+## triangle budgets.
+
+const VAULT: PackedScene = preload("res://scenes/rooms/vault_room.tscn")
+const MAIN: PackedScene = preload("res://scenes/main.tscn")
+## How far a gameplay position may move from where it was in the grey-box vault, in metres.
+const MOVE: float = 0.5
+## Where each marker, door and pier stood in the grey-box vault (x and z; height does not count).
+const OLD_POSITIONS: Dictionary = {
+	"Entry_start": Vector2(-10, 0),
+	"Entry_start/Companion1": Vector2(-10, 1.5),
+	"Entry_start/Companion2": Vector2(-10, -1.5),
+	"Entry_from_haven": Vector2(-10, 0),
+	"Entry_from_haven/Companion1": Vector2(-10, 1.5),
+	"Entry_from_haven/Companion2": Vector2(-10, -1.5),
+	"EnemySpawn1": Vector2(0.5, 0),
+	"EnemySpawn2": Vector2(1.5, -1.5),
+	"EnemySpawn3": Vector2(1.5, 1.5),
+	"EnemySpawn4": Vector2(9, 0),
+	"EnemySpawn5": Vector2(10, -2),
+	"EnemySpawn6": Vector2(10, 2),
+	"WestDoor": Vector2(-11.85, 3),
+	"LastLock": Vector2(11.85, -5),
+	"NavigationRegion3D/Pillars/Pillar1": Vector2(-6, -3.5),
+	"NavigationRegion3D/Pillars/Pillar2": Vector2(0, -3.5),
+	"NavigationRegion3D/Pillars/Pillar3": Vector2(6, -3.5),
+	"NavigationRegion3D/Pillars/Pillar4": Vector2(-6, 3.5),
+	"NavigationRegion3D/Pillars/Pillar5": Vector2(0, 3.5),
+	"NavigationRegion3D/Pillars/Pillar6": Vector2(6, 3.5),
+}
+const MAX_LIGHTS: int = 6
+const MAX_SHADOWED_LIGHTS: int = 2
+const MAX_TRIANGLES: int = 150000
+
+
+func _flat(at: Vector3) -> Vector2:
+	return Vector2(at.x, at.z)
+
+
+func _vault() -> Room:
+	var room: Room = add_child_autofree(VAULT.instantiate())
+	var map: RID = room.get_world_3d().navigation_map
+	var region: RID = (room.get_node("NavigationRegion3D") as NavigationRegion3D).get_rid()
+	# Until the region has taken its navmesh in, and the map the region after that.
+	await wait_until(func() -> bool: return NavigationServer3D.region_get_iteration_id(region) > 0, 2.0)
+	var before: int = NavigationServer3D.map_get_iteration_id(map)
+	await wait_until(func() -> bool: return NavigationServer3D.map_get_iteration_id(map) > before, 2.0)
+	return room
+
+
+func test_markers_doors_and_piers_stay_put_and_markers_and_doors_are_on_the_navmesh() -> void:
+	var room: Room = await _vault()
+	var map: RID = room.get_world_3d().navigation_map
+	for path: String in OLD_POSITIONS:
+		var node := room.get_node_or_null(path) as Node3D
+		assert_not_null(node, path)
+		if node == null:
+			continue
+		var moved: float = _flat(node.global_position).distance_to(OLD_POSITIONS[path])
+		assert_lte(moved, MOVE, "%s moved %.2f m" % [path, moved])
+		if path.begins_with("NavigationRegion3D"):
+			continue
+		# A door stands in its wall; Álvar uses it from its use mark, which must be walkable.
+		var stand: Vector3 = node.global_position
+		if node is Door:
+			stand = node.global_transform * (node as Door).use_mark_position()
+		var closest: Vector3 = NavigationServer3D.map_get_closest_point(map, stand)
+		assert_lt(_flat(closest).distance_to(_flat(stand)), 0.05, "%s stands on the navmesh" % path)
+
+
+func test_the_room_is_drawn_with_kit_pieces_only() -> void:
+	var room: Room = await _vault()
+	for node: Node in room.find_children("*", "MeshInstance3D", true, false):
+		var mesh: Mesh = (node as MeshInstance3D).mesh
+		assert_false(mesh is BoxMesh, "%s is a box" % room.get_path_to(node))
+		assert_false(mesh is CapsuleMesh, "%s is a capsule" % room.get_path_to(node))
+
+
+func test_a_click_on_the_floor_between_two_piers_orders_a_move_there() -> void:
+	var main: Main = add_child_autofree(MAIN.instantiate())
+	await wait_physics_frames(3)
+	for enemy: Unit in main.enemies:
+		enemy.get_node("Brain").free()
+		enemy.global_position.x = 11.0
+	main.player.global_position = Vector3(-3, 0, 0)
+	main.rig.snap_to_target()
+	await wait_physics_frames(3)
+	# Midway between the two western piers of each row, under the arch that springs between them.
+	for spot: Vector3 in [Vector3(-3, 0, -3.5), Vector3(-3, 0, 3.5)]:
+		main.input.click_at(main.rig.camera().unproject_position(spot))
+		await wait_for_signal(main.player.arrived, 4.0)
+		assert_lt(_flat(main.player.global_position).distance_to(_flat(spot)), 0.5, "walked to %s" % spot)
+
+
+func test_the_room_has_at_most_six_lights_and_two_shadows() -> void:
+	var room: Room = await _vault()
+	var lights: Array[Node] = room.find_children("*", "Light3D", true, false)
+	assert_lte(lights.size(), MAX_LIGHTS)
+	var shadowed: int = lights.filter(func(light: Light3D) -> bool: return light.shadow_enabled).size()
+	assert_lte(shadowed, MAX_SHADOWED_LIGHTS)
+
+
+func test_the_room_draws_fewer_than_150000_triangles() -> void:
+	var room: Room = await _vault()
+	var triangles: int = 0
+	for node: Node in room.find_children("*", "MeshInstance3D", true, false):
+		var instance := node as MeshInstance3D
+		if not instance.is_visible_in_tree() or instance.mesh == null:
+			continue
+		triangles += instance.mesh.get_faces().size() / 3
+	gut.p("the vault draws %d triangles" % triangles)
+	assert_lt(triangles, MAX_TRIANGLES)
+
+
+func test_the_arcade_between_the_camera_and_the_nave_is_cut_at_each_turn() -> void:
+	var main: Main = add_child_autofree(MAIN.instantiate())
+	await wait_physics_frames(3)
+	var north := main.room.get_node("NavigationRegion3D/Arcades/North") as Node3D
+	var south := main.room.get_node("NavigationRegion3D/Arcades/South") as Node3D
+	# Looking north, then west, south and east, a quarter turn at a time.
+	var expected: Array = [[true, false], [true, true], [false, true], [true, true]]
+	for turn: int in 4:
+		await wait_process_frames(2)
+		assert_eq([north.visible, south.visible], expected[turn], "turn %d: north and south arcades drawn" % turn)
+		main.rig.rotate_by(PI / 2)
