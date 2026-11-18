@@ -12,7 +12,6 @@
 [ext_resource type="PackedScene" uid="uid://cb7p7x2wekg13" path="res://assets/kit/barrel.glb" id="7_kdj8o"]
 [ext_resource type="PackedScene" uid="uid://bh4b3yl73j0kn" path="res://assets/kit/bench.glb" id="8_ak5vn"]
 [ext_resource type="PackedScene" uid="uid://7s0updgm3quj" path="res://assets/kit/door_frame.glb" id="9_3h6bv"]
-[ext_resource type="PackedScene" uid="uid://qiilkoewphql" path="res://assets/kit/door_leaf.glb" id="10_5surm"]
 [ext_resource type="PackedScene" uid="uid://cvy7sxmhtv430" path="res://assets/kit/stair_down.glb" id="11_af8pw"]
 [ext_resource type="PackedScene" uid="uid://yx6j7x4e3rqs" path="res://assets/kit/forge.glb" id="12_hoxf8"]
 [ext_resource type="PackedScene" uid="uid://cj1rworh2rqon" path="res://assets/kit/embers.glb" id="13_qm4g3"]
@@ -377,9 +376,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.25, 0, 5.75)
 [node name="StairFrame" type="Node3D" parent="NavigationRegion3D/Walls/East" unique_id=895491048 instance=ExtResource("9_3h6bv")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 9.25, 0, 2.5)
 
-[node name="StairLeaf" type="Node3D" parent="NavigationRegion3D/Walls/East" unique_id=6190808 instance=ExtResource("10_5surm")]
-transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 9.1, 0, 2.5)
-
 [node name="Sconce2" type="Node3D" parent="NavigationRegion3D/Walls/East" unique_id=539171621 instance=ExtResource("25_kixco")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 8.8, 0, -1.5)
 
@@ -481,15 +477,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.5)
 [node name="Companion2" type="Marker3D" parent="Entry_from_vault" unique_id=1504934942]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5)
 
-[node name="StairDoor" parent="." unique_id=1300236024 instance=ExtResource("2_door")]
+[node name="StairDoor" parent="." unique_id=1300236024 node_paths=PackedStringArray("drawn_with") instance=ExtResource("2_door")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 9.1, 0, 2.5)
 to_room = &"vault"
 to_entry = &"from_haven"
 needs_flags = Array[StringName]([&"order_given"])
 locked_text = "The stair is barred until Malakor says otherwise"
-
-[node name="Leaf" parent="StairDoor" index="1"]
-visible = false
+drawn_with = NodePath("../NavigationRegion3D/Walls/East/StairFrame")
 
 [node name="Malakor" parent="." unique_id=763472037 instance=ExtResource("4_lt12a")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.2, 0, -4.2)
@@ -540,5 +534,3 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 5)
 
 [node name="Slab2" type="Node3D" parent="CellFloor" unique_id=340360602 instance=ExtResource("2_r6t6n")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 5)
-
-[editable path="StairDoor"]

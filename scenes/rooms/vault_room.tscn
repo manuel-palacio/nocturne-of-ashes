@@ -746,11 +746,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.3, -2)
 [node name="EnemySpawn6" type="Marker3D" parent="." unique_id=175699437]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.3, 2)
 
-[node name="WestDoor" parent="." unique_id=238157373 instance=ExtResource("2_door")]
+[node name="WestDoor" parent="." unique_id=238157373 node_paths=PackedStringArray("drawn_with") instance=ExtResource("2_door")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -12.1, 0, 3)
 to_room = &"haven"
 to_entry = &"from_vault"
 leader_only = true
+drawn_with = NodePath("../NavigationRegion3D/Walls/West/West6")
 
 [node name="LastLock" parent="." unique_id=225836557 instance=ExtResource("2_door")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 12.1, 0, -5)

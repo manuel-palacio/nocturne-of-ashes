@@ -132,21 +132,40 @@ func test_the_room_draws_fewer_than_150000_triangles() -> void:
 	assert_lt(triangles, MAX_TRIANGLES)
 
 
-func test_the_wall_on_the_camera_side_is_cut_at_each_turn_and_the_stair_door_with_its_wall() -> void:
+func test_the_wall_on_the_camera_side_is_cut_at_each_turn() -> void:
 	main = Story.boot(self, _after_waking())
 	await wait_physics_frames(3)
 	var walls: Array[Node3D] = []
 	for side: String in ["North", "West", "South", "East"]:
 		walls.append(main.room.get_node("NavigationRegion3D/Walls/" + side) as Node3D)
-	var leaf := main.room.get_node("NavigationRegion3D/Walls/East/StairLeaf") as Node3D
-	var frame := main.room.get_node("NavigationRegion3D/Walls/East/StairFrame") as Node3D
-	var door_leaf := main.room.get_node("StairDoor/Leaf") as Node3D
 	# Looking north, then west, south and east, a quarter turn at a time.
 	for turn: int in 4:
 		await wait_process_frames(2)
 		for side: int in 4:
 			# The wall behind the camera is the one two quarter turns from the way it looks.
 			assert_eq(walls[side].visible, side != (turn + 2) % 4, "turn %d: %s wall drawn" % [turn, walls[side].name])
-		assert_eq(leaf.is_visible_in_tree(), frame.is_visible_in_tree(), "turn %d: the stair door's leaf goes with its frame" % turn)
 		main.rig.rotate_by(PI / 2)
-	assert_false(door_leaf.visible, "the door's own leaf is not drawn; the wall's is")
+
+
+func test_the_stair_door_is_cut_with_its_wall_and_can_still_be_used() -> void:
+	main = Story.boot(self, _after_waking())
+	await wait_physics_frames(3)
+	var door := main.room.get_node("StairDoor") as Door
+	var leaf := door.get_node("Leaf") as Node3D
+	var frame := main.room.get_node("NavigationRegion3D/Walls/East/StairFrame") as Node3D
+	main.player.global_position = Vector3(5, 0, 2.5)
+	# Looking west: the east wall, the door's, is behind the camera.
+	main.rig.rotate_by(PI / 2)
+	await wait_process_frames(3)
+	assert_false(frame.is_visible_in_tree(), "the frame is cut with its wall")
+	assert_false(leaf.is_visible_in_tree(), "the leaf is cut with its frame")
+	# Who used it, by member id: going through the door replaces the party.
+	var users: Array[StringName] = []
+	door.used.connect(func(by: Unit) -> void: users.append(by.member_id))
+	main.player.order_interact(door)
+	await wait_until(func() -> bool: return not users.is_empty(), 10.0)
+	assert_eq(users, [GameState.LEADER] as Array[StringName], "Álvar walked up to the door and used it")
+	main.rig.rotate_by(-PI / 2)
+	await wait_process_frames(3)
+	assert_true(frame.is_visible_in_tree(), "the frame is drawn again")
+	assert_true(leaf.is_visible_in_tree(), "and the leaf with it")
