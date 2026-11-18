@@ -23,7 +23,8 @@ const OLD_POSITIONS: Dictionary = {
 	"GonzaloNpc": Vector2(6.5, -4.3),
 }
 ## Who sits behind bars, off the walkable floor: he is spoken with across them, from the floor in
-## front, which `test_everyone_can_be_walked_up_to_and_spoken_with` checks.
+## front, which `test_everyone_can_be_walked_up_to_and_spoken_with` checks. His bench belongs to the
+## cell, not to him, so it stays, drawn and solid, once he is gone.
 const BEHIND_BARS: Array[String] = ["Captive"]
 const MAX_LIGHTS: int = 6
 const MAX_SHADOWED_LIGHTS: int = 2
@@ -140,18 +141,23 @@ func test_the_room_draws_fewer_than_150000_triangles() -> void:
 	assert_lt(triangles, MAX_TRIANGLES)
 
 
-func test_the_wall_on_the_camera_side_is_cut_at_each_turn() -> void:
+func test_the_wall_on_the_camera_side_is_cut_at_each_turn_and_the_cell_bars_never() -> void:
 	main = Story.boot(self, _after_waking())
 	await wait_physics_frames(3)
 	var walls: Array[Node3D] = []
 	for side: String in ["North", "West", "South", "East"]:
 		walls.append(main.room.get_node("NavigationRegion3D/Walls/" + side) as Node3D)
+	var bars: Array[Node] = main.room.get_node("NavigationRegion3D/Props/Cell").find_children("Bars*", "", true, false)
+	assert_eq(bars.size(), 3, "the cell has three grilles")
 	# Looking north, then west, south and east, a quarter turn at a time.
 	for turn: int in 4:
 		await wait_process_frames(2)
 		for side: int in 4:
 			# The wall behind the camera is the one two quarter turns from the way it looks.
 			assert_eq(walls[side].visible, side != (turn + 2) % 4, "turn %d: %s wall drawn" % [turn, walls[side].name])
+		# The grilles are seen through, so the captive stays behind his bars from every side.
+		for grille: Node in bars:
+			assert_true((grille as Node3D).is_visible_in_tree(), "turn %d: %s drawn" % [turn, grille.get_path()])
 		main.rig.rotate_by(PI / 2)
 
 
