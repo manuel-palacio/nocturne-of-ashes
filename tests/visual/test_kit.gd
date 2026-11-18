@@ -17,6 +17,7 @@ const BOUNDS: Dictionary = {
 	"pillar": [Vector3(-0.4, 0, -0.4), Vector3(0.4, 4, 0.4)],
 	"arch_horseshoe": [Vector3(-1, 0, -0.4), Vector3(1, 4, 0.4)],
 	"arch_round": [Vector3(-2, 0, -0.4), Vector3(2, 4, 0.4)],
+	"arch_segmental": [Vector3(-3, 0, -0.4), Vector3(3, 4, 0.4)],
 	"vault_barrel": [Vector3(-2, 4, -1), Vector3(2, 6, 1)],
 	"door_frame": [Vector3(-1, 0, -0.25), Vector3(1, 4, 0.3)],
 	"door_leaf": [Vector3(-0.7, 0, -0.05), Vector3(0.7, 2.4, 0.09)],

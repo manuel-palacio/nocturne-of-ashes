@@ -18,6 +18,7 @@ for the camera to see from above; the vault is drawn only from below, so the cam
 | pillar | 0.8 x 0.8, 4 | brick pier, stone plinth, capital at the impost (2 m), stone cap | world |
 | arch_horseshoe | 2 x 0.8, 4 | a bay: horseshoe arch, alternating stone and brick voussoirs, alfiz | world (jambs) |
 | arch_round | 4 x 0.8, 4 | a bay: Roman round arch in radial brick | world (jambs) |
+| arch_segmental | 6 x 0.8, 4 | a wide bay: Roman segmental arch in radial brick, for an arcade on piers 6 m apart | world (jambs) |
 | vault_barrel | 4 x 2, from 4 to 6 | a barrel vault segment in brick, seen from below only | nothing |
 | door_frame | 2 x 0.5, 4 | a wall bay with a 1.4 x 2.4 doorway in dressed stone | walls |
 | door_leaf | 1.4 x 0.1, 2.4 | planked door with iron straps, studs and a ring | nothing (the door scene's body does) |
@@ -30,7 +31,8 @@ for the camera to see from above; the vault is drawn only from below, so the cam
 
 The arch bays carry their own jambs (half a pier each side, with the pillar's plinth and impost), so a
 row of bays is an arcade whose neighbouring jambs make the piers; the impost is at 2 m, as on the
-pillar. A horseshoe arch's curve continues a third of its radius below its centre line, so the opening
+pillar. A segmental arch is a third of a circle, so it rises 1.5 m over its 5.2 m opening and stays
+under the bay's top. A horseshoe arch's curve continues a third of its radius below its centre line, so the opening
 is narrower at the impost (1.2 m) than at its widest (1.27 m).
 
 Materials: each face uses one of five shared materials, by name: stone, brick, plaster, wood, iron.
@@ -269,7 +271,8 @@ def arch_bay(name: str, half: float, opening: float, below: float, ring: float, 
              ring_materials: list, wall_material: str, alfiz: bool, chamfer: float) -> Piece:
     """A bay `2 * half` wide, `HEIGHT` tall and `2 * BAY_HALF` thick, open below an arch whose curve
     meets the jambs `opening` either side of the middle at the impost. The curve continues `below`
-    (a fraction of its radius) under its centre line: 0 for a round arch, a third for a horseshoe.
+    (a fraction of its radius) under its centre line: 0 for a round arch, a third for a horseshoe; a
+    negative fraction starts it above, for a segmental arch.
     The ring of `voussoirs`, `ring` deep, stands `PROUD` of both faces, cycling through
     `ring_materials`; with `alfiz`, a brick frame round it encloses a plastered field."""
     p = Piece(name)
@@ -387,6 +390,11 @@ def arch_horseshoe() -> Piece:
 
 def arch_round() -> Piece:
     return arch_bay("arch_round", half=2.0, opening=1.6, below=0.0, ring=0.35, voussoirs=16,
+                    ring_materials=["brick"], wall_material="brick", alfiz=False, chamfer=0.0)
+
+
+def arch_segmental() -> Piece:
+    return arch_bay("arch_segmental", half=3.0, opening=2.6, below=-0.5, ring=0.3, voussoirs=18,
                     ring_materials=["brick"], wall_material="brick", alfiz=False, chamfer=0.0)
 
 
@@ -642,7 +650,7 @@ def sconce() -> Piece:
 
 
 PIECES = [floor_slab, lambda: wall("wall", "stone"), lambda: wall("wall_brick", "brick"), wall_corner, pillar, arch_horseshoe,
-          arch_round, vault_barrel, door_frame, door_leaf, stair_down, forge, anvil, rack, barrel, bench, bars,
+          arch_round, arch_segmental, vault_barrel, door_frame, door_leaf, stair_down, forge, anvil, rack, barrel, bench, bars,
           sconce, lock_seal]
 
 
