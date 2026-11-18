@@ -115,16 +115,22 @@ func test_the_room_draws_fewer_than_150000_triangles() -> void:
 	assert_lt(triangles, MAX_TRIANGLES)
 
 
-func test_the_arcade_between_the_camera_and_the_nave_is_cut_at_each_turn() -> void:
+func test_the_arcade_and_the_wall_on_the_camera_side_are_cut_at_each_turn() -> void:
 	var main: Main = add_child_autofree(MAIN.instantiate())
 	await wait_physics_frames(3)
 	var north := main.room.get_node("NavigationRegion3D/Arcades/North") as Node3D
 	var south := main.room.get_node("NavigationRegion3D/Arcades/South") as Node3D
+	var walls: Array[Node3D] = []
+	for side: String in ["North", "West", "South", "East"]:
+		walls.append(main.room.get_node("NavigationRegion3D/Walls/" + side) as Node3D)
 	# Looking north, then west, south and east, a quarter turn at a time.
 	var expected: Array = [[true, false], [true, true], [false, true], [true, true]]
 	for turn: int in 4:
 		await wait_process_frames(2)
 		assert_eq([north.visible, south.visible], expected[turn], "turn %d: north and south arcades drawn" % turn)
+		for side: int in 4:
+			# The wall behind the camera is the one two quarter turns from the way it looks.
+			assert_eq(walls[side].visible, side != (turn + 2) % 4, "turn %d: %s wall drawn" % [turn, walls[side].name])
 		main.rig.rotate_by(PI / 2)
 
 
