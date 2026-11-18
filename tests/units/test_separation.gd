@@ -119,3 +119,97 @@ func test_followers_settle_apart_and_a_walk_to_an_empty_spot_arrives_close() -> 
 		for j: int in range(i + 1, followers.size()):
 			assert_gte(Arena.flat(follower.global_position, followers[j].global_position), 0.5)
 	assert_push_warning_count(0)
+
+
+func test_a_stunned_unit_stays_put_and_its_neighbour_steps_away() -> void:
+	var stunned: Unit = arena.spawn(Arena.ALVAR, Vector3.ZERO)
+	var neighbour: Unit = arena.spawn(Arena.ZAHRA, Vector3(0.3, 0, 0))
+	var stun := StatusEffect.new()
+	stun.id = &"test_stun"
+	stun.stuns = true
+	stun.duration = 5.0
+	stunned.add_effect(stun)
+	await wait_physics_frames(3)
+	var stunned_at: Vector3 = stunned.global_position
+	await wait_seconds(1.5)
+	assert_true(stunned.is_stunned())
+	assert_lt(Arena.flat(stunned.global_position, stunned_at), 0.01)
+	assert_gte(Arena.flat(neighbour.global_position, stunned.global_position), 0.8)
+
+
+func test_a_walker_passes_a_unit_standing_in_its_path_at_half_speed_or_more() -> void:
+	var walker: Unit = arena.spawn(Arena.ALVAR, Vector3(-4, 0, -3))
+	arena.spawn(Arena.ZAHRA, Vector3(0, 0, -3))
+	await wait_physics_frames(3)
+	var frames: Array[int] = [0, -1, -1]
+	var count := func() -> void:
+		frames[0] += 1
+		if frames[1] < 0 and walker.global_position.x >= -1.0:
+			frames[1] = frames[0]
+		if frames[2] < 0 and walker.global_position.x >= 1.0:
+			frames[2] = frames[0]
+	get_tree().physics_frame.connect(count)
+	watch_signals(walker)
+	walker.order_move(Vector3(4, 0, -3))
+	await wait_for_signal(walker.arrived, 6.0)
+	get_tree().physics_frame.disconnect(count)
+	assert_signal_emitted(walker, "arrived")
+	assert_lte(Arena.flat(walker.global_position, Vector3(4, 0, -3)), 0.5)
+	assert_push_warning_count(0)
+	var step: float = 1.0 / Engine.physics_ticks_per_second
+	var half: float = walker.walk_speed() * 0.5
+	assert_gte(8.0 / (frames[0] * step), half, "over the whole walk")
+	assert_gt(frames[2], frames[1])
+	assert_gte(2.0 / ((frames[2] - frames[1]) * step), half, "past the standing unit")
+
+
+func test_two_units_on_one_spot_part_the_same_way_every_time() -> void:
+	var first: Array[Vector3] = await _part_a_pair()
+	var second: Array[Vector3] = await _part_a_pair()
+	assert_gte(Arena.flat(first[0], first[1]), 0.8)
+	assert_true(first[0].is_equal_approx(second[0]), "%s then %s" % [first[0], second[0]])
+	assert_true(first[1].is_equal_approx(second[1]), "%s then %s" % [first[1], second[1]])
+
+
+func _part_a_pair() -> Array[Vector3]:
+	var a: Unit = arena.spawn(Arena.ALVAR, Vector3(-2, 0, 2))
+	var b: Unit = arena.spawn(Arena.ZAHRA, Vector3(-2, 0, 2))
+	await wait_seconds(1.5)
+	var parted: Array[Vector3] = [a.global_position, b.global_position]
+	a.queue_free()
+	b.queue_free()
+	await wait_physics_frames(2)
+	return parted
+
+
+func test_a_fallen_unit_neither_is_pushed_nor_pushes() -> void:
+	var fallen: Unit = arena.spawn(Arena.CRUSADER, Vector3.ZERO)
+	var standing: Unit = arena.spawn(Arena.ZAHRA, Vector3(0.3, 0, 0))
+	await wait_physics_frames(3)
+	fallen.take_hit(1000)
+	var fallen_at: Vector3 = fallen.global_position
+	var standing_at: Vector3 = standing.global_position
+	await wait_seconds(1.5)
+	assert_false(fallen.is_alive())
+	assert_lt(Arena.flat(fallen.global_position, fallen_at), 0.01)
+	assert_lt(Arena.flat(standing.global_position, standing_at), 0.01)
+
+
+func test_an_attacker_put_out_of_range_comes_back_and_strikes() -> void:
+	var target: Unit = arena.spawn(Arena.SERGEANT, Vector3(0, 0, 4))
+	target.stats.max_health = 5000
+	target.stats.reset()
+	var attacker: Unit = arena.spawn(Arena.ALVAR, Vector3(0, 0, 0))
+	await wait_physics_frames(3)
+	attacker.order_attack(target)
+	await wait_seconds(2.0)
+	assert_lte(Arena.flat(attacker.global_position, target.global_position), 1.6)
+	# As a crowd might leave it: out of range, not walking, and the target where it was.
+	attacker.global_position += (attacker.global_position - target.global_position).normalized()
+	await wait_physics_frames(2)
+	var struck: Array[int] = [0]
+	target.was_hit.connect(func(_amount: int, _source: Unit) -> void: struck[0] += 1)
+	await wait_seconds(2.0)
+	assert_lte(Arena.flat(attacker.global_position, target.global_position), 1.6)
+	assert_gt(struck[0], 0)
+	assert_push_warning_count(0)
