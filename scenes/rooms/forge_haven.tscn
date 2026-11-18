@@ -419,8 +419,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.5, 0, -5.4)
 [node name="Cell" type="Node3D" parent="NavigationRegion3D/Props" unique_id=1726019228]
 
 [node name="North" type="Node3D" parent="NavigationRegion3D/Props/Cell" unique_id=904830737]
-script = ExtResource("3_s40rp")
-outward = Vector3(0, 0, -1)
 
 [node name="Bars1" type="Node3D" parent="NavigationRegion3D/Props/Cell/North" unique_id=940458900 instance=ExtResource("16_eo7nb")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.25, 0, 3.8)
@@ -429,8 +427,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.25, 0, 3.8)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.75, 0, 3.8)
 
 [node name="East" type="Node3D" parent="NavigationRegion3D/Props/Cell" unique_id=2010021211]
-script = ExtResource("3_s40rp")
-outward = Vector3(1, 0, 0)
 
 [node name="Bars" type="Node3D" parent="NavigationRegion3D/Props/Cell/East" unique_id=1120063236 instance=ExtResource("16_eo7nb")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -4.75, 0, 4.8)
@@ -508,9 +504,6 @@ dress = ExtResource("dress_captive")
 sitting = true
 label = "The captive"
 
-[node name="Seat" type="Node3D" parent="Captive" unique_id=292763456 instance=ExtResource("8_ak5vn")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.08, 0.3)
-
 [node name="ZahraNpc" parent="." unique_id=1155358755 instance=ExtResource("4_lt12a")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 4.4)
 dialogue = ExtResource("6_nf4cx")
@@ -527,10 +520,13 @@ hidden_if = &"gonzalo_joined"
 dress = ExtResource("dress_gonzalo")
 label = "Gonzalo"
 
-[node name="CellFloor" type="Node3D" parent="." unique_id=1138527862]
+[node name="CellInterior" type="Node3D" parent="." unique_id=1138527862]
 
-[node name="Slab1" type="Node3D" parent="CellFloor" unique_id=647162135 instance=ExtResource("2_r6t6n")]
+[node name="Slab1" type="Node3D" parent="CellInterior" unique_id=647162135 instance=ExtResource("2_r6t6n")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 5)
 
-[node name="Slab2" type="Node3D" parent="CellFloor" unique_id=340360602 instance=ExtResource("2_r6t6n")]
+[node name="Slab2" type="Node3D" parent="CellInterior" unique_id=340360602 instance=ExtResource("2_r6t6n")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 5)
+
+[node name="Bench" type="Node3D" parent="CellInterior" unique_id=292763456 instance=ExtResource("8_ak5vn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6, -0.08, 5)
