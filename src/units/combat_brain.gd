@@ -25,9 +25,13 @@ const _FOLLOW_RETARGET: float = 1.0
 ## leader standing still, so followers spaced apart around it, a little beyond `follow_distance`, stay
 ## at rest when nudged.
 @export var follow_slack: float = 2.0
-## As `follow_slack`, while the leader walks (`is_moving()`), so a leader walking away is followed
-## promptly. A follow walk under way is carried out whichever band applies.
+## As `follow_slack`, while the leader walks (`is_moving()`) and for `follow_recent` seconds after it
+## stops, so a leader walking away is followed even when its walk ends between two thinks. A follow
+## walk under way is carried out whichever band applies.
 @export var follow_slack_moving: float = 1.0
+## Seconds after the leader stops walking during which `follow_slack_moving` still applies; longer
+## than `think_interval`, so at least one think falls in it.
+@export var follow_recent: float = 0.6
 ## Whether the brain feeds and uses its unit's Gifts.
 @export var uses_gifts: bool = false
 ## With `uses_gifts`, the unit feeds on a weakened hostile within `aggro_radius` while its Blood is below this.
@@ -50,6 +54,8 @@ var leader: Unit
 var _since_thought: float = 0.0
 ## Where the leader stood when the current follow walk was aimed.
 var _leader_was_at: Vector3
+## Seconds since the leader was last seen walking, watched every physics frame.
+var _leader_still_for: float = INF
 ## A hostile that hit the unit while the world was paused, answered once the brain runs again.
 var _hit_while_paused: Unit
 
@@ -65,6 +71,10 @@ func _physics_process(delta: float) -> void:
 		var source: Unit = _hit_while_paused if is_instance_valid(_hit_while_paused) else null
 		_hit_while_paused = null
 		_on_unit_hit(0, source)
+	if leader != null and is_instance_valid(leader) and leader.is_moving():
+		_leader_still_for = 0.0
+	else:
+		_leader_still_for += delta
 	_since_thought += delta
 	if _since_thought < think_interval:
 		return
@@ -136,7 +146,7 @@ func _follow() -> void:
 	var following: bool = _is_following()
 	if following and _flat(leader.global_position, _leader_was_at) <= _FOLLOW_RETARGET:
 		return
-	var slack: float = follow_slack_moving if leader.is_moving() else follow_slack
+	var slack: float = follow_slack_moving if _leader_still_for < follow_recent else follow_slack
 	if not following and _flat_to(leader) <= follow_distance + slack:
 		return
 	var away: Vector3 = _unit.global_position - leader.global_position
