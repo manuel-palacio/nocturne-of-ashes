@@ -3,9 +3,9 @@ extends EditorScenePostImport
 ## Godot's importer runs this on every kit piece (`assets/kit/*.glb`; each piece's `.import` names it
 ## as its import script). It does two things the glTF file cannot say:
 ##
-## - Each surface's material is named after one of the five shared materials (`stone`, `brick`,
-##   `plaster`, `wood`, `iron`) by `tools/blender/kit.py`; this swaps it for
-##   `resources/materials/<name>.tres`, so every piece draws with the same five materials and carries no
+## - Each surface's material is named after one of the six shared materials (`stone`, `brick`,
+##   `plaster`, `wood`, `iron`, `ember`) by `tools/blender/kit.py`; this swaps it for
+##   `resources/materials/<name>.tres`, so every piece draws with the same six materials and carries no
 ##   texture of its own.
 ## - The collision bodies the importer made from the `-convcolonly` meshes go on the layer their
 ##   name asks for: a body whose name ends in `-walls` on layer 3 "walls" (units bump into it, but the
