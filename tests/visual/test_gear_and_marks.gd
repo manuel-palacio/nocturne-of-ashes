@@ -165,3 +165,50 @@ func test_a_fallen_unit_shows_no_marks() -> void:
 	assert_eq(main.selected, main.player, "the fallen leader stays selected")
 	assert_false(main.player.has_selected_mark())
 	assert_false(_visual(main.player).is_selected_mark_shown())
+
+func _lit_interactables() -> Array[Node]:
+	return get_tree().get_nodes_in_group(&"interactables").filter(
+			func(thing: Node) -> bool: return (thing as Interactable).has_use_mark())
+
+func test_the_selected_ring_is_on_alvar_after_a_reload() -> void:
+	var state := GameState.new_game()
+	state.set_flag(&"met_malakor")
+	state.join(&"zahra")
+	main = Story.boot(self, state)
+	await wait_physics_frames(3)
+	main.select(main.party[1])
+	main.checkpoint()
+	main.reload_checkpoint()
+	await wait_physics_frames(3)
+	assert_eq(_lit(main.party), [main.player])
+
+func test_a_joiner_arrives_without_a_ring() -> void:
+	await _haven()
+	main.state.join(&"zahra")
+	await wait_physics_frames(3)
+	assert_eq(main.party.size(), 2)
+	assert_eq(_lit(main.party), [main.player])
+	assert_false(_visual(main.party[1]).is_selected_mark_shown())
+
+func test_a_mark_asked_for_before_the_unit_is_ready_shows() -> void:
+	var foe: Unit = (load("res://scenes/units/crusader.tscn") as PackedScene).instantiate()
+	foe.set_feed_mark(true)
+	add_child_autofree(foe)
+	await wait_physics_frames(2)
+	assert_true(_visual(foe).is_feed_mark_shown())
+
+func test_only_one_use_ring_shows_and_the_hovered_one_wins() -> void:
+	await _haven()
+	var malakor: Npc = _npc("Malakor")
+	var smith: Npc = _npc("Íñigo")
+	await _place_alvar(smith.global_position + Vector3(0.5, 0.3, 2.0))
+	assert_eq(_lit_interactables(), [smith], "the nearest")
+	main.input.point_at(main.rig.camera().unproject_position(malakor.global_position + Vector3(0, 1.2, 0)))
+	await wait_physics_frames(2)
+	assert_eq(_lit_interactables(), [malakor], "the hovered one instead")
+
+func test_a_door_nothing_answers_shows_no_ring() -> void:
+	await _skirmish()
+	var door := main.room.find_child("WestDoor") as Door
+	await _place_alvar(door.global_position + Vector3(1.5, 0.3, 0.0))  # inside the room, by the west wall
+	assert_eq(_lit_interactables(), [])
