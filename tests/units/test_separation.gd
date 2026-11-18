@@ -263,3 +263,32 @@ func test_a_follow_walk_begun_behind_a_walking_leader_is_finished_after_it_stops
 	assert_lte(Arena.flat(follower.global_position, leader.global_position), 4.0)
 	assert_gte(Arena.flat(follower.global_position, leader.global_position), 2.5)
 	assert_push_warning_count(0)
+
+
+func test_a_leader_who_walks_off_and_stops_between_thinks_is_followed() -> void:
+	# At full speed the gap is past 4 m for only a moment before the leader stops 4.4 m away;
+	# whatever the phase of the follower's thinks, the follow walk starts.
+	for run: int in 10:
+		var leader: Unit = arena.spawn(Arena.ALVAR, Vector3(-4, 0, 4))
+		var follower: Unit = arena.spawn(Arena.ZAHRA, Vector3(-4, 0, 5.1), true)
+		var brain := follower.get_node("Brain") as CombatBrain
+		brain.leader = leader
+		await wait_seconds(1.0)
+		assert_eq(follower.current_order(), Unit.Order.NONE, "run %d: at rest first" % run)
+		brain._since_thought = run * brain.think_interval / 10.0
+		leader.order_move(Vector3(-4, 0, 0.4))
+		# Polled rather than awaited as a signal, so no freed unit is left watched.
+		await wait_physics_frames(2)
+		for frame: int in 180:
+			if not leader.is_moving():
+				break
+			await wait_physics_frames(1)
+		assert_false(leader.is_moving(), "run %d: the leader stopped" % run)
+		var gap: float = Arena.flat(leader.global_position, Vector3(-4, 0, 5.1))
+		assert_between(gap, 4.2, 4.6, "run %d: the leader stops about 4.4 m away" % run)
+		await wait_seconds(2.0)
+		assert_lte(Arena.flat(follower.global_position, leader.global_position), 4.0, "run %d: followed" % run)
+		leader.queue_free()
+		follower.queue_free()
+		await wait_physics_frames(2)
+	assert_push_warning_count(0)
