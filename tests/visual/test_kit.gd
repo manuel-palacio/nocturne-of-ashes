@@ -13,6 +13,7 @@ const BOUNDS: Dictionary = {
 	"floor_slab": [Vector3(-1, -0.1, -1), Vector3(1, 0, 1)],
 	"wall": [Vector3(-1, 0, -0.25), Vector3(1, 4, 0.25)],
 	"wall_brick": [Vector3(-1, 0, -0.25), Vector3(1, 4, 0.25)],
+	"wall_corner": [Vector3(-0.25, 0, -0.25), Vector3(0.25, 4, 0.25)],
 	"pillar": [Vector3(-0.4, 0, -0.4), Vector3(0.4, 4, 0.4)],
 	"arch_horseshoe": [Vector3(-1, 0, -0.4), Vector3(1, 4, 0.4)],
 	"arch_round": [Vector3(-2, 0, -0.4), Vector3(2, 4, 0.4)],
@@ -32,10 +33,17 @@ const BOUNDS: Dictionary = {
 ## Pieces that block nothing: the vault is overhead, the sconce and the seal lie flat on a wall, and a
 ## door's own body (`scenes/rooms/door.tscn`) does the door's blocking.
 const OPEN: Array[String] = ["vault_barrel", "door_leaf", "sconce", "lock_seal"]
-## Blocking pieces on the "walls" layer (3), which the click ray ignores; the rest block on "world" (1).
-const ON_WALLS: Array[String] = ["wall", "wall_brick", "door_frame", "bars"]
+## Blocking pieces a click passes through, to whatever lies beyond: the wall nearest the camera is
+## not drawn, a grille is seen through, and a click on the stairwell means the floor. The others stop a
+## click where they stand.
+const CLICK_THROUGH: Array[String] = ["wall", "wall_brick", "wall_corner", "door_frame", "bars", "stair_down"]
+## The click ray tests only this layer (`Picker`).
 const WORLD_LAYER: int = 0b001
 const WALLS_LAYER: int = 0b100
+## What a unit bumps into (`unit_base.tscn`).
+const UNIT_MASK: int = 0b101
+## Where the pieces stand in the physics tests, one per spot, far enough apart not to touch.
+const SPACING: float = 12.0
 const MATERIALS: Array[String] = ["stone", "brick", "plaster", "wood", "iron"]
 const MAX_TEXTURE: int = 1024
 
@@ -43,6 +51,33 @@ const MAX_TEXTURE: int = 1024
 func _piece(piece_name: String) -> Node3D:
 	var scene := load(KIT_DIR + piece_name + ".glb") as PackedScene
 	return add_child_autofree(scene.instantiate()) as Node3D
+
+
+## `piece_name` placed `SPACING` metres along x per `slot`, in the physics world.
+func _placed(piece_name: String, slot: int) -> Node3D:
+	var piece: Node3D = _piece(piece_name)
+	piece.position = Vector3(slot * SPACING, 0, 0)
+	return piece
+
+
+## What a straight-down ray at `at` (relative to `piece`) hits on `mask`, or an empty dictionary.
+func _ray_down(piece: Node3D, at: Vector3, mask: int) -> Dictionary:
+	var origin: Vector3 = piece.position + Vector3(at.x, 20.0, at.z)
+	var query := PhysicsRayQueryParameters3D.create(origin, origin + Vector3.DOWN * 40.0, mask)
+	return piece.get_world_3d().direct_space_state.intersect_ray(query)
+
+
+## The middle of each collision shape of `piece`, relative to the piece.
+func _shape_centres(piece: Node3D) -> Array[Vector3]:
+	var centres: Array[Vector3] = []
+	for node: Node in piece.find_children("*", "CollisionShape3D", true, false):
+		var shape := node as CollisionShape3D
+		var points: PackedVector3Array = (shape.shape as ConvexPolygonShape3D).points
+		var sum := Vector3.ZERO
+		for point: Vector3 in points:
+			sum += point
+		centres.append(piece.global_transform.affine_inverse() * shape.global_transform * (sum / points.size()))
+	return centres
 
 
 func _meshes(piece: Node) -> Array[MeshInstance3D]:
@@ -106,10 +141,41 @@ func test_blocking_pieces_have_a_collision_shape_and_open_ones_none() -> void:
 		for shape: CollisionShape3D in shapes:
 			assert_not_null(shape.shape, "%s: %s" % [piece_name, shape.name])
 			assert_true(shape.get_parent() is StaticBody3D, "%s: %s hangs from a static body" % [piece_name, shape.name])
-		var layer: int = WALLS_LAYER if piece_name in ON_WALLS else WORLD_LAYER
 		for body: CollisionObject3D in bodies:
-			assert_eq(body.collision_layer, layer, "%s: %s layer" % [piece_name, body.name])
+			assert_has([WORLD_LAYER, WALLS_LAYER], body.collision_layer, "%s: %s is on world or walls" % [piece_name, body.name])
 			assert_eq(body.collision_mask, 0, "%s: %s looks for nothing" % [piece_name, body.name])
+
+
+func test_clicks_pass_through_walls_grilles_and_stairwells_and_stop_on_the_rest() -> void:
+	var slot: int = 0
+	for piece_name: String in BOUNDS:
+		if piece_name in OPEN:
+			continue
+		var piece: Node3D = _placed(piece_name, slot)
+		slot += 1
+		await wait_physics_frames(1)
+		for centre: Vector3 in _shape_centres(piece):
+			var stops_units: bool = not _ray_down(piece, centre, UNIT_MASK).is_empty()
+			assert_true(stops_units, "%s: units bump into its shape at %s" % [piece_name, centre])
+			var click: Dictionary = _ray_down(piece, centre, WORLD_LAYER)
+			if piece_name in CLICK_THROUGH:
+				assert_true(click.is_empty(), "%s: a click at %s passes through" % [piece_name, centre])
+			else:
+				assert_false(click.is_empty(), "%s: a click at %s stops on it" % [piece_name, centre])
+
+
+func test_a_click_on_the_stairwell_lands_on_the_floor_plane() -> void:
+	var stair: Node3D = _placed("stair_down", 0)
+	var camera := Camera3D.new()
+	add_child_autofree(camera)
+	camera.position = stair.position + Vector3(0, 10, 4)
+	camera.look_at(stair.position + Vector3(0, -1.2, 0))
+	camera.make_current()
+	await wait_physics_frames(1)
+	var screen: Vector2 = camera.unproject_position(stair.position + Vector3(0, -1.2, 0))
+	var ground: Variant = Picker.ground_at(camera, screen)
+	assert_not_null(ground)
+	assert_almost_eq((ground as Vector3).y, 0.0, 0.01, "at floor level, not on a collider over the steps")
 
 
 func test_pieces_draw_only_with_the_shared_materials_and_textures() -> void:

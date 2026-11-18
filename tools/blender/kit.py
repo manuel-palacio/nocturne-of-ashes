@@ -13,14 +13,15 @@ for the camera to see from above; the vault is drawn only from below, so the cam
 | piece | footprint (x by z), height | what | blocks |
 |---|---|---|---|
 | floor_slab | 2 x 2, 0.1 below the floor | worn flagstones | world |
-| wall, wall_brick | 2 x 0.5, 4 | coursed stone / Roman brick, one-sided | walls |
+| wall, wall_brick | 2 x 0.5, 4 | coursed stone / Roman brick, one-sided, closed at its ends | walls |
+| wall_corner | 0.5 x 0.5, 4 | the post that fills the corner where two walls meet | walls |
 | pillar | 0.8 x 0.8, 4 | brick pier, stone plinth, capital at the impost (2 m), stone cap | world |
 | arch_horseshoe | 2 x 0.8, 4 | a bay: horseshoe arch, alternating stone and brick voussoirs, alfiz | world (jambs) |
 | arch_round | 4 x 0.8, 4 | a bay: Roman round arch in radial brick | world (jambs) |
 | vault_barrel | 4 x 2, from 4 to 6 | a barrel vault segment in brick, seen from below only | nothing |
 | door_frame | 2 x 0.5, 4 | a wall bay with a 1.4 x 2.4 doorway in dressed stone | walls |
 | door_leaf | 1.4 x 0.1, 2.4 | planked door with iron straps, studs and a ring | nothing (the door scene's body does) |
-| stair_down | 2 x 4, 2.4 below the floor | a flight going down toward -z under a lintel | world |
+| stair_down | 2 x 4, 2.4 below the floor | a flight going down toward -z under a lintel | walls (a low barrier round its mouth and sides) |
 | forge | 2.6 x 1.4, 4 | hearth with a fire pan, a plastered hood and flue | world (hearth) |
 | anvil, rack, barrel, bench | props | | world |
 | bars | 2 x 0.06, 2.4 | an iron grille | walls (blocks units, not clicks) |
@@ -42,8 +43,10 @@ Roman bricks are. Arch rings and vaults are mapped round their curve instead, so
 voussoirs radiate from the centre.
 
 Collision: where a piece blocks movement it has boxes (or a prism) named `...-convcolonly`, which
-Godot's importer turns into `StaticBody3D`s with convex shapes and no mesh; the import script puts
-them on the layer in the table ("walls" is layer 3, which the click ray ignores; "world" is layer 1).
+Godot's importer turns into `StaticBody3D`s with convex shapes and no mesh. Each collider's name says
+its layer: `<piece>_block<n>-walls-convcolonly` for layer 3 "walls", which units bump into but the
+click ray passes through, and `<piece>_block<n>-convcolonly` for layer 1 "world", which stops both.
+The import script reads the marker; the layer is written down only here, in the piece.
 
 The output is byte-identical from one run to the next: the meshes are built in a fixed order, and the
 exporter's generator string (which names the Blender version) is replaced by this tool's name. Every
@@ -129,7 +132,7 @@ class Piece:
     def __init__(self, name: str):
         self.name = name
         self.faces: list[tuple[list, str, list]] = []
-        self.colliders: list[list[tuple]] = []  # each a convex point cloud
+        self.colliders: list[tuple[str, list[tuple]]] = []  # (layer, convex point cloud)
 
     def face(self, points, out, material, uvs=None, scale=None, turn=False) -> None:
         """Adds a face wound to look along `out`. Without `uvs` it is box-mapped at the material's
@@ -212,8 +215,9 @@ class Piece:
         if top:
             self.face([p for p, _ in grid[-1][:-1]], (0, 1, 0), material)
 
-    def collider(self, lo, hi) -> None:
-        self.colliders.append([(x, y, z) for x in (lo[0], hi[0]) for y in (lo[1], hi[1]) for z in (lo[2], hi[2])])
+    def collider(self, lo, hi, layer: str = "world") -> None:
+        """A box that blocks movement, on the "world" layer or the "walls" layer."""
+        self.colliders.append((layer, [(x, y, z) for x in (lo[0], hi[0]) for y in (lo[1], hi[1]) for z in (lo[2], hi[2])]))
 
 
 # ---- walls and floors ----------------------------------------------------------------------------
@@ -230,7 +234,19 @@ def wall(name: str, material: str) -> Piece:
     p.face([(-1, 0, WALL_HALF), (1, 0, WALL_HALF), (1, HEIGHT, WALL_HALF), (-1, HEIGHT, WALL_HALF)], (0, 0, 1), material)
     p.face([(-1, HEIGHT, -WALL_HALF), (1, HEIGHT, -WALL_HALF), (1, HEIGHT, WALL_HALF), (-1, HEIGHT, WALL_HALF)],
            (0, 1, 0), material)
-    p.collider((-1, 0, -WALL_HALF), (1, HEIGHT, WALL_HALF))
+    for sign in (-1, 1):  # its ends, for a run of wall that stops short of anything
+        x = sign * 1.0
+        p.face([(x, 0, -WALL_HALF), (x, 0, WALL_HALF), (x, HEIGHT, WALL_HALF), (x, HEIGHT, -WALL_HALF)], (sign, 0, 0), material)
+    p.collider((-1, 0, -WALL_HALF), (1, HEIGHT, WALL_HALF), "walls")
+    return p
+
+
+def wall_corner() -> Piece:
+    """The square where two walls meet at a room's corner, which neither wall covers: seen from above
+    it would be a hole. Stone, as the walls are; brick rooms' corners read the same from above."""
+    p = Piece("wall_corner")
+    p.box((-WALL_HALF, 0, -WALL_HALF), (WALL_HALF, HEIGHT, WALL_HALF), "stone", skip=("-y",))
+    p.collider((-WALL_HALF, 0, -WALL_HALF), (WALL_HALF, HEIGHT, WALL_HALF), "walls")
     return p
 
 
@@ -412,9 +428,9 @@ def door_frame() -> Piece:
             p.box((lo_x, y, z), (hi_x, y + height - joint, z + proud), "stone", skip=("-y", "-z"))
             y += height
     p.box((-0.98, h, z), (0.98, h + 0.45, z + proud), "stone", skip=("-y", "-z"))
-    p.collider((-1, 0, -z), (-hw, HEIGHT, z))
-    p.collider((hw, 0, -z), (1, HEIGHT, z))
-    p.collider((-hw, h, -z), (hw, HEIGHT, z))
+    p.collider((-1, 0, -z), (-hw, HEIGHT, z), "walls")
+    p.collider((hw, 0, -z), (1, HEIGHT, z), "walls")
+    p.collider((-hw, h, -z), (hw, HEIGHT, z), "walls")
     return p
 
 
@@ -485,7 +501,12 @@ def stair_down() -> Piece:
     p.face([(-1, 0, -2), (1, 0, -2), (1, 0, cover), (-1, 0, cover)], (0, 1, 0), "stone")
     p.face([(-1, 0, cover), (1, 0, cover), (1, -lintel, cover), (-1, -lintel, cover)], (0, 0, 1), "stone")
     p.face([(-1, -lintel, -2), (1, -lintel, -2), (1, -lintel, cover), (-1, -lintel, cover)], (0, -1, 0), "stone")
-    p.collider((-1, -0.1, -2), (1, 1.0, 2))
+    # A low barrier on the walls layer round its mouth and sides: units cannot step in, and a click
+    # on the drawn steps passes through to the floor plane. Nothing stands on the world layer.
+    p.collider((-1, 0, 1.9), (1, 1.0, 2), "walls")
+    for sign in (-1, 1):
+        lo_x, hi_x = sorted((sign * 1.0, sign * 0.9))
+        p.collider((lo_x, 0, -2), (hi_x, 1.0, 1.9), "walls")
     return p
 
 
@@ -579,8 +600,8 @@ def barrel() -> Piece:
                 if ya <= y <= yb:
                     return ra + (rb - ra) * (y - ya) / (yb - ya) + 0.008
         p.lathe([(y0, radius(y0)), (y1, radius(y1))], 12, "iron")
-    p.colliders.append([(0.32 * math.cos(math.pi * i / 4), y, 0.32 * math.sin(math.pi * i / 4))
-                        for i in range(8) for y in (0.0, 0.9)])
+    p.colliders.append(("world", [(0.32 * math.cos(math.pi * i / 4), y, 0.32 * math.sin(math.pi * i / 4))
+                        for i in range(8) for y in (0.0, 0.9)]))
     return p
 
 
@@ -603,7 +624,7 @@ def bars() -> Piece:
         p.box((x - half, 0, -half), (x + half, 2.4, half), "iron", skip=("-y",))
     for y in (0.12, 1.2, 2.25):
         p.box((-1.0, y - 0.03, -0.03), (1.0, y + 0.03, 0.03), "iron")
-    p.collider((-1.0, 0, -0.05), (1.0, 2.4, 0.05))
+    p.collider((-1.0, 0, -0.05), (1.0, 2.4, 0.05), "walls")
     return p
 
 
@@ -620,7 +641,7 @@ def sconce() -> Piece:
     return p
 
 
-PIECES = [floor_slab, lambda: wall("wall", "stone"), lambda: wall("wall_brick", "brick"), pillar, arch_horseshoe,
+PIECES = [floor_slab, lambda: wall("wall", "stone"), lambda: wall("wall_brick", "brick"), wall_corner, pillar, arch_horseshoe,
           arch_round, vault_barrel, door_frame, door_leaf, stair_down, forge, anvil, rack, barrel, bench, bars,
           sconce, lock_seal]
 
@@ -660,9 +681,9 @@ def build(piece: Piece) -> None:
         polygon.use_smooth = False
         for loop, uv in zip(polygon.loop_indices, uvs):
             layer.data[loop].uv = uv
-    for i, points in enumerate(piece.colliders):
-        hull = convex_faces(points)
-        new_object(f"{piece.name}_block{i + 1}-convcolonly", hull)
+    for i, (layer, points) in enumerate(piece.colliders):
+        marker = "-walls" if layer == "walls" else ""
+        new_object(f"{piece.name}_block{i + 1}{marker}-convcolonly", convex_faces(points))
     path = OUT / f"{piece.name}.glb"
     bpy.ops.export_scene.gltf(
         filepath=str(path), export_format="GLB", export_yup=True, export_apply=False,
