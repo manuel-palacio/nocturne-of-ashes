@@ -1,6 +1,12 @@
 class_name CameraRig
 extends Node3D
-## Follows `target` across the floor with a pitched camera that can be rotated and zoomed.
+## Follows `target` across the floor with a pitched camera that can be rotated and zoomed. Its focus
+## point (the rig's position, which the camera looks at) is the target's, kept inside the room's floor
+## shrunk by a margin, so the view never centres on the dark beyond a wall. The margins follow the view,
+## at any zoom and turn: from the walls at the screen's sides, `side_fraction` of the view's half-width
+## on the floor; from the wall at its bottom, nearest the camera, `near_fraction` of how far the floor
+## is seen toward the camera; from the wall at its top, `far_fraction` of that, less, so the wall ahead
+## and its doors stay in sight. At a fraction of 1 a wall comes to the screen's edge and no further in.
 
 @export var pitch_degrees: float = 50.0
 @export var distance: float = 12.0
@@ -10,8 +16,16 @@ extends Node3D
 ## Radians per second while a rotate key is held.
 @export var rotate_speed: float = 1.6
 @export var follow_sharpness: float = 8.0
+## The margin from the walls at the screen's left and right, as a fraction of the view's half-width.
+@export var side_fraction: float = 0.85
+## The margin from the wall at the screen's bottom, as a fraction of the view's reach toward the camera.
+@export var near_fraction: float = 1.0
+## The margin from the wall at the screen's top, as a fraction of the view's reach toward the camera.
+@export var far_fraction: float = 0.5
 
 var target: Node3D
+## The room's floor in world x and z (a `Rect2`'s y is z); without area the focus is not held in.
+var _bounds: Rect2 = Rect2()
 
 
 func _ready() -> void:
@@ -22,7 +36,53 @@ func _process(delta: float) -> void:
 	if not is_instance_valid(target):
 		return
 	var weight: float = 1.0 - exp(-follow_sharpness * delta)
-	global_position = global_position.lerp(target.global_position, weight)
+	global_position = global_position.lerp(focus_for(target.global_position), weight)
+
+
+## Holds the focus point inside `floor_rect` (world x and z) shrunk by the margins, from now on, as
+## `Room.floor_bounds()` gives it. A rectangle without area lets the focus go anywhere.
+func set_bounds(floor_rect: Rect2) -> void:
+	_bounds = floor_rect
+
+
+## Where the rig looks when its target stands at `point`: the point itself, or the nearest point inside
+## the room's floor shrunk by the margins (its middle, along an axis where the floor is narrower than
+## two margins).
+func focus_for(point: Vector3) -> Vector3:
+	if not _bounds.has_area():
+		return point
+	var lo: Vector2 = _bounds.position + Vector2(margin_toward(Vector2.LEFT), margin_toward(Vector2.UP))
+	var hi: Vector2 = _bounds.end - Vector2(margin_toward(Vector2.RIGHT), margin_toward(Vector2.DOWN))
+	var middle: Vector2 = _bounds.get_center()
+	return Vector3(
+			clampf(point.x, lo.x, hi.x) if lo.x <= hi.x else middle.x,
+			point.y,
+			clampf(point.z, lo.y, hi.y) if lo.y <= hi.y else middle.y)
+
+
+## How far the focus keeps from a wall whose side facing away from the room is `outward` (world x and
+## z, a `Vector2`'s y is z), for the way the camera is turned and zoomed. Between quarter turns the
+## margins blend.
+func margin_toward(outward: Vector2) -> float:
+	var reach: Vector2 = view_reach()
+	# Where the camera looks, along the floor: -z unturned.
+	var look := Vector2(-sin(rotation.y), -cos(rotation.y))
+	var ahead: float = outward.normalized().dot(look)
+	var depth: float = (far_fraction if ahead > 0.0 else near_fraction) * reach.y
+	return (1.0 - absf(ahead)) * side_fraction * reach.x + absf(ahead) * depth
+
+
+## How far the view reaches on the floor from the focus point: across the screen to its side edge (x),
+## and toward the camera to its bottom edge (y), in metres.
+func view_reach() -> Vector2:
+	var cam: Camera3D = camera()
+	var half_fov: float = deg_to_rad(cam.fov) / 2.0
+	var view: Vector2 = get_viewport().get_visible_rect().size
+	var aspect: float = view.x / view.y if view.y > 0.0 else 1.0
+	var pitch: float = deg_to_rad(pitch_degrees)
+	var across: float = distance * tan(half_fov) * aspect
+	var toward: float = distance * cos(pitch) - distance * sin(pitch) / tan(pitch + half_fov)
+	return Vector2(across, toward)
 
 
 func rotate_by(radians: float) -> void:
@@ -37,7 +97,7 @@ func zoom_by(steps: int) -> void:
 
 func snap_to_target() -> void:
 	if is_instance_valid(target):
-		global_position = target.global_position
+		global_position = focus_for(target.global_position)
 	_place_camera()
 
 

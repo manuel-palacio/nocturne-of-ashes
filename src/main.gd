@@ -300,6 +300,7 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	state.room = room_id
 	state.entry = arrived_at
 	_party.remember_entry_vitals(state)
+	rig.set_bounds(room.floor_bounds())
 	_hand_control_to_alvar()
 	room_started.emit()
 
