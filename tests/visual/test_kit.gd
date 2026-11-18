@@ -40,8 +40,10 @@ const CLICK_THROUGH: Array[String] = ["wall", "wall_brick", "wall_corner", "door
 ## The click ray tests only this layer (`Picker`).
 const WORLD_LAYER: int = 0b001
 const WALLS_LAYER: int = 0b100
-## What a unit bumps into (`unit_base.tscn`).
+## What a unit bumps into (`unit_base.tscn`), and the size of one.
 const UNIT_MASK: int = 0b101
+const UNIT_RADIUS: float = 0.35
+const UNIT_HEIGHT: float = 1.8
 ## Where the pieces stand in the physics tests, one per spot, far enough apart not to touch.
 const SPACING: float = 12.0
 const MATERIALS: Array[String] = ["stone", "brick", "plaster", "wood", "iron"]
@@ -58,6 +60,27 @@ func _placed(piece_name: String, slot: int) -> Node3D:
 	var piece: Node3D = _piece(piece_name)
 	piece.position = Vector3(slot * SPACING, 0, 0)
 	return piece
+
+
+## Whether a unit standing at `at` (relative to `piece`) touches anything it would bump into.
+func _unit_blocked(piece: Node3D, at: Vector3) -> bool:
+	var shape := CapsuleShape3D.new()
+	shape.radius = UNIT_RADIUS
+	shape.height = UNIT_HEIGHT
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = shape
+	query.collision_mask = UNIT_MASK
+	query.transform = Transform3D(Basis(), piece.position + at + Vector3(0, UNIT_HEIGHT / 2 + 0.05, 0))
+	return not piece.get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+
+## Whether a unit walking from `from` to `to` (relative to `piece`, 5 cm steps) is stopped on the way.
+func _walk_blocked(piece: Node3D, from: Vector3, to: Vector3) -> bool:
+	var steps: int = ceili(from.distance_to(to) / 0.05)
+	for i: int in steps + 1:
+		if _unit_blocked(piece, from.lerp(to, float(i) / steps)):
+			return true
+	return false
 
 
 ## What a straight-down ray at `at` (relative to `piece`) hits on `mask`, or an empty dictionary.
@@ -178,6 +201,29 @@ func test_a_click_on_the_stairwell_lands_on_the_floor_plane() -> void:
 	assert_almost_eq((ground as Vector3).y, 0.0, 0.01, "at floor level, not on a collider over the steps")
 
 
+func test_a_unit_walks_through_the_openings_and_not_through_walls_piers_bars_or_the_stair() -> void:
+	var pieces: Dictionary = {}
+	var slot: int = 0
+	for piece_name: String in ["arch_horseshoe", "arch_round", "door_frame", "wall", "wall_corner", "pillar", "bars", "stair_down"]:
+		pieces[piece_name] = _placed(piece_name, slot)
+		slot += 1
+	await wait_physics_frames(1)
+	for opening: String in ["arch_horseshoe", "arch_round", "door_frame"]:
+		assert_false(_walk_blocked(pieces[opening], Vector3(0, 0, 2), Vector3(0, 0, -2)), "through %s" % opening)
+	assert_true(_walk_blocked(pieces["arch_horseshoe"], Vector3(-2, 0, 0), Vector3(2, 0, 0)), "not through the horseshoe's jambs")
+	assert_true(_walk_blocked(pieces["arch_round"], Vector3(-3, 0, 0), Vector3(3, 0, 0)), "not through the round arch's jambs")
+	assert_true(_walk_blocked(pieces["door_frame"], Vector3(-0.85, 0, 2), Vector3(-0.85, 0, -2)), "not through the door frame's wall")
+	for solid: String in ["wall", "wall_corner", "pillar"]:
+		assert_true(_walk_blocked(pieces[solid], Vector3(0, 0, 2), Vector3(0, 0, -2)), "not through %s" % solid)
+	for x: float in [-0.95, -0.5, 0.0, 0.5, 0.95]:
+		assert_true(_walk_blocked(pieces["bars"], Vector3(x, 0, 1), Vector3(x, 0, -1)), "the bars stop a unit at x = %.2f" % x)
+	assert_true(_unit_blocked(pieces["bars"], Vector3(0.95, 0, 0)), "the bars span their 2 m")
+	assert_false(_unit_blocked(pieces["bars"], Vector3(1.4, 0, 0)), "and no further")
+	assert_true(_walk_blocked(pieces["stair_down"], Vector3(0, 0, 3), Vector3(0, 0, 0)), "not into the stair's mouth")
+	for x: float in [-2.0, 2.0]:
+		assert_true(_walk_blocked(pieces["stair_down"], Vector3(x, 0, 0), Vector3(0, 0, 0)), "not in over its side from x = %d" % x)
+
+
 func test_pieces_draw_only_with_the_shared_materials_and_textures() -> void:
 	var shared: Array = MATERIALS.map(func(material: String) -> String:
 			return "res://resources/materials/%s.tres" % material)
@@ -195,3 +241,5 @@ func test_pieces_draw_only_with_the_shared_materials_and_textures() -> void:
 			assert_not_null(texture, path)
 			assert_true(texture.resource_path.begins_with("res://assets/textures/"), texture.resource_path)
 			assert_lte(maxi(texture.get_width(), texture.get_height()), MAX_TEXTURE, texture.resource_path)
+			for side: int in [texture.get_width(), texture.get_height()]:
+				assert_eq(side & (side - 1), 0, "%s is a power of two" % texture.resource_path)
