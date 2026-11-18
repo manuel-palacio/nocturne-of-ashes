@@ -91,14 +91,22 @@ func test_the_room_is_drawn_with_kit_pieces_only() -> void:
 func test_everyone_can_be_walked_up_to_and_spoken_with() -> void:
 	main = Story.boot(self, _after_waking())
 	await wait_physics_frames(3)
-	for npc: Npc in main.room.npcs():
-		var npc_name: String = npc.name
+	var npcs: Array[Npc] = main.room.npcs()
+	assert_eq(npcs.size(), 5, "five people stand in the haven")
+	for npc: Npc in npcs:
+		watch_signals(npc)
+	for index: int in npcs.size():
+		var npc: Npc = npcs[index]
 		# From the middle of the room each time.
 		main.player.global_position = Vector3.ZERO
 		await wait_physics_frames(2)
 		main.player.order_interact(npc)
-		var used: bool = await wait_for_signal(npc.used, 15.0)
-		assert_true(used, "%s was walked up to and used" % npc_name)
+		await wait_until(func() -> bool: return get_signal_emit_count(npc, "used") > 0, 15.0)
+		assert_signal_emitted_with_parameters(npc, "used", [main.player])
+		# Only the one ordered was used, and each of those before once.
+		for other: int in npcs.size():
+			assert_signal_emit_count(npcs[other], "used", 1 if other <= index else 0,
+					"%s used when %s was ordered" % [npcs[other].name, npc.name])
 		# Through the conversation, the first choice each time, before the next.
 		var guard: int = 0
 		while main.is_talking() and guard < 60:
@@ -109,7 +117,7 @@ func test_everyone_can_be_walked_up_to_and_spoken_with() -> void:
 			else:
 				main.dialogue.advance()
 			await wait_physics_frames(2)
-		assert_false(main.is_talking(), "the talk with %s ended" % npc_name)
+		assert_false(main.is_talking(), "the talk with %s ended" % npc.name)
 
 
 func test_the_room_has_at_most_six_lights_and_two_shadows() -> void:
