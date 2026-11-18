@@ -54,8 +54,8 @@ on every run. Its docstring has the table of pieces: footprint on the 2 m grid, 
 on which physics layer. The pieces carry no textures: each face names one of five shared materials
 (`resources/materials/stone|brick|plaster|wood|iron.tres`), and `tools/kit_import.gd`, the pieces'
 import script, swaps those names for the materials and puts the collision bodies on their layers. The
-materials' tiling textures, colour and normal map at 1024 px, are CC0 sets from Poly Haven in
-`assets/textures/` (see `CREDITS.md`), imported VRAM-compressed with mipmaps, the normal maps at 512 px.
+materials' tiling textures, colour maps at 1024 px and normal maps at 512 px, are CC0 sets from Poly
+Haven in `assets/textures/` (see `CREDITS.md`), imported with mipmaps.
 
 ## Story so far
 
