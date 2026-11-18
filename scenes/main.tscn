@@ -36,14 +36,15 @@ script = ExtResource("11_travel")
 
 [node name="CameraRig" type="Node3D" parent="."]
 script = ExtResource("3_rig")
-distance = 30.0
-min_distance = 20.0
+pitch_degrees = 57.0
+distance = 32.0
+min_distance = 16.0
 max_distance = 40.0
 zoom_step = 2.0
 
 [node name="Camera" type="Camera3D" parent="CameraRig"]
 current = true
-fov = 25.0
+fov = 15.0
 
 [node name="PlayerInput" type="Node" parent="."]
 script = ExtResource("4_input")
