@@ -4,7 +4,8 @@ extends Node3D
 ## the camera looks at its outer side: then it is not drawn, as the wall nearest the camera is not, so
 ## the floor and the units behind it stay in sight. It still blocks what it blocks; only drawing stops.
 
-## The side it shows away from the middle of the room, along the floor (y is ignored).
+## The side it shows away from the middle of the room, along the floor (y is ignored), in world space:
+## rooms are placed without turning, so this is also the room's own direction.
 @export var outward: Vector3 = Vector3.BACK
 ## It is cut while the camera looks within this many degrees of straight at its outer side.
 @export var cut_within_degrees: float = 60.0
