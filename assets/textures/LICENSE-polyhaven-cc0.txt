@@ -1,6 +1,7 @@
 The textures in this directory come from Poly Haven (https://polyhaven.com), where they are
 published under CC0 1.0 Universal (public domain dedication). Each file is the 1024 px JPEG
-download of the set named below, renamed; nothing else was changed.
+download of the set named below, renamed. The colour maps are unchanged; the normal maps were
+resized to 512 px (the size the game imports them at), which CC0 allows.
 
 stone_color.jpg, stone_normal.jpg     "Medieval Blocks 03" by Rob Tuytel     https://polyhaven.com/a/medieval_blocks_03
 brick_color.jpg, brick_normal.jpg     "Castle Brick 02 Red" by Rob Tuytel    https://polyhaven.com/a/castle_brick_02_red
