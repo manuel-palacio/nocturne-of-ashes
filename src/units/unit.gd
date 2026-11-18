@@ -59,6 +59,7 @@ var _feed_mark: bool = false
 @onready var _effects: Effects = $Effects
 @onready var _feeder: Feeder = $Feeder
 @onready var _fury: Fury = $Fury
+@onready var _separation: Separation = $Separation
 @onready var _visual: UnitVisual = get_node_or_null(^"Visual") as UnitVisual
 
 
@@ -89,8 +90,22 @@ func _physics_process(delta: float) -> void:
 	var was_on_floor: bool = is_on_floor()
 	if not was_on_floor:
 		velocity.y -= _gravity * delta
-	move_and_slide()
+	_move_body(_separation.push())
 	_mover.after_move(delta, was_on_floor)
+
+
+## Moves the body with its velocity plus `push`, the `Separation`'s for this frame. The push lasts this
+## one move: the unit's own horizontal velocity is kept as it was, so nothing else sees it walk.
+func _move_body(push: Vector3) -> void:
+	if push == Vector3.ZERO:
+		move_and_slide()
+		return
+	var own: Vector3 = velocity
+	velocity.x += push.x
+	velocity.z += push.z
+	move_and_slide()
+	velocity.x = own.x
+	velocity.z = own.z
 
 
 func current_order() -> Order:

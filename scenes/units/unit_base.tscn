@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://src/units/unit.gd" id="1_unit"]
 [ext_resource type="Script" path="res://src/units/mover.gd" id="2_mover"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://src/units/fury.gd" id="6_fury"]
 [ext_resource type="Script" path="res://src/units/orders.gd" id="7_orders"]
 [ext_resource type="Script" path="res://src/units/unit_visual.gd" id="8_visual"]
+[ext_resource type="Script" path="res://src/units/separation.gd" id="9_separation"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
@@ -47,3 +48,6 @@ script = ExtResource("6_fury")
 
 [node name="Orders" type="Node" parent="."]
 script = ExtResource("7_orders")
+
+[node name="Separation" type="Node" parent="."]
+script = ExtResource("9_separation")
