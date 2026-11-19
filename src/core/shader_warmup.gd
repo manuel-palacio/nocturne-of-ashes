@@ -11,12 +11,15 @@ extends Node
 ## the room's built pieces (those with normal maps, the stone kit, then the rest, such as the flames),
 ## its lights' shadows, its people, and its sparks and embers, each kind drawn with the shaders the
 ## kinds before it already compiled. A shader's first use still costs about two seconds in Firefox,
-## one for each of the two programs the renderer links for it at once; that is the longest frame. The frame after the last kind, the
-## view is freed and the next room's is added. `finished` is emitted after the last room;
-## `stop()` frees whatever is left without it. Nothing of it stays in the game's world.
+## one for each of the two programs the renderer links for it at once; that is the longest frame.
+## The frame after the last kind, the view is freed and the next room's is added. `finished` is
+## emitted after the last room; `stop()` frees whatever is left without it. Either way `ended` follows,
+## once. Nothing of it stays in the game's world.
 
 ## Emitted once every room given to `start()` has been drawn whole.
 signal finished
+## Emitted once the warmup is over, whether it finished or was stopped.
+signal ended
 
 ## Frames the title is drawn on before the first room is, so it shows before the work starts.
 const TITLE_FRAMES: int = 10
@@ -57,12 +60,13 @@ func start(rooms: Array[PackedScene]) -> void:
 	set_process(true)
 
 
-## Frees the room being drawn, if any, and draws no more; `finished` is not emitted.
+## Frees the room being drawn, if any, and draws no more; `finished` is not emitted, `ended` is if it
+## was warming.
 func stop() -> void:
-	_waiting.clear()
-	_free_view()
-	_warming = false
-	set_process(false)
+	var was_warming: bool = _warming
+	_halt()
+	if was_warming:
+		ended.emit()
 
 
 ## True until every room given to `start()` has been drawn, or `stop()`.
@@ -86,8 +90,9 @@ func _process(_delta: float) -> void:
 		return
 	_free_view()
 	if _waiting.is_empty():
-		stop()
+		_halt()
 		finished.emit()
+		ended.emit()
 		return
 	_view = _make_view()
 	add_child(_view)
@@ -186,6 +191,13 @@ static func _normal_mapped(thing: GeometryInstance3D) -> bool:
 			and mesh_instance.mesh.get_surface_count() > 0:
 		material = mesh_instance.get_active_material(0)
 	return material is BaseMaterial3D and (material as BaseMaterial3D).normal_enabled
+
+
+func _halt() -> void:
+	_waiting.clear()
+	_free_view()
+	_warming = false
+	set_process(false)
 
 
 func _free_view() -> void:

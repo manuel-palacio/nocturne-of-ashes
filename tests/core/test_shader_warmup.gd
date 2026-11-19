@@ -59,6 +59,7 @@ func test_each_room_is_shown_a_kind_at_a_time_in_its_own_world_then_freed() -> v
 	assert_eq(vault.back(), "vault own=true rings=1 showing=some shadows=2")
 	assert_false(warmup.is_warming())
 	assert_signal_emit_count(warmup, "finished", 1)
+	assert_signal_emit_count(warmup, "ended", 1, "ended, by finishing")
 	assert_null(warmup.view())
 	assert_eq(warmup.get_child_count(), 0)
 
@@ -71,6 +72,9 @@ func test_stop_frees_the_room_being_drawn() -> void:
 	watch_signals(warmup)
 	warmup.stop()
 	assert_signal_not_emitted(warmup, "finished")
+	assert_signal_emit_count(warmup, "ended", 1, "ended, by the stop")
+	warmup.stop()
+	assert_signal_emit_count(warmup, "ended", 1, "a stop with nothing warming ends nothing")
 	assert_false(warmup.is_warming())
 	assert_null(warmup.view())
 	assert_eq(warmup.get_child_count(), 0)
@@ -93,6 +97,7 @@ func test_the_title_warms_both_rooms_and_a_new_game_stops_it() -> void:
 	title.new_game_chosen.emit()
 	await wait_physics_frames(2)
 	assert_false(warmup.is_warming())
+	assert_false(title.is_preparing_shown(), "the stopped warmup's line is gone as a finished one's is")
 	assert_null(warmup.view())
 	assert_eq(main.room.room_id, &"haven")
 	assert_eq(get_tree().get_nodes_in_group(&"interactables").filter(
