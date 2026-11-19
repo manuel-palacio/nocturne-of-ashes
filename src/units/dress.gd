@@ -13,13 +13,6 @@ enum Region { SKIN, HAIR, TUNIC, SLEEVES, SKIRT, HOSE, BOOTS, TRIM }
 @export var height: float = 1.8
 
 
-## The colour of `region` in the palette; grey without one.
-func colour(region: Region) -> Color:
-	if palette == null:
-		return Color.GRAY
-	return palette.get_image().get_pixel(region, 0)
-
-
 ## The palette's name: `zahra` for `palette-zahra.png`; empty without a palette. Portraits are named by it.
 func palette_name() -> String:
 	if palette == null:
