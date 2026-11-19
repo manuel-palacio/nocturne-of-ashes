@@ -1,31 +1,6 @@
 // e2e/story.spec.js
 const { test, expect } = require('@playwright/test');
-
-const state = (page) => page.evaluate(() => { window.nocturneProbe(); return window.nocturneState; });
-
-async function open(page, query) {
-  const errors = [];
-  page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
-  page.on('pageerror', (err) => errors.push(err.message));
-  await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto('/?' + query);
-  await page.waitForFunction(() => window.nocturneStarted === true, null, { timeout: 60000 });
-  await page.waitForTimeout(1000);
-  return errors;
-}
-
-const until = (page, fn, arg, timeout = 15000) => page.waitForFunction(fn, arg, { timeout });
-
-// Presses Enter through plain lines and `key` at each choice until the conversation ends.
-async function talkThrough(page, key) {
-  for (let i = 0; i < 60; i++) {
-    const s = await state(page);
-    if (!s.talking) return;
-    await page.keyboard.press(s.choices.length > 0 ? key : 'Enter');
-    await page.waitForTimeout(250);
-  }
-  throw new Error('the conversation did not end');
-}
+const { state, open, until, talkThrough } = require('./helpers');
 
 test('a new game wakes in the haven and Malakor speaks first', async ({ page }) => {
   test.setTimeout(90000);

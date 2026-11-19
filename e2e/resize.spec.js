@@ -1,7 +1,6 @@
 // e2e/resize.spec.js
 const { test, expect } = require('@playwright/test');
-
-const state = (page) => page.evaluate(() => { window.nocturneProbe(); return window.nocturneState; });
+const { state } = require('./helpers');
 
 test('after a resize and a lost focus the canvas fills the window and clicks still land', async ({ page }) => {
   test.setTimeout(90000);

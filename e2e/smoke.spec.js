@@ -1,18 +1,6 @@
 // e2e/smoke.spec.js
 const { test, expect } = require('@playwright/test');
-
-const state = (page) => page.evaluate(() => { window.nocturneProbe(); return window.nocturneState; });
-
-async function open(page, query) {
-  const errors = [];
-  page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
-  page.on('pageerror', (err) => errors.push(err.message));
-  await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto('/?' + query);
-  await page.waitForFunction(() => window.nocturneStarted === true, null, { timeout: 60000 });
-  await page.waitForTimeout(1000);
-  return errors;
-}
+const { state, open } = require('./helpers');
 
 test('the room loads without errors and shows the player and six enemies', async ({ page }) => {
   test.setTimeout(90000);
