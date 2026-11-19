@@ -76,7 +76,7 @@ func floor_bounds() -> Rect2:
 
 
 ## What moves in the room's air: its `Lights` node, holding the real-time lights with their flicker and
-## the particles (embers, dust) that rise from them; null in a room without one. It stops with the
+## the particles (the embers) that rise from them; null in a room without one. It stops with the
 ## world on a pause; see `WorldHold`.
 func air() -> Node3D:
 	return get_node_or_null(^"Lights") as Node3D

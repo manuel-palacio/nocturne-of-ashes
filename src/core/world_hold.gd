@@ -5,7 +5,7 @@ extends Node
 ## released on its own; the world moves again once none is left. Held units stay in the physics space
 ## (their scenes keep them active when disabled), so they can still be clicked and given orders.
 ##
-## The room's air (its torches' flicker, embers and dust: `Room.air()`) stops with the world too, but
+## The room's air (its torches' flicker and embers: `Room.air()`) stops with the world too, but
 ## not for a conversation: the room stays alive while people talk.
 
 ## The reason that holds the units but leaves the air moving.
