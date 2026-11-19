@@ -135,9 +135,6 @@ func _enemy_points(view: Vector2, marked_only: bool) -> Array[Array]:
 	return points
 
 
-## Each visible character's and door's screen point, `PERSON_HEIGHT` up, in CSS pixels relative to the
-## canvas, whose size is `view`: a character under its untranslated label, a door under its node name.
-## A point off screen is reported as it is, outside the canvas; only those behind the camera are left out.
 func _title() -> TitleScreen:
 	return _main.find_child("TitleScreen", true, false) as TitleScreen
 
@@ -152,6 +149,9 @@ func _title_point(view: Vector2) -> Array[int]:
 	return [roundi(at.x), roundi(at.y)]
 
 
+## Each visible character's and door's screen point, `PERSON_HEIGHT` up, in CSS pixels relative to the
+## canvas, whose size is `view`: a character under its untranslated label, a door under its node name.
+## A point off screen is reported as it is, outside the canvas; only those behind the camera are left out.
 func _people(view: Vector2) -> Dictionary:
 	var people: Dictionary = {}
 	var camera: Camera3D = get_viewport().get_camera_3d()
