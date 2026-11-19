@@ -3,7 +3,8 @@ extends Node3D
 ## A place the party can be in: its floor and walls, the entries the party arrives by and the markers
 ## where its enemies stand. An entry is a `Marker3D` named `Entry_<name>` with two `Marker3D` children,
 ## `Companion1` and `Companion2`, for the companions; every room has `Entry_start`. Enemy markers are
-## `Marker3D` children named `EnemySpawn<N>`. The characters to talk to are `Npc` children.
+## `Marker3D` children named `EnemySpawn<N>`. The characters to talk to are `Npc` children. Its lights
+## and the air that moves with them are under `Lights` (see `air()`).
 
 const ENTRY_PREFIX: String = "Entry_"
 const START: StringName = &"start"
@@ -68,6 +69,13 @@ func arrival_point(display_name: String, fallback: Node3D) -> Vector3:
 ## `floor_rect` in world x and z. Rooms are placed without turning, so only the room's position counts.
 func floor_bounds() -> Rect2:
 	return Rect2(floor_rect.position + Vector2(global_position.x, global_position.z), floor_rect.size)
+
+
+## What moves in the room's air: its `Lights` node, holding the real-time lights with their flicker and
+## the particles (embers, dust) that rise from them; null in a room without one. It stops with the
+## world on a pause; see `WorldHold`.
+func air() -> Node3D:
+	return get_node_or_null(^"Lights") as Node3D
 
 
 ## The characters to talk to that are children of the room, in scene order.

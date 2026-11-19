@@ -363,6 +363,7 @@ func _load_room(room_id: StringName) -> void:
 	move_child(room, 0)
 	# Owned like the rest of the scene, so `find_child` reaches its markers.
 	room.owner = self
+	_world_hold.set_air(room.air())
 
 
 func _on_selection_changed(unit: Unit) -> void:
