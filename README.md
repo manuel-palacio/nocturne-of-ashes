@@ -8,6 +8,9 @@ party, use blood powers and make choices that cost something.
 
 Play the latest milestone in a desktop browser: https://nocturne-of-ashes.fly.dev/
 
+Credits: [`CREDITS.md`](CREDITS.md), served beside the game as https://nocturne-of-ashes.fly.dev/credits.txt,
+with the licence texts it names, the engine's included, in https://nocturne-of-ashes.fly.dev/licenses.txt.
+
 Run the tests: `ops/test.sh`
 
 Build for the browser: `ops/build-web.sh`
