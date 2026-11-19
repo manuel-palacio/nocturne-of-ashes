@@ -1,5 +1,4 @@
-# The image holds only the exported game, the server config and the credits.
+# The image holds only the exported game (with its credits and licences) and the server config.
 *
 !build/web/**
 !ops/nginx.conf
-!CREDITS.md

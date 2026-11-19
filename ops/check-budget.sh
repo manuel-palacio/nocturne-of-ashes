@@ -2,7 +2,9 @@
 # Checks the browser build in build/web against its budget: at most 80 MB on disk, and no single file
 # other than the engine's .wasm over 30 MB. Prints the build's files and the ten largest assets inside
 # the pack (index.pck), read from the pack's own file table by a few lines of Python. Run it from the
-# repository root after ops/build-web.sh; it exits non-zero when the budget is broken.
+# repository root after ops/build-web.sh; it exits non-zero when the budget is broken, or when the
+# build lacks the credits (credits.txt, the same as CREDITS.md) or a licence text: licenses.txt must
+# hold the engine's licence and every licence file CREDITS.md names (ops/licence-files.sh).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 web=build/web
@@ -26,6 +28,21 @@ while IFS= read -r file; do
     echo "ops/check-budget.sh: $file is over 30 MB" >&2; fail=1
   fi
 done < <(find "$web" -type f | sort)
+
+echo "Credits and licences:"
+if cmp -s CREDITS.md "$web/credits.txt"; then
+  echo "  credits.txt is CREDITS.md"
+else
+  echo "ops/check-budget.sh: $web/credits.txt is missing or differs from CREDITS.md" >&2; fail=1
+fi
+licenses="$web/licenses.txt"
+for section in "Godot Engine" $(ops/licence-files.sh); do
+  if [ -f "$licenses" ] && grep -qxF "######## $section ########" "$licenses"; then
+    echo "  licenses.txt holds $section"
+  else
+    echo "ops/check-budget.sh: $licenses lacks the licence of $section" >&2; fail=1
+  fi
+done
 
 echo "Ten largest assets in the pack:"
 python3 -I - "$pack" <<'PY'
