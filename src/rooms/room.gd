@@ -18,6 +18,10 @@ const BESIDE_NPC: float = 2.0
 ## The walkable floor inside the walls, in the room's own x and z (a `Rect2`'s y is z): the camera
 ## keeps its focus inside it. Without area the camera is not held in.
 @export var floor_rect: Rect2 = Rect2()
+## How close the camera's focus may come to the wall at the top of the screen, as
+## `CameraRig.far_fraction`: under the rig's 0.5 where that wall is worth seeing whole (the haven's
+## horseshoe arches).
+@export_range(0.0, 1.0) var camera_far_fraction: float = 0.5
 
 
 ## The entry called `entry_name`; `Entry_start`, with a warning, when the room has no such entry; null,
