@@ -112,6 +112,7 @@ locale/fallback="en"
 [navigation]
 
 world/region_use_async_iterations=false
+3d/default_cell_size=0.2
 
 [rendering]
 

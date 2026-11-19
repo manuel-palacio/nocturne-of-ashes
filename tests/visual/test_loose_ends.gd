@@ -66,7 +66,8 @@ func _stepped_floor() -> Node3D:
 	var region := NavigationRegion3D.new()
 	var navmesh := NavigationMesh.new()
 	navmesh.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
-	navmesh.agent_radius = 0.5
+	navmesh.agent_radius = 0.4
+	navmesh.cell_size = 0.2
 	region.navigation_mesh = navmesh
 	floor_root.add_child(region)
 	_box(region, Vector3(-5, -0.1, 0), Vector3(10, 0.2, 6))
@@ -125,3 +126,23 @@ func test_an_order_given_in_a_fall_that_never_lands_warns_once_and_is_dropped() 
 	assert_push_warning("could not plan its move order")
 	await wait_seconds(1.0)
 	assert_push_warning_count(1)
+
+# 4. Every room's navmesh is baked for the units' own radius, which its cells do not round up.
+
+const ROOMS: Array[String] = ["res://scenes/rooms/vault_room.tscn", "res://scenes/rooms/forge_haven.tscn"]
+
+
+func test_every_room_is_baked_for_the_units_radius_in_cells_that_hold_it_exactly() -> void:
+	var unit: Unit = autofree(Arena.ALVAR.instantiate())
+	var radius: float = (unit.get_node(^"Agent") as NavigationAgent3D).radius
+	assert_almost_eq(radius, 0.4, 0.0001, "the units' agent radius")
+	var map_cell: float = ProjectSettings.get_setting("navigation/3d/default_cell_size")
+	for path: String in ROOMS:
+		var room: Node = autofree((load(path) as PackedScene).instantiate())
+		var regions: Array[Node] = room.find_children("*", "NavigationRegion3D", true, false)
+		assert_eq(regions.size(), 1, path)
+		var navmesh: NavigationMesh = (regions[0] as NavigationRegion3D).navigation_mesh
+		assert_almost_eq(navmesh.agent_radius, radius, 0.0001, "%s: baked for the units' radius" % path)
+		var cells: float = navmesh.agent_radius / navmesh.cell_size
+		assert_almost_eq(cells, roundf(cells), 0.001, "%s: the radius is %.2f cells of %.2f m, not rounded up" % [path, cells, navmesh.cell_size])
+		assert_almost_eq(navmesh.cell_size, map_cell, 0.0001, "%s: the map's own cell size" % path)
