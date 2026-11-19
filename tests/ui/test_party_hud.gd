@@ -86,7 +86,7 @@ func test_pause_and_cleared_labels() -> void:
 	assert_true(hud.find_child("ClearedLabel").visible)
 	assert_eq(hud.find_child("ClearedLabel").text, "The vault is quiet")
 
-func test_the_fallen_prompt_is_unchanged_and_restart_clears_the_labels() -> void:
+func test_the_fallen_prompt_shows_and_restart_clears_the_labels() -> void:
 	main.player.take_hit(999)
 	await wait_physics_frames(2)
 	assert_true(hud.is_fallen_shown())
