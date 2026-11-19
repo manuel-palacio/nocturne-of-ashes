@@ -49,7 +49,13 @@ const _FOLLOW_RETARGET: float = 1.0
 		if not enabled and _unit != null and _is_following():
 			_unit.stop()
 
-var leader: Unit
+## Whom the unit follows. A new leader starts with no memory of walking: what the last one did says
+## nothing about it.
+var leader: Unit:
+	set(value):
+		if value != leader:
+			_leader_still_for = INF
+		leader = value
 
 var _since_thought: float = 0.0
 ## Where the leader stood when the current follow walk was aimed.
