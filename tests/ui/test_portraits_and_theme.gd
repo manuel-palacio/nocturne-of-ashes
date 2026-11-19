@@ -153,6 +153,32 @@ func test_every_control_of_the_hud_the_dialogue_box_and_the_title_uses_the_theme
 			assert_null(label.label_settings.font, "%s keeps the theme's face" % label.get_path())
 
 
+func test_plain_text_headers_keys_and_the_title_each_have_their_colour() -> void:
+	await _boot_with_title(null)
+	var parchment := Color(0.9, 0.85, 0.76)
+	var amber := Color(0.93, 0.74, 0.44)
+	var title_tan := Color(0.86, 0.72, 0.52)
+	var title_label := _title().find_child("TitleLabel") as Label
+	assert_eq(title_label.get_theme_color(&"font_color"), title_tan)
+	var plain := Label.new()
+	var header := Label.new()
+	header.theme_type_variation = &"HeaderLabel"
+	var key := Label.new()
+	key.theme_type_variation = &"KeyLabel"
+	for label: Label in [plain, header, key]:
+		_title().add_child(label)
+	assert_eq(plain.get_theme_color(&"font_color"), parchment, "plain text")
+	assert_eq(header.get_theme_color(&"font_color"), amber, "headers")
+	assert_eq(key.get_theme_color(&"font_color"), amber, "keys")
+	for label: Label in [plain, header, key]:
+		label.free()
+	# Each type is written once: no type the theme does not mean to have.
+	var types: PackedStringArray = THEME.get_type_list()
+	types.sort()
+	assert_eq(types, PackedStringArray(["BloodBar", "Button", "HeaderLabel", "HealthBar", "KeyLabel", "Label", "Panel",
+			"PanelContainer", "PortraitFrame", "ProgressBar", "SelectedPanel", "TargetingButton", "TitleLabel"]))
+
+
 func test_a_panel_and_a_gift_button_write_nothing_while_nothing_changes() -> void:
 	await _skirmish()
 	main.set_paused(true)
