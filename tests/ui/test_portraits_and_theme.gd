@@ -181,7 +181,12 @@ func test_plain_text_headers_keys_and_the_title_each_have_their_colour() -> void
 
 func test_a_panel_and_a_gift_button_write_nothing_while_nothing_changes() -> void:
 	await _skirmish()
-	main.set_paused(true)
+	# The world runs; only the enemies stand idle, so no value changes by itself.
+	for enemy: Unit in main.enemies:
+		var brain: Node = enemy.get_node_or_null(^"Brain")
+		if brain != null:
+			enemy.remove_child(brain)
+			brain.free()
 	await wait_physics_frames(2)
 	var panel: PartyMemberPanel = main.hud.panels()[0]
 	var button: GiftButton = main.hud.gift_buttons()[0]
