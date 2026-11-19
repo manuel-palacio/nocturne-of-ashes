@@ -183,3 +183,25 @@ func test_the_stair_door_is_cut_with_its_wall_and_can_still_be_used() -> void:
 	await wait_process_frames(3)
 	assert_true(frame.is_visible_in_tree(), "the frame is drawn again")
 	assert_true(leaf.is_visible_in_tree(), "and the leaf with it")
+
+
+## At a new game's first frame, a unit by the west wall stands right of the party panel or below it,
+## not under it.
+func test_at_the_waking_a_unit_at_the_west_wall_stands_clear_of_the_party_panel() -> void:
+	# The frame the game is played and shown in, not the headless window's square one.
+	var window_size: Vector2i = get_tree().root.size
+	get_tree().root.size = Vector2i(1280, 720)
+	main = Story.boot(self)
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"haven")
+	main.rig.snap_to_target()
+	await wait_process_frames(2)
+	var panels: Rect2 = (main.hud.find_child("PartyColumn") as Control).get_global_rect()
+	var map: RID = main.get_world_3d().navigation_map
+	var entry: Vector3 = main.player.global_position
+	for z: float in [entry.z - 1.5, entry.z, entry.z + 1.5]:
+		var edge: Vector3 = NavigationServer3D.map_get_closest_point(map, Vector3(-9.0, 0.0, z))
+		var at: Vector2 = main.rig.camera().unproject_position(edge)
+		assert_true(at.x > panels.end.x or at.y > panels.end.y,
+				"a unit at %s is drawn at %s, clear of the panel %s" % [edge, at, panels])
+	get_tree().root.size = window_size
