@@ -2,6 +2,8 @@ class_name Gift
 extends Resource
 ## A power a unit uses for Blood, then waits out its cooldown. One resource is shared by every unit
 ## that carries it: it holds the numbers and the rules only, and the `GiftUser` keeps the cooldowns.
+## Its numbers, and its id and name, are set in its resource under `resources/gifts/` only: the
+## scripts' own defaults are neutral, so a number a resource leaves out does nothing.
 
 enum Targeting { SELF, ENEMY, ALLY }
 

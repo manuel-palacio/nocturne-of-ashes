@@ -2,17 +2,9 @@ class_name IronSinew
 extends Gift
 ## The caster walks faster and hits harder for a while.
 
-@export var duration: float = 8.0
-@export var speed_multiplier: float = 1.4
-@export var damage_dealt_multiplier: float = 1.5
-
-
-func _init() -> void:
-	id = &"iron_sinew"
-	display_name = "Iron Sinew"
-	blood_cost = 20
-	cooldown = 12.0
-	targeting = Targeting.SELF
+@export var duration: float = 0.0
+@export var speed_multiplier: float = 1.0
+@export var damage_dealt_multiplier: float = 1.0
 
 
 func apply(caster: Unit, _target: Unit) -> void:
