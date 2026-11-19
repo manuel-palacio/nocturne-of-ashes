@@ -225,9 +225,15 @@ func _set_targeting(index: int) -> void:
 	targeting_changed.emit(index)
 
 
+## Has the use ring chosen again on the next frame, though nothing has moved: what can be used has
+## changed, as when a story flag shows or hides someone.
+func refresh_use_marks() -> void:
+	_marks_stale = true
+
+
 ## Lights one use ring: the usable interactable's under the mouse, else the nearest usable one's within
-## `NEAR_USE` of the leader. Chosen again only when the pointer, the leader or the camera has moved, or
-## input was turned on or off; only the ring that changes is touched.
+## `NEAR_USE` of the leader. Chosen again only when the pointer, the leader or the camera has moved,
+## input was turned on or off, or `refresh_use_marks()` asked; only the ring that changes is touched.
 func _show_use_marks() -> void:
 	var leader_at: Vector3 = leader.global_position if is_instance_valid(leader) else Vector3.INF
 	var camera: Transform3D = rig.camera().global_transform if rig != null else Transform3D()

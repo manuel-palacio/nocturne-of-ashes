@@ -113,8 +113,10 @@ func _on_room_child_entered(child: Node) -> void:
 		_take(child)
 
 
+## A flag can show or hide someone, or change what can be used: the use ring is chosen again too.
 func _on_flag_changed(_key: StringName) -> void:
 	_show_characters()
+	_input.refresh_use_marks()
 
 
 func _on_talk_requested(npc: Npc, _by: Unit) -> void:
