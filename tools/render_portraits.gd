@@ -3,7 +3,8 @@ extends SceneTree
 ## 256 × 256: the game's own figure (a `UnitVisual` wearing `resources/dress/<name>.tres`, so its
 ## model, palette and gear), standing in the first frame of its idle clip, seen in a three-quarter
 ## view, lit warm from one side with a faint cool fill and rim, on a dark ground; towards the edges
-## the whole picture darkens to `GROUND_EDGE`'s depth, so it sits on any dark panel without a seam. `<name>` is the dress's palette name (`palette-<name>.png`).
+## the whole picture darkens to `GROUND_EDGE`'s depth, so it sits on any dark panel without a seam.
+## `<name>` is the dress's palette name (`palette-<name>.png`).
 ##
 ##     godot --path . -s tools/render_portraits.gd [-- <name>...]
 ##

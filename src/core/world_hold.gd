@@ -1,9 +1,10 @@
 class_name WorldHold
 extends Node
 ## Holds the world still for any number of reasons at once (the pause, a conversation, the title, the
-## controls card): while any reason holds it the units do not process and the fight does not advance. Each reason is
-## released on its own; the world moves again once none is left. Held units stay in the physics space
-## (their scenes keep them active when disabled), so they can still be clicked and given orders.
+## controls card): while any reason holds it the units do not process and the fight does not advance.
+## Each reason is released on its own; the world moves again once none is left. Held units stay in the
+## physics space (their scenes keep them active when disabled), so they can still be clicked and given
+## orders.
 ##
 ## The room's air (its torches' flicker and embers: `Room.air()`) stops with the world too, but
 ## not for a conversation: the room stays alive while people talk.
