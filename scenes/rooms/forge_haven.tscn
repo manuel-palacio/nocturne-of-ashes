@@ -25,6 +25,7 @@
 [ext_resource type="Resource" path="res://resources/dress/smith.tres" id="dress_smith"]
 [ext_resource type="Resource" path="res://resources/dress/zahra.tres" id="dress_zahra"]
 [ext_resource type="Environment" path="res://resources/environment/cellar.tres" id="env_cellar"]
+[ext_resource type="LightmapGIData" path="res://scenes/rooms/forge_haven.lmbake" id="bake_light"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_r6t6n"]
 albedo_color = Color(1, 0.55, 0.2, 1)
@@ -555,6 +556,13 @@ omni_attenuation = 1.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=685442373]
 environment = ExtResource("env_cellar")
+
+[node name="LightmapGI" type="LightmapGI" parent="."]
+quality = 1
+environment_mode = 3
+environment_custom_color = Color(0.2, 0.23, 0.33, 1)
+environment_custom_energy = 0.8
+light_data = ExtResource("bake_light")
 
 [node name="Entry_start" type="Marker3D" parent="." unique_id=1384605981]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0.3, 0)
