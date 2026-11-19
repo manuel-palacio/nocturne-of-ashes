@@ -2,7 +2,9 @@ class_name Hud
 extends CanvasLayer
 ## Shows a panel per party member, the selected member's Gifts, Conscience in a story, the conversation on show (in its
 ## `DialogueBox`), the prompts for a pause, a cleared room and Álvar's fall, and a passing notice.
-## Clicks on panels and Gift buttons go out through its signals. Every control draws with
+## Clicks on panels and Gift buttons go out through its signals. Its `?` button in the lower right
+## corner opens the `ControlsCard`; whoever owns the HUD holds the world while the card is open
+## (`controls_toggled`), and the dialogue box reads no keys meanwhile. Every control draws with
 ## `resources/ui/theme.tres`.
 ##
 ## Texts: every control whose text is set here or in a panel or button has automatic translation off
@@ -16,6 +18,8 @@ signal member_pressed(unit: Unit)
 signal gift_chosen(index: int)
 ## The fallen prompt was clicked: the player asks to rise, as with Enter.
 signal fallen_pressed
+## The controls card opened (`open` true) or closed.
+signal controls_toggled(open: bool)
 
 const PANEL: PackedScene = preload("res://scenes/ui/party_member_panel.tscn")
 const GIFT_BUTTON: PackedScene = preload("res://scenes/ui/gift_button.tscn")
@@ -44,10 +48,14 @@ var _notice_left: float = 0.0
 @onready var _conscience_label: Label = %ConscienceLabel
 @onready var _notice_label: Label = %NoticeLabel
 @onready var _dialogue_box: DialogueBox = %DialogueBox
+@onready var _controls_button: Button = %ControlsButton
+@onready var _controls_card: ControlsCard = %ControlsCard
 
 
 func _ready() -> void:
 	_fallen_label.gui_input.connect(_on_fallen_label_input)
+	_controls_button.pressed.connect(_controls_card.toggle)
+	_controls_card.toggled.connect(_on_controls_toggled)
 	_show_texts()
 	hide_fallen()
 	hide_cleared()
@@ -153,6 +161,10 @@ func hide_cleared() -> void:
 	_cleared_label.visible = false
 
 
+func is_controls_open() -> bool:
+	return _controls_card.is_open()
+
+
 ## Shows `text`, an English source text, in the middle of the screen for `notice_time` seconds, in
 ## place of any notice on show. An empty text hides the notice.
 func show_notice(text: String) -> void:
@@ -201,6 +213,13 @@ func _on_fallen_label_input(event: InputEvent) -> void:
 	var button := event as InputEventMouseButton
 	if button != null and button.pressed and button.button_index == MOUSE_BUTTON_LEFT:
 		fallen_pressed.emit()
+
+
+## While the card is open the conversation on show waits: its keys are not read, and the card stops
+## clicks on it.
+func _on_controls_toggled(open: bool) -> void:
+	_dialogue_box.set_process(not open)
+	controls_toggled.emit(open)
 
 
 func _on_conscience_changed(_value: int) -> void:

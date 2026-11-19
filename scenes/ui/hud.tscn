@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://src/ui/hud.gd" id="1_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/dialogue_box.tscn" id="2_dialogue_box"]
 [ext_resource type="Theme" path="res://resources/ui/theme.tres" id="3_theme"]
+[ext_resource type="PackedScene" path="res://scenes/ui/controls_card.tscn" id="4_card"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_fallen"]
 font_size = 36
@@ -103,6 +104,26 @@ label_settings = SubResource("LabelSettings_notice")
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="ControlsButton" type="Button" parent="Root"]
+auto_translate_mode = 2
+unique_name_in_owner = true
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -56.0
+offset_top = -56.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+focus_mode = 0
+theme_override_font_sizes/font_size = 22
+text = "?"
+
 [node name="FallenLabel" type="Label" parent="Root"]
 auto_translate_mode = 2
 unique_name_in_owner = true
@@ -136,5 +157,9 @@ vertical_alignment = 1
 autowrap_mode = 3
 
 [node name="DialogueBox" parent="Root" instance=ExtResource("2_dialogue_box")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="ControlsCard" parent="Root" instance=ExtResource("4_card")]
 unique_name_in_owner = true
 layout_mode = 1

@@ -113,6 +113,7 @@ func _ready() -> void:
 	hud.member_pressed.connect(input.press_member)
 	hud.gift_chosen.connect(input.press_gift)
 	hud.fallen_pressed.connect(reload_checkpoint)
+	hud.controls_toggled.connect(_on_controls_toggled)
 	selection_changed.connect(hud.show_selected)
 	pause_changed.connect(hud.set_paused)
 	room_cleared.connect(hud.show_cleared)
@@ -137,8 +138,8 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	# While talking, the dialogue box has the keys.
-	if is_title_open() or is_talking():
+	# While talking, the dialogue box has the keys; while the controls card is open, the card has them.
+	if is_title_open() or is_talking() or hud.is_controls_open():
 		return
 	# Polled rather than read from events, so presses made with Input.action_press count too.
 	if not player.is_alive() and Input.is_action_just_pressed(&"confirm"):
@@ -381,6 +382,11 @@ func _on_member_died(unit: Unit) -> void:
 		input.cancel_targeting()
 		input.enabled = false
 		hud.show_fallen()
+
+
+## The controls card holds the world as the pause does, the room's air with it.
+func _on_controls_toggled(open: bool) -> void:
+	_world_hold.set_held(&"controls", open)
 
 
 func _on_member_revived(_unit: Unit) -> void:

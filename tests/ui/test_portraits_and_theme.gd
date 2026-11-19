@@ -161,3 +161,64 @@ func test_a_panel_and_a_gift_button_write_nothing_while_nothing_changes() -> voi
 	await wait_physics_frames(2)
 	assert_gt(panel.text_writes(), panel_writes, "a change is written")
 	assert_gt(button.text_writes(), button_writes, "a change is written")
+
+
+# --- The controls card ---
+
+func test_the_hud_question_button_opens_the_controls_card_and_holds_the_world() -> void:
+	await _skirmish()
+	var hold := main.get_node("WorldHold") as WorldHold
+	var button := main.hud.find_child("ControlsButton") as Button
+	assert_eq(button.text, "?")
+	assert_eq(button.focus_mode, Control.FOCUS_NONE)
+	button.pressed.emit()
+	await wait_physics_frames(2)
+	var card := main.hud.find_child("ControlsCard") as ControlsCard
+	assert_true(card.is_open())
+	assert_true(hold.is_held())
+	assert_true(hold.is_air_held(), "the room's air freezes, as on pause")
+	assert_false(main.is_paused(), "a hold of its own, not the pause")
+	await _tap(&"pause")
+	assert_false(main.is_paused(), "Space does not pause behind the card")
+	await _tap(&"cancel")
+	assert_false(card.is_open())
+	assert_false(hold.is_held())
+
+
+func test_a_click_outside_the_card_closes_it_and_gives_no_order() -> void:
+	await _skirmish()
+	var card := main.hud.find_child("ControlsCard") as ControlsCard
+	main.hud.find_child("ControlsButton").pressed.emit()
+	await wait_physics_frames(2)
+	assert_true(card.is_open())
+	_click(main.hud.get_viewport(), Vector2(30, 680))
+	await wait_physics_frames(2)
+	assert_false(card.is_open())
+	assert_eq(main.player.current_order(), Unit.Order.NONE)
+	assert_false((main.get_node("WorldHold") as WorldHold).is_held())
+
+
+func test_the_card_lists_every_control_in_both_languages() -> void:
+	await _skirmish()
+	var card := main.hud.find_child("ControlsCard") as ControlsCard
+	assert_eq(card.rows(), 9)
+	assert_true(card.text().contains("Space"))
+	Language.apply("es")
+	await wait_physics_frames(2)
+	assert_true(card.text().contains("Espacio"), card.text())
+	TranslationServer.set_locale("en")
+
+
+func test_the_title_controls_button_opens_the_card_and_escape_closes_it() -> void:
+	await _boot_with_title(null)
+	var button := _title().find_child("ControlsButton") as Button
+	assert_eq(button.text, "Controls")
+	button.pressed.emit()
+	await wait_physics_frames(2)
+	var card := _title().find_child("ControlsCard") as ControlsCard
+	assert_true(card.is_open())
+	await _tap(&"confirm")
+	assert_true(_title().is_open(), "Enter does not start a game behind the card")
+	await _tap(&"cancel")
+	assert_false(card.is_open())
+	assert_true(_title().is_open())

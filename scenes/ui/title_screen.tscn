@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://src/ui/title_screen.gd" id="1_title"]
 [ext_resource type="Theme" path="res://resources/ui/theme.tres" id="2_theme"]
 [ext_resource type="Texture2D" path="res://assets/portraits/alvar.png" id="3_alvar"]
+[ext_resource type="PackedScene" path="res://scenes/ui/controls_card.tscn" id="4_card"]
 
 [node name="TitleScreen" type="Control"]
 visible = false
@@ -82,3 +83,15 @@ custom_minimum_size = Vector2(260, 46)
 layout_mode = 2
 size_flags_horizontal = 4
 focus_mode = 0
+
+[node name="ControlsButton" type="Button" parent="Column"]
+auto_translate_mode = 2
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 46)
+layout_mode = 2
+size_flags_horizontal = 4
+focus_mode = 0
+
+[node name="ControlsCard" parent="." instance=ExtResource("4_card")]
+unique_name_in_owner = true
+layout_mode = 1
