@@ -1,8 +1,10 @@
 # tests/visual/test_atmosphere.gd
 extends GutTest
-## The rooms' light and air: both share one environment with no fog measured from the camera, and
-## the baked light they draw with is exported in a form every browser reads.
+## The rooms' light and air: both share one environment with no fog measured from the camera, the
+## baked light they draw with is exported in a form every browser reads, and the air (torch flicker,
+## embers) stops with the world on a pause but keeps moving while people talk.
 
+const MAIN: PackedScene = preload("res://scenes/main.tscn")
 const ROOMS: Array[PackedScene] = [
 	preload("res://scenes/rooms/vault_room.tscn"),
 	preload("res://scenes/rooms/forge_haven.tscn"),
@@ -15,6 +17,14 @@ const LOSSLESS: int = 0
 
 func _room(scene: PackedScene) -> Room:
 	return add_child_autofree(scene.instantiate()) as Room
+
+
+func _air_nodes(room: Room) -> Array[Node]:
+	var found: Array[Node] = []
+	found.append_array(room.air().find_children("*", "AnimationPlayer", true, false))
+	found.append_array(room.air().find_children("*", "CPUParticles3D", true, false))
+	found.append_array(room.air().find_children("*", "GPUParticles3D", true, false))
+	return found
 
 
 func test_both_rooms_share_one_environment_without_distance_fog() -> void:
@@ -58,3 +68,43 @@ func test_the_baked_light_is_exported_in_a_form_browsers_read() -> void:
 			for pattern: String in excluded:
 				assert_false(file.trim_prefix("res://").match(pattern.strip_edges()),
 						"%s is not left out of the export by %s" % [file, pattern])
+
+
+func _positions(nodes: Array[Node]) -> Array[float]:
+	var at: Array[float] = []
+	for node: Node in nodes:
+		if node is AnimationPlayer:
+			at.append((node as AnimationPlayer).current_animation_position)
+		else:
+			at.append(-1.0)
+	return at
+
+
+func _check_air_moves(main: Main, moving: bool, why: String) -> void:
+	var air: Array[Node] = _air_nodes(main.room)
+	assert_gt(air.size(), 0, "%s: the room has air" % main.room.room_id)
+	var before: Array[float] = _positions(air)
+	await wait_seconds(0.3)
+	var after: Array[float] = _positions(air)
+	for index: int in air.size():
+		var node: Node = air[index]
+		assert_eq(node.can_process(), moving, "%s %s: %s" % [main.room.room_id, why, node.get_path()])
+		if node is AnimationPlayer:
+			assert_eq(not is_equal_approx(before[index], after[index]), moving,
+					"%s %s: the flicker of %s" % [main.room.room_id, why, node.get_path()])
+
+
+func test_a_pause_freezes_the_air_with_the_units_but_a_conversation_does_not() -> void:
+	var skirmish: Main = add_child_autofree(MAIN.instantiate())
+	var story: Main = Story.boot(self)
+	await wait_physics_frames(3)
+	for main: Main in [skirmish, story]:
+		var hold: WorldHold = main.get_node("WorldHold")
+		await _check_air_moves(main, true, "at play")
+		main.set_paused(true)
+		await _check_air_moves(main, false, "paused")
+		main.set_paused(false)
+		hold.set_held(&"talk", true)
+		await _check_air_moves(main, true, "while people talk")
+		hold.set_held(&"talk", false)
+	Story.finish(story)

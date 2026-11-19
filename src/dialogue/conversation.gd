@@ -50,7 +50,7 @@ func talk(resource: Resource, title: String) -> void:
 	_input.enabled = false
 	# Held at once, even from the physics step of the unit using someone: held units stay in the
 	# physics space. Held before the start, so a conversation that ends at once releases it.
-	_world_hold.set_held(&"talk", true)
+	_world_hold.set_held(WorldHold.TALK, true)
 	_runner.start(resource, title, StoryHooks.new(_state, func() -> Unit: return _party.leader))
 
 
@@ -135,7 +135,7 @@ func _on_line_shown(speaker: String, _text: String, _choices: Array[String]) -> 
 
 func _on_finished() -> void:
 	_show_speaker("")
-	_world_hold.set_held(&"talk", false)
+	_world_hold.set_held(WorldHold.TALK, false)
 	_input.enabled = true
 	if _runner.ended_in_error():
 		failed.emit()
