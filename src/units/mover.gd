@@ -34,12 +34,14 @@ var _waiting_for: float = 0.0
 
 ## Walks to the reachable navmesh point nearest to `target`.
 ## A walk started before the navigation map has synced, or in the air, is held until it can be planned,
-## for at most `_PLAN_TIME` seconds of the unit's physics; then it is dropped with a warning.
+## for at most `_PLAN_TIME` seconds of the unit's physics; then it is dropped with a warning. A walk
+## aimed again while it waits, as a chase is whenever its target moves, keeps the time it has waited.
 func walk_to(target: Vector3) -> void:
+	if not (_walking and _pending):
+		_waiting_for = 0.0
 	_destination = target
 	_pending = true
 	_walking = true
-	_waiting_for = 0.0
 	_plan()
 
 
