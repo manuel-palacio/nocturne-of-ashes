@@ -195,7 +195,7 @@ func _notification(what: int) -> void:
 
 
 func _show_texts() -> void:
-	_fallen_label.text = tr("You have fallen — press Enter")
+	_fallen_label.text = tr("You have fallen — press Enter or click")
 	_paused_label.text = tr("Paused — give your orders")
 	_cleared_label.text = tr("The vault is quiet")
 	# Never `tr("")`, which gives the translation's header.

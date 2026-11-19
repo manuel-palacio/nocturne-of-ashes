@@ -19,7 +19,7 @@ func test_english_is_the_source() -> void:
 
 func test_spanish_translates_the_prompts() -> void:
 	Language.apply("es")
-	assert_eq(tr("You have fallen — press Enter"), "Has caído — pulsa Intro")
+	assert_eq(tr("You have fallen — press Enter or click"), "Has caído — pulsa Intro o haz clic")
 	assert_eq(tr("Paused — give your orders"), "En pausa — da tus órdenes")
 	assert_eq(tr("The vault is quiet"), "La cripta está en silencio")
 
@@ -37,7 +37,7 @@ func test_the_hud_follows_a_language_change() -> void:
 	assert_eq(main.hud.panels()[0].find_child("NameLabel").text, "Hermano Álvar")
 	main.player.take_hit(999)
 	await wait_physics_frames(2)
-	assert_eq(main.hud.find_child("FallenLabel").text, "Has caído — pulsa Intro")
+	assert_eq(main.hud.find_child("FallenLabel").text, "Has caído — pulsa Intro o haz clic")
 	assert_eq(main.hud.panels()[0].find_child("StateLabel").text, "Caído")
 
 func test_controls_built_after_the_switch_are_spanish_too() -> void:

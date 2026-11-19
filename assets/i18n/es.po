@@ -9,8 +9,8 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 # HUD prompts
-msgid "You have fallen — press Enter"
-msgstr "Has caído — pulsa Intro"
+msgid "You have fallen — press Enter or click"
+msgstr "Has caído — pulsa Intro o haz clic"
 
 msgid "Paused — give your orders"
 msgstr "En pausa — da tus órdenes"

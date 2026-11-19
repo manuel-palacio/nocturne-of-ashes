@@ -90,7 +90,7 @@ func test_the_fallen_prompt_is_unchanged_and_restart_clears_the_labels() -> void
 	main.player.take_hit(999)
 	await wait_physics_frames(2)
 	assert_true(hud.is_fallen_shown())
-	assert_eq(hud.find_child("FallenLabel").text, "You have fallen — press Enter")
+	assert_eq(hud.find_child("FallenLabel").text, "You have fallen — press Enter or click")
 	main.start_room()
 	assert_false(hud.is_fallen_shown())
 	assert_false(hud.find_child("ClearedLabel").visible)
