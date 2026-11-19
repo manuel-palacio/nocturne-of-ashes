@@ -58,6 +58,12 @@ const STRIDE_SPEED: Dictionary = {&"walk": 1.06, &"run": 5.4}
 ## turns red.
 const FURY_TINT: Color = Color(1.0, 0.5, 0.45)
 const FURY_GLOW: Color = Color(0.5, 0.03, 0.02)
+## Every figure carries a faint light of its own, so it stays distinguishable in the darkest corner
+## of a room without lighting the room more: its own colours at `LIFT` of their strength, plus the
+## cool `LIFT_FLOOR` at the same strength, which keeps even a figure dressed in black off the black
+## floor. The Fury's glow takes its place.
+const LIFT: float = 0.16
+const LIFT_FLOOR: Color = Color(0.3, 0.34, 0.46)
 ## The selected member's ring: its outer radius and width, in metres, and its colour.
 const SELECTED_RADIUS: float = 0.55
 const SELECTED_WIDTH: float = 0.035
@@ -121,9 +127,8 @@ var _running: bool = false
 var _lean: float = 0.0
 ## Where the lean goes, flat in world space, as of the last frame of drinking.
 var _lean_offset: Vector3 = Vector3.ZERO
-## The material's own colours, which the Fury's tint leaves and gives back.
+## The material's own colour, which the Fury's tint leaves and gives back.
 var _albedo: Color
-var _emission: Color
 
 
 func _ready() -> void:
@@ -136,11 +141,10 @@ func _ready() -> void:
 	_skeleton.skeleton_updated.connect(_fit_cloth)
 	# Its own copy, so one figure's palette and tint never show on another.
 	_material = (_mesh.mesh.surface_get_material(0) as StandardMaterial3D).duplicate()
-	# On from the start, so the Fury changes a colour and not the shader.
+	# On from the start, so the lift and the Fury change uniforms and not the shader.
 	_material.emission_enabled = true
-	_material.emission = Color.BLACK
 	_albedo = _material.albedo_color
-	_emission = _material.emission
+	_lift(_material)
 	_mesh.material_override = _material
 	_materials.append(_material)
 	_on_screen = VisibleOnScreenNotifier3D.new()
@@ -218,6 +222,7 @@ func _wear() -> void:
 	_feed_drop.position.y = dress.height + DROP_ABOVE
 	if dress.palette != null:
 		_material.albedo_texture = dress.palette
+		_tint(_material)
 	_hang_gear()
 
 
@@ -269,7 +274,6 @@ func _hang_at_rest(bone: int) -> Transform3D:
 func _cloth_material(region: Dress.Region) -> StandardMaterial3D:
 	var material := _material.duplicate() as StandardMaterial3D
 	material.albedo_color = _albedo
-	material.emission = _emission
 	material.uv1_offset = Vector3(float(region) / PALETTE_SQUARES, 0.0, 0.0)
 	_materials.append(material)
 	_tint(material)
@@ -278,7 +282,20 @@ func _cloth_material(region: Dress.Region) -> StandardMaterial3D:
 
 func _tint(material: StandardMaterial3D) -> void:
 	material.albedo_color = _albedo * FURY_TINT if _tinted else _albedo
-	material.emission = FURY_GLOW if _tinted else _emission
+	if _tinted:
+		material.emission = FURY_GLOW
+		material.emission_texture = null
+		material.emission_energy_multiplier = 1.0
+	else:
+		_lift(material)
+
+
+## Gives `material` the faint light of its own colours (see `LIFT`): the emission adds its texture's
+## colour to `LIFT_FLOOR`, both at `LIFT` of their strength.
+static func _lift(material: StandardMaterial3D) -> void:
+	material.emission = LIFT_FLOOR
+	material.emission_texture = material.albedo_texture
+	material.emission_energy_multiplier = LIFT
 
 
 ## Made once, from a body's material (`body`) as it stands untinted.
@@ -286,8 +303,8 @@ static func _shared_own_colours(body: StandardMaterial3D) -> StandardMaterial3D:
 	if _own_colours == null:
 		_own_colours = body.duplicate() as StandardMaterial3D
 		_own_colours.albedo_color = Color.WHITE
-		_own_colours.emission = Color.BLACK
 		_own_colours.albedo_texture = GEAR_PALETTE
+		_lift(_own_colours)
 	return _own_colours
 
 
