@@ -45,3 +45,60 @@ func test_the_cameras_distance_to_a_walking_unit_changes_smoothly() -> void:
 		worst = maxf(worst, absf(gaps[i] - gaps[i - 1]))
 	assert_lt(worst, step * 0.2, "the largest change of the distance in one frame, %.4f m (a step is %.4f m)" % [worst, step])
 
+# 3. The mover re-measures the height between the feet and the navmesh along the walk.
+
+## A static box of `size` centred at `centre`, turned by `roll` radians about z, under `parent`.
+func _box(parent: Node, centre: Vector3, size: Vector3, roll: float = 0.0) -> void:
+	var body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = size
+	shape.shape = box
+	body.add_child(shape)
+	body.transform = Transform3D(Basis(Vector3.BACK, roll), centre)
+	parent.add_child(body)
+
+
+## A floor at 0 from x = −10 to 0, a ramp up to 0.4 m from x = 0 to 3, and a floor at 0.4 m from x = 3 to
+## 10, 6 m deep, its navmesh baked from its colliders.
+func _stepped_floor() -> Node3D:
+	var floor_root := Node3D.new()
+	var region := NavigationRegion3D.new()
+	var navmesh := NavigationMesh.new()
+	navmesh.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
+	navmesh.agent_radius = 0.5
+	region.navigation_mesh = navmesh
+	floor_root.add_child(region)
+	_box(region, Vector3(-5, -0.1, 0), Vector3(10, 0.2, 6))
+	_box(region, Vector3(6.5, 0.2, 0), Vector3(7, 0.4, 6))
+	var rise: float = atan2(0.4, 3.0)
+	var length: float = Vector2(3.0, 0.4).length()
+	# The ramp's top face runs from (0, 0) to (3, 0.4); the box is 0.2 thick below it.
+	var down := Vector3(sin(rise), -cos(rise), 0.0) * 0.1
+	_box(region, Vector3(1.5, 0.2, 0) + down, Vector3(length, 0.2, 6), rise)
+	arena.room.add_child(floor_root)
+	floor_root.global_position = Vector3(0, 0, 30)
+	region.bake_navigation_mesh(false)
+	return floor_root
+
+
+## Where the navmesh lies above the feet changes along the fixture: from 0.55 m at the ramp's foot to
+## 0.23 m at its top, as the bake shapes it. Walked with the height measured once per order, the walks
+## from the ramp's foot up, and from its top down, end more than a path point's 0.3 m from their last
+## point in 3D and stall.
+func test_a_unit_walks_up_a_ramp_to_a_higher_floor_and_back() -> void:
+	var floor_root: Node3D = _stepped_floor()
+	var origin: Vector3 = floor_root.global_position
+	var alvar: Unit = arena.spawn(Arena.ALVAR, origin + Vector3(-7, 0, 0))
+	await wait_physics_frames(5)
+	# Along x, with the height of the floor there.
+	for x: float in [0.0, 3.0, 7.0, 3.0, 0.0, -7.0]:
+		var floor_y: float = clampf(x / 3.0, 0.0, 1.0) * 0.4
+		var goal: Vector3 = origin + Vector3(x, floor_y, 0)
+		alvar.order_move(goal)
+		await wait_for_signal(alvar.arrived, 6.0)
+		var at: Vector3 = alvar.global_position - origin
+		assert_lt(Arena.flat(alvar.global_position, goal), 0.5, "walked to x = %.1f, stands at %s" % [x, at])
+		assert_almost_eq(at.y, floor_y, 0.05, "on the floor at x = %.1f" % x)
+		assert_false(alvar.is_moving())
+	assert_push_warning_count(0)
