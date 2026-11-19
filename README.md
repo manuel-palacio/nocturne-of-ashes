@@ -57,6 +57,13 @@ import script, swaps those names for the materials and puts the collision bodies
 materials' tiling textures, colour maps at 1024 px and normal maps at 512 px, are CC0 sets from Poly
 Haven in `assets/textures/` (see `CREDITS.md`), imported with mipmaps.
 
+The portraits (`assets/portraits/`) are rendered from the dressed figures by
+`godot --path . -s tools/render_portraits.gd` (it needs a window). The interface's typefaces and
+panel frames (`assets/ui/`) are made by `tools/make_ui.py`; its docstring has the command. Both write
+the same bytes on every run. These small interface images keep Godot's lossless 2D import: they are
+drawn at or near their own size in the interface, where block compression would smear the thin
+frame edges and the faces, and together they add only a few hundred kilobytes to the build.
+
 ## Story so far
 
 Brother Álvar wakes after his Turning in the forge-haven of the Blood-Forged, under Toledo, and
