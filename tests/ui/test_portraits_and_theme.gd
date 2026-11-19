@@ -232,6 +232,39 @@ func test_a_click_outside_the_card_closes_it_and_gives_no_order() -> void:
 	assert_false((main.get_node("WorldHold") as WorldHold).is_held())
 
 
+func test_escape_closes_the_card_first_and_leaves_targeting_open() -> void:
+	await _skirmish()
+	main.input.press_gift(1)  # Baleful Eye waits for a target
+	assert_eq(main.input.targeting_gift(), 1)
+	main.hud.find_child("ControlsButton").pressed.emit()
+	await wait_physics_frames(2)
+	await _tap(&"cancel")
+	assert_false((main.hud.find_child("ControlsCard") as ControlsCard).is_open())
+	assert_eq(main.input.targeting_gift(), 1, "the Escape that closed the card cancelled nothing")
+	await _tap(&"cancel")
+	assert_eq(main.input.targeting_gift(), -1, "the next Escape does")
+
+
+func test_no_key_or_click_reaches_the_game_behind_the_card() -> void:
+	await _skirmish()
+	main.hud.find_child("ControlsButton").pressed.emit()
+	await wait_physics_frames(2)
+	var blood: int = main.player.stats.blood
+	for action: StringName in [&"gift_1", &"gift_2", &"select_next", &"pause"]:
+		await _tap(action)
+	main.input.click_at(Vector2(900, 360))
+	main.input.press_gift(0)
+	main.input.press_member(main.party[1])
+	await wait_physics_frames(2)
+	assert_eq(main.player.stats.blood, blood, "no Gift used")
+	assert_false(main.player.has_effect(&"iron_sinew"))
+	assert_eq(main.input.targeting_gift(), -1, "no targeting opened")
+	assert_eq(main.selected, main.player, "the selection stays")
+	assert_false(main.is_paused())
+	assert_eq(main.player.current_order(), Unit.Order.NONE, "no order")
+	assert_true((main.hud.find_child("ControlsCard") as ControlsCard).is_open())
+
+
 func test_the_card_lists_every_control_in_both_languages() -> void:
 	await _skirmish()
 	var card := main.hud.find_child("ControlsCard") as ControlsCard
