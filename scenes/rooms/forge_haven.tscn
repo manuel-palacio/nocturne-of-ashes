@@ -24,13 +24,7 @@
 [ext_resource type="Resource" path="res://resources/dress/malakor.tres" id="dress_malakor"]
 [ext_resource type="Resource" path="res://resources/dress/smith.tres" id="dress_smith"]
 [ext_resource type="Resource" path="res://resources/dress/zahra.tres" id="dress_zahra"]
-
-[sub_resource type="NavigationMesh" id="NavigationMesh_klwib"]
-vertices = PackedVector3Array(1.5, 0.4, -3.25, 2, 0.4, -3.5, 1.5, 0.4, -4, -1.5, 0.4, -4, -7.5, 0.4, -5.25, -7.75, 0.4, -2.25, -4.25, 0.4, 3.25, 1.25, 0.4, 4.75, 1.5, 0.4, -2, -4, 0.4, 5.5, 1, 0.4, 5.5, -8.25, 0.4, -2, -8.25, 0.4, 3.25, 2.5, 0.4, 4.75, 2.5, 0.4, -1.75, -1.75, 0.4, -5.25, 1.75, 0.4, -5.25, 3.5, 0.4, -3.25, 5.25, 0.4, -4.75, 4.25, 0.4, -5.5, 7.5, 0.4, -4, 7.5, 0.4, -4.75, 3.5, 0.4, -2, 3.75, 0.4, 4.75, 4, 0.4, 5.5, 8.5, 0.4, 5.5, 8.5, 0.4, -3.75)
-polygons = [PackedInt32Array(1, 0, 2), PackedInt32Array(2, 0, 3), PackedInt32Array(4, 3, 5), PackedInt32Array(5, 3, 8), PackedInt32Array(5, 8, 6), PackedInt32Array(6, 8, 7), PackedInt32Array(0, 8, 3), PackedInt32Array(10, 9, 7), PackedInt32Array(7, 9, 6), PackedInt32Array(11, 5, 12), PackedInt32Array(12, 5, 6), PackedInt32Array(14, 13, 8), PackedInt32Array(8, 13, 7), PackedInt32Array(4, 15, 3), PackedInt32Array(2, 16, 1), PackedInt32Array(1, 16, 17), PackedInt32Array(17, 16, 19), PackedInt32Array(17, 19, 18), PackedInt32Array(21, 20, 18), PackedInt32Array(18, 20, 17), PackedInt32Array(17, 20, 22), PackedInt32Array(14, 22, 13), PackedInt32Array(13, 22, 23), PackedInt32Array(24, 23, 25), PackedInt32Array(25, 23, 22), PackedInt32Array(25, 22, 20), PackedInt32Array(25, 20, 26)]
-geometry_parsed_geometry_type = 1
-geometry_collision_mask = 5
-agent_radius = 0.4
+[ext_resource type="Environment" path="res://resources/environment/cellar.tres" id="env_cellar"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_r6t6n"]
 albedo_color = Color(1, 0.55, 0.2, 1)
@@ -39,16 +33,91 @@ emission_enabled = true
 emission = Color(1, 0.5, 0.15, 1)
 emission_energy_multiplier = 3.0
 
+[sub_resource type="NavigationMesh" id="NavigationMesh_klwib"]
+vertices = PackedVector3Array(1.5, 0.4, -3.25, 2, 0.4, -3.5, 1.5, 0.4, -4, -1.5, 0.4, -4, -7.5, 0.4, -5.25, -7.75, 0.4, -2.25, -4.25, 0.4, 3.25, 1.25, 0.4, 4.75, 1.5, 0.4, -2, -4, 0.4, 5.5, 1, 0.4, 5.5, -8.25, 0.4, -2, -8.25, 0.4, 3.25, 2.5, 0.4, 4.75, 2.5, 0.4, -1.75, -1.75, 0.4, -5.25, 1.75, 0.4, -5.25, 3.5, 0.4, -3.25, 5.25, 0.4, -4.75, 4.25, 0.4, -5.5, 7.5, 0.4, -4, 7.5, 0.4, -4.75, 3.5, 0.4, -2, 3.75, 0.4, 4.75, 4, 0.4, 5.5, 8.5, 0.4, 5.5, 8.5, 0.4, -3.75)
+polygons = [PackedInt32Array(1, 0, 2), PackedInt32Array(2, 0, 3), PackedInt32Array(4, 3, 5), PackedInt32Array(5, 3, 8), PackedInt32Array(5, 8, 6), PackedInt32Array(6, 8, 7), PackedInt32Array(0, 8, 3), PackedInt32Array(10, 9, 7), PackedInt32Array(7, 9, 6), PackedInt32Array(11, 5, 12), PackedInt32Array(12, 5, 6), PackedInt32Array(14, 13, 8), PackedInt32Array(8, 13, 7), PackedInt32Array(4, 15, 3), PackedInt32Array(2, 16, 1), PackedInt32Array(1, 16, 17), PackedInt32Array(17, 16, 19), PackedInt32Array(17, 19, 18), PackedInt32Array(21, 20, 18), PackedInt32Array(18, 20, 17), PackedInt32Array(17, 20, 22), PackedInt32Array(14, 22, 13), PackedInt32Array(13, 22, 23), PackedInt32Array(24, 23, 25), PackedInt32Array(25, 23, 22), PackedInt32Array(25, 22, 20), PackedInt32Array(25, 20, 26)]
+geometry_parsed_geometry_type = 1
+geometry_collision_mask = 5
+agent_radius = 0.4
+
 [sub_resource type="SphereMesh" id="SphereMesh_s40rp"]
 material = SubResource("StandardMaterial3D_r6t6n")
 radius = 0.08
 height = 0.16
 
-[sub_resource type="Environment" id="Environment_lmdco"]
-background_mode = 1
-ambient_light_source = 2
-ambient_light_color = Color(0.14, 0.14, 0.2, 1)
-tonemap_mode = 2
+[sub_resource type="SphereMesh" id="gen_spark"]
+material = SubResource("StandardMaterial3D_r6t6n")
+radius = 0.025
+height = 0.05
+radial_segments = 4
+rings = 2
+
+[sub_resource type="Curve" id="gen_ember_fade"]
+_data = [Vector2(0, 0.3), 0.0, 0.0, 0, 0, Vector2(0.15, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="Animation" id="gen_flicker_0"]
+length = 2.3
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:light_energy")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0.0, 0.46, 1.035, 1.38, 1.84, 2.3),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [4.5, 5.04, 4.05, 4.86, 3.87, 4.5]
+}
+
+[sub_resource type="AnimationLibrary" id="gen_flicker_lib_0"]
+_data = {
+&"flicker": SubResource("gen_flicker_0")
+}
+
+[sub_resource type="Animation" id="gen_flicker_1"]
+length = 1.25
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:light_energy")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0.0, 0.25, 0.562, 0.75, 1.0, 1.25),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [2.2, 2.464, 1.98, 2.376, 1.892, 2.2]
+}
+
+[sub_resource type="AnimationLibrary" id="gen_flicker_lib_1"]
+_data = {
+&"flicker": SubResource("gen_flicker_1")
+}
+
+[sub_resource type="Animation" id="gen_flicker_2"]
+length = 1.15
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:light_energy")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0.0, 0.23, 0.517, 0.69, 0.92, 1.15),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [2.2, 2.464, 1.98, 2.376, 1.892, 2.2]
+}
+
+[sub_resource type="AnimationLibrary" id="gen_flicker_lib_2"]
+_data = {
+&"flicker": SubResource("gen_flicker_2")
+}
 
 [node name="ForgeHaven" type="Node3D" unique_id=677468714]
 script = ExtResource("1_rrw2c")
@@ -433,27 +502,59 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -4.7
 
 [node name="Lights" type="Node3D" parent="." unique_id=1876672760]
 
-[node name="Forge" type="OmniLight3D" parent="Lights" unique_id=1992454687]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, -3.8)
-light_color = Color(1, 0.48, 0.18, 1)
-light_energy = 3.5
+[node name="Forge" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 2.4, -3.8)
+light_color = Color(1.0, 0.46, 0.16, 1)
+light_energy = 4.5
+light_indirect_energy = 0.55
 shadow_enabled = true
-omni_range = 9.0
+shadow_opacity = 0.55
+shadow_blur = 2.5
+omni_range = 8.5
+omni_attenuation = 1.3
 
-[node name="Torch1" type="OmniLight3D" parent="Lights" unique_id=1540677847]
+[node name="Flicker" type="AnimationPlayer" parent="Lights/Forge"]
+libraries/ = SubResource("gen_flicker_lib_0")
+autoplay = &"flicker"
+
+[node name="Torch1" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.68, 2.7, 4.4)
-light_color = Color(1, 0.68, 0.38, 1)
-light_energy = 1.4
-omni_range = 7.0
+light_color = Color(1.0, 0.6, 0.3, 1)
+light_energy = 2.2
+omni_range = 6.5
+omni_attenuation = 1.5
 
-[node name="Torch2" type="OmniLight3D" parent="Lights" unique_id=469440460]
+[node name="Flicker" type="AnimationPlayer" parent="Lights/Torch1"]
+libraries/ = SubResource("gen_flicker_lib_1")
+autoplay = &"flicker"
+
+[node name="Torch2" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.68, 2.7, -1.5)
-light_color = Color(1, 0.68, 0.38, 1)
-light_energy = 1.4
-omni_range = 7.0
+light_color = Color(1.0, 0.6, 0.3, 1)
+light_energy = 2.2
+omni_range = 6.5
+omni_attenuation = 1.5
+
+[node name="Flicker" type="AnimationPlayer" parent="Lights/Torch2"]
+libraries/ = SubResource("gen_flicker_lib_2")
+autoplay = &"flicker"
+
+[node name="AlcoveWest" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.0, 1.5, -6.55)
+light_color = Color(1.0, 0.62, 0.32, 1)
+light_energy = 1.8
+omni_range = 2.8
+omni_attenuation = 1.0
+
+[node name="AlcoveEast" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.0, 1.5, -6.55)
+light_color = Color(1.0, 0.62, 0.32, 1)
+light_energy = 1.8
+omni_range = 2.8
+omni_attenuation = 1.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=685442373]
-environment = SubResource("Environment_lmdco")
+environment = ExtResource("env_cellar")
 
 [node name="Entry_start" type="Marker3D" parent="." unique_id=1384605981]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0.3, 0)

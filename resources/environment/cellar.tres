@@ -1,0 +1,26 @@
+[gd_resource type="Environment" format=3]
+
+[sub_resource type="Gradient" id="Gradient_grade"]
+offsets = PackedFloat32Array(0, 0.25, 0.6, 1)
+colors = PackedColorArray(0.03, 0.045, 0.09, 1, 0.23, 0.245, 0.29, 1, 0.61, 0.6, 0.58, 1, 1, 0.95, 0.86, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_grade"]
+gradient = SubResource("Gradient_grade")
+width = 128
+
+[resource]
+resource_name = "cellar"
+background_mode = 1
+background_color = Color(0, 0, 0, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.2, 0.23, 0.33, 1)
+ambient_light_energy = 0.8
+tonemap_mode = 2
+tonemap_white = 6.0
+glow_enabled = true
+glow_intensity = 0.6
+glow_bloom = 0.0
+glow_hdr_threshold = 1.2
+adjustment_enabled = true
+adjustment_saturation = 0.95
+adjustment_color_correction = SubResource("GradientTexture1D_grade")
