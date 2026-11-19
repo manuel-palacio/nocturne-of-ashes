@@ -384,9 +384,15 @@ func _on_member_died(unit: Unit) -> void:
 		hud.show_fallen()
 
 
-## The controls card holds the world as the pause does, the room's air with it.
+## The controls card holds the world as the pause does, the room's air with it, and while it is open
+## no key or click reaches the game. Input comes back at the end of the frame the card closes in, so
+## the Escape that closed it does not also cancel a Gift's targeting.
 func _on_controls_toggled(open: bool) -> void:
 	_world_hold.set_held(&"controls", open)
+	if open:
+		input.suspended = true
+	else:
+		input.set_deferred(&"suspended", false)
 
 
 func _on_member_revived(_unit: Unit) -> void:

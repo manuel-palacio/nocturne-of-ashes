@@ -39,6 +39,10 @@ var enabled: bool = true:
 			cancel_targeting()
 			_pointing = false
 
+## While true no key or click gives an order or changes targeting, and targeting stays as it is: a
+## card covers the game (the controls card). Unlike `enabled` it leaves the use ring as it was.
+var suspended: bool = false
+
 ## The index of the Gift waiting for a click on its target, or −1.
 var _targeting: int = -1
 ## Where the mouse is over the world, while it is.
@@ -67,6 +71,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if suspended:
+		return
 	var motion := event as InputEventMouseMotion
 	if motion != null:
 		point_at(motion.position)
@@ -86,6 +92,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	if suspended:
+		return
 	# Polled rather than read from events, so presses made with Input.action_press count too.
 	if enabled and Input.is_action_just_pressed(&"select_next"):
 		select_next_requested.emit()
@@ -113,7 +121,7 @@ func targeting_gift() -> int:
 ## ready apart from its target. Pressing the Gift being targeted closes targeting. A Gift that is not
 ## ready is ignored.
 func press_gift(index: int) -> void:
-	if not enabled or unit == null:
+	if not enabled or suspended or unit == null:
 		return
 	if index == _targeting:
 		cancel_targeting()
@@ -140,7 +148,7 @@ func cancel_targeting() -> void:
 ## nothing when that one may not use it; else walks to the ground under it. A click on the controlled
 ## unit itself does nothing.
 func click_at(screen_position: Vector2) -> void:
-	if not enabled or unit == null or not unit.is_alive():
+	if not enabled or suspended or unit == null or not unit.is_alive():
 		return
 	var cam: Camera3D = rig.camera()
 	var other: Unit = Picker.unit_at(cam, screen_position)
@@ -180,7 +188,7 @@ func point_at(screen_position: Vector2) -> void:
 ## be used on `member`, uses it on them and keeps the selection; otherwise asks to select them.
 ## Does nothing while input is off.
 func press_member(member: Unit) -> void:
-	if not enabled:
+	if not enabled or suspended:
 		return
 	_close_stale_targeting()
 	if _targeting >= 0 and _use_targeted_on(member):
