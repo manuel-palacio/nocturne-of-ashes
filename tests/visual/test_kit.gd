@@ -224,6 +224,7 @@ func test_a_unit_walks_through_the_openings_and_not_through_walls_piers_bars_or_
 	assert_true(_walk_blocked(pieces["stair_down"], Vector3(0, 0, 3), Vector3(0, 0, 0)), "not into the stair's mouth")
 	for x: float in [-2.0, 2.0]:
 		assert_true(_walk_blocked(pieces["stair_down"], Vector3(x, 0, 0), Vector3(0, 0, 0)), "not in over its side from x = %d" % x)
+	assert_true(_walk_blocked(pieces["stair_down"], Vector3(0, 0, -3), Vector3(0, 0, -1)), "not in from behind, over its low end")
 
 
 func test_pieces_draw_only_with_the_shared_materials_and_textures() -> void:
