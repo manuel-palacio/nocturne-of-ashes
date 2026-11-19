@@ -20,6 +20,8 @@ Check the browser build's budget: `ops/check-budget.sh` (after a browser build).
 is over 80 MB or a file other than the engine's `.wasm` is over 30 MB, and lists the ten largest assets
 in the pack. `e2e/look.spec.js` holds the frame rate (30 a second with everyone in view) and the first
 load (under 20 s), and saves the frames to show of each browser's run as `build/e2e/look-*.png`.
+The title compiles the rooms' shaders behind it while it is read (`ShaderWarmup`), which in
+Firefox takes several seconds; the game starts without that wait afterwards.
 
 - Design: [docs/superpowers/specs/2026-11-15-vertical-slice-design.md](docs/superpowers/specs/2026-11-15-vertical-slice-design.md)
 - Plans: [docs/superpowers/plans/2026-11-15-milestone-1-first-room.md](docs/superpowers/plans/2026-11-15-milestone-1-first-room.md), [docs/superpowers/plans/2026-11-16-milestone-2-party-and-blood.md](docs/superpowers/plans/2026-11-16-milestone-2-party-and-blood.md), [docs/superpowers/plans/2026-11-16-milestone-3-talk-and-choose.md](docs/superpowers/plans/2026-11-16-milestone-3-talk-and-choose.md)
