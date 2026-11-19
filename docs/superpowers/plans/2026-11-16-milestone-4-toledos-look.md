@@ -512,3 +512,54 @@ Each item is one small change with its test, in `tests/visual/test_loose_ends.gd
 ### After the last task: put the milestone online
 
 Once the final review's fixes are in and the suites are green, the controller runs `ops/deploy-fly.sh`, checks that https://nocturne-of-ashes.fly.dev/ serves the new build and that the game starts there, and reports the address with the frames from Task 10.
+
+---
+
+## Amendments made while building
+
+These decisions changed what the tasks above describe. The code follows the amendments.
+
+- **Task 1.** The character tool's command pins its Python and library versions (the README has it). The library has 46 clips; the model keeps only the 13 the game plays (`feed` and `sit_talk` came later).
+- **Task 1.** Cloth shapes (habit skirt, robe, mantle, apron) are gear pieces built in Task 3, not palette colours: the mannequin has separate legs, so a "skirt" colour reads as breeches. Zahra's hair covered at the trim was dropped.
+- **Task 2.** No backtrace-based error watch inside conversations: the party reacts to joins and learned Gifts deferred, so no scene change runs inside a line lookup, the same in debug and release. A joiner appears one frame after the line that calls `join`.
+- **Task 2.** Travel plays the `run` clip above 2.2 m/s and `walk` below (the walk clip at 4 m/s is a shuffle); two tests changed to match.
+- **Task 2.** A feeder's figure may be drawn shifted towards its victim, up to 0.8 m and within its own visual, because figures 1.5 m apart do not read as feeding; the unit itself does not move.
+- **Task 2.** The captive sits on a stool and talks with a `sit_talk` clip.
+- **Task 3.** Cloth bends with shape keys, beyond the plan's rigid pieces, on condition that it is cheap: tables precomputed by the tool, weights written only on change, skipped off screen and when settled.
+- **Task 3.** Only one use ring shows at a time: the hovered thing, else the nearest within 4 m, with a 0.5 m margin against swapping. It shows on a barred door, not on an unwired door or on someone who cannot be talked to now.
+- **Task 3.** The hood piece was removed, unused.
+- **Task 4.** The separation radius is 0.9 m, not 0.7: at the game's camera units 0.67 m apart still read as one knot.
+- **Task 4.** Beyond separation alone, a pushed-away attacker walks back in, and attacks are made from a ring 1.25–1.55 m from the target; without them the wider radius left attackers out of reach.
+- **Task 4.** Followers re-follow at their follow distance plus 2 m while the leader stands still and plus 1 m while it walks (remembered for 0.6 s); a follow walk under way is finished. Resting followers stay put; a leader walking away is followed as before.
+- **Task 5.** Textures import as Basis Universal, so desktop GPUs without S3TC can draw them.
+- **Task 5.** The stair down is a set piece: wall-layer barriers keep units off it and no world-layer body sits above the floor, so a click on it lands at floor level. The door does the travelling.
+- **Task 6.** Figures stand about 90 px tall at the default camera distance, not 100–120: closer broke two browser tests' framing, and the wheel zooms in to about 180 px.
+- **Task 6.** "Cut them at that side" is `CameraCut`: the camera-side arcade and wall are not drawn; their colliders stay.
+- **Task 7.** The captive's grilles are not cut: the captive behind bars is the picture, and thin bars hide little.
+- **Task 7.** Making the haven's horseshoe arches read was moved to Task 8, as a question of light and framing.
+- **Task 7.** A door draws its leaf exactly while an exported node it is set in (its frame) is drawn, one pattern for both rooms. The final fix wave extended it to other parts of a door, such as the last lock's seal; a sealed door shows no leaf.
+- **Task 8.** No dust in the air, only embers: the dust's shader compile broke the Firefox load budget.
+- **Task 9.** While the controls card is open no input reaches the game, stricter than the pause: the card covers the screen.
+- **Task 9.** The portraits are waist-up dressed mannequins with smooth faces, and Álvar has no hood: the model has no face and the dresses no cowl.
+- **Task 10.** The title is never dead: shaders are compiled over several frames behind a "preparing" line, New game works at once, and a test holds that path to 15 s.
+- **Task 10.** Warm-up frames of up to about 2.7 s in Firefox are accepted: one shader's two programs link in one frame and cannot be split.
+- **Task 10.** The camera keeps 220 px clear for the party panels; 320 px moved an earlier browser test's clicks. A selection ring may touch the panels' edge.
+- **Commits.** Commit types are the seven in the rules; unpushed `perf:` and `build:` commits were reworded. Two `perf:` commits already pushed stay: rewording them would mean force-pushing public history.
+- **Final fix wave.** The credits name the Godot Engine, and every web build serves `credits.txt` and `licenses.txt` (the engine's licence and notices, then every licence file the credits name). The dialogue hint names the number of choices; the keypad's Enter confirms. A browser test walks the story from New game to the last lock and back by Continue.
+
+## Carried forward
+
+- Faces are featureless and the portraits show bare-torso mannequins: the model has no face.
+- Melee reads as a knot of rigid skirts.
+- The floor texture's repeat shows, and the piers' faces on the camera side are near black.
+- The camera cut pops at 60° of turn.
+- Warm-up frames of up to 2.7 s in Firefox.
+- The vault's west door is seen edge-on.
+- The party panels or the dialogue box can cover a character.
+- Units can stand inside the people they talk to (`Npc`).
+- Conversations are not yet translated (milestone 5).
+- The `?probe=1` test parameters are open on the public site.
+- `ops/bake-light.sh` has not been run end to end since its last edit.
+- The texture path for GPUs without S3TC has never run on real hardware.
+- `unit_visual.gd` is due for a split.
+- Two early commits on the public branch use the type `perf:`; they were left rather than force-pushed.
