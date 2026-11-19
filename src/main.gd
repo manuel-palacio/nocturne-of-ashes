@@ -347,7 +347,7 @@ func _open_title() -> void:
 	_title.open(store.has_save())
 	# Behind the title, the rooms' shaders are compiled while the player reads it, a little a frame.
 	_title.show_preparing(true)
-	_warmup.finished.connect(_title.show_preparing.bind(false), CONNECT_ONE_SHOT)
+	_warmup.ended.connect(_title.show_preparing.bind(false), CONNECT_ONE_SHOT)
 	_warmup.start([ROOMS[&"haven"], ROOMS[&"vault"]])
 
 

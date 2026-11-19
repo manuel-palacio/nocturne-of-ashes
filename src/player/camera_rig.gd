@@ -8,8 +8,9 @@ extends Node3D
 ## is seen toward the camera, which leaves room for the HUD along the bottom edge; from the wall at its
 ## top, `far_fraction` of that, less, so the wall ahead and its doors stay in sight. At a fraction of 1
 ## a wall comes to the screen's edge and no further in. The wall at the screen's left, where the HUD's
-## party panels are, is held further off when `panel_reserve_px` asks for it, so a unit by that wall
-## stands right of the panels (the dark beyond the wall goes under them).
+## party panels are, is held further off when `panel_reserve_px` asks for it, so the feet of a unit by
+## that wall are drawn right of the panels, at any turn (the dark beyond the wall goes under them); its
+## selection ring, wider than the feet, may still touch the panels' edge.
 
 @export var pitch_degrees: float = 50.0
 @export var distance: float = 12.0
@@ -26,8 +27,9 @@ extends Node3D
 @export var near_fraction: float = 0.8
 ## The margin from the wall at the screen's top, as a fraction of the view's reach toward the camera.
 @export var far_fraction: float = 0.5
-## How far in from the screen's left edge, in the viewport's pixels, a unit at the wall on that side
-## stands at least: the party panels' width and a ring's. At 0 that wall is held like the right one.
+## How far in from the screen's left edge, in the viewport's pixels, the feet of a unit at the wall on
+## that side are drawn at least: about the party panels' width. At 0 that wall is held like the right
+## one.
 @export var panel_reserve_px: float = 0.0
 
 var target: Node3D

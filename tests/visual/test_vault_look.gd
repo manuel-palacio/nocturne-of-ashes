@@ -214,3 +214,28 @@ func test_a_unit_at_the_west_wall_by_the_entry_stands_clear_of_the_party_panels(
 		assert_true(at.x > panels.end.x or at.y > panels.end.y,
 				"a unit at %s is drawn at %s, clear of the panels %s" % [edge, at, panels])
 	get_tree().root.size = window_size
+
+
+## Turned a quarter, so the south wall is at the screen's left, where the party panels are: a unit by
+## that wall stands right of the panels or below them, as it does by the west wall unturned.
+func test_turned_a_quarter_a_unit_at_the_wall_on_the_left_stands_clear_of_the_party_panels() -> void:
+	var window_size: Vector2i = get_tree().root.size
+	get_tree().root.size = Vector2i(1280, 720)
+	story = Story.boot(self, PageBoot.haven_finished())
+	await wait_physics_frames(3)
+	assert_eq(story.party.size(), 3)
+	var map: RID = story.get_world_3d().navigation_map
+	story.rig.rotate_by(PI / 2)
+	story.player.global_position = NavigationServer3D.map_get_closest_point(map, Vector3(0.0, 0.0, 20.0))
+	story.rig.snap_to_target()
+	await wait_process_frames(2)
+	var panels: Rect2 = (story.hud.find_child("PartyColumn") as Control).get_global_rect()
+	var camera: Camera3D = story.rig.camera()
+	var x: float = story.player.global_position.x
+	for along: float in [x - 1.5, x, x + 1.5]:
+		var edge: Vector3 = NavigationServer3D.map_get_closest_point(map, Vector3(along, 0.0, 20.0))
+		var at: Vector2 = camera.unproject_position(edge)
+		assert_lt(at.x, get_tree().root.size.x / 2.0, "the south wall is on the screen's left (%s)" % at)
+		assert_true(at.x > panels.end.x or at.y > panels.end.y,
+				"a unit at %s is drawn at %s, clear of the panels %s" % [edge, at, panels])
+	get_tree().root.size = window_size
