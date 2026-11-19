@@ -22,10 +22,14 @@ const USE_MARK_AHEAD: float = 0.9
 @export var needs_flags: Array[StringName] = []
 ## Shown when it is used while barred; translatable.
 @export var locked_text: String = ""
-## When set, the door's leaf is drawn exactly while this node is drawn, so a door set in a wall that the
-## camera cuts (its frame) goes and comes back with it; unset, the leaf is always drawn. Only the leaf:
-## the door's body, its ring and its use never depend on it.
+## When set, the door's leaf and `drawn_also` are drawn exactly while this node is drawn, so a door set
+## in a wall that the camera cuts (its frame) goes and comes back with it; unset, they are always drawn.
+## Only what is drawn: the door's body, its ring and its use never depend on it.
 @export var drawn_with: Node3D
+## Whether the door has a leaf to draw at all; a sealed door (the last lock) shows none, cut or not.
+@export var shows_leaf: bool = true
+## Other things on the door, such as a seal, drawn with `drawn_with` like the leaf.
+@export var drawn_also: Array[Node3D] = []
 
 ## Asked, with no arguments, at each use; unless it is set and answers true, the use is refused and
 ## does not count.
@@ -40,13 +44,16 @@ func _ready() -> void:
 	if drawn_with != null:
 		# A Node3D's `visibility_changed` also fires when an ancestor (a cut wall) is shown or hidden.
 		drawn_with.visibility_changed.connect(_draw_leaf)
-		_draw_leaf()
+	_draw_leaf()
 
 
 func _draw_leaf() -> void:
+	var drawn: bool = drawn_with == null or drawn_with.is_visible_in_tree()
 	var leaf := get_node_or_null(^"Leaf") as Node3D
 	if leaf != null:
-		leaf.visible = drawn_with.is_visible_in_tree()
+		leaf.visible = drawn and shows_leaf
+	for part: Node3D in drawn_also:
+		part.visible = drawn
 
 
 ## In front of it, on the floor: on whichever side of it the room's origin lies.
