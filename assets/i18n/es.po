@@ -79,6 +79,9 @@ msgstr "Sí, empezar de nuevo"
 msgid "No"
 msgstr "No"
 
+msgid "Preparing the cellars…"
+msgstr "Preparando las bóvedas…"
+
 # Doors
 msgid "Not while they are upon you"
 msgstr "No mientras los tengas encima"
