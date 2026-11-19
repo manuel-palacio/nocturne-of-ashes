@@ -210,6 +210,12 @@ func settle_cloth() -> void:
 		fit.fit(SETTLED_AFTER)
 
 
+## The fits of its cloth pieces that stretch, so a test can call them: headless no figure is on screen,
+## and only a figure on screen fits its cloth itself.
+func cloth_fits() -> Array[ClothFit]:
+	return _fits.duplicate()
+
+
 func is_selected_mark_shown() -> bool:
 	return _selected_ring.visible
 
