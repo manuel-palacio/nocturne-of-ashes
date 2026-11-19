@@ -11,8 +11,16 @@ const PALETTES: Array[String] = ["alvar", "captive", "crusader", "gonzalo", "mal
 var main: Main
 
 
+## GUT's layers a test hid.
+var _runner_layers: Array[Node] = []
+
+
 func after_each() -> void:
 	Story.finish(main)
+	for node: Node in _runner_layers:
+		if is_instance_valid(node):
+			(node as CanvasLayer).visible = true
+	_runner_layers.clear()
 
 
 func _skirmish() -> void:
@@ -296,3 +304,82 @@ func test_without_a_save_new_game_starts_at_once() -> void:
 	await wait_physics_frames(3)
 	assert_false(_title().is_open())
 	assert_eq(main.room.room_id, &"haven")
+
+
+## GUT draws its output on a layer over the test window, which takes the mouse where Yes stands:
+## hidden until the test ends.
+func _let_clicks_past_the_runner() -> void:
+	for node: Node in get_tree().root.find_children("GutLayer", "CanvasLayer", true, false):
+		_runner_layers.append(node)
+		(node as CanvasLayer).visible = false
+
+
+func _press_at(control: Control) -> void:
+	_click(control.get_viewport(), control.get_global_rect().get_center())
+
+
+func test_a_double_press_on_new_game_answers_nothing() -> void:
+	await _boot_with_title(GameState.skirmish())
+	_let_clicks_past_the_runner()
+	var new_game := _title().find_child("NewGameButton") as Button
+	var at: Rect2 = new_game.get_global_rect()
+	_press_at(new_game)
+	await wait_physics_frames(1)
+	var no := _title().find_child("NoButton") as Button
+	var yes := _title().find_child("YesButton") as Button
+	assert_eq(no.get_global_rect(), at, "No takes the button's place, under the pointer")
+	assert_false(yes.get_global_rect().intersects(at), "Yes stands away from it")
+	_click(_title().get_viewport(), at.get_center())
+	await wait_seconds(0.1)
+	_click(_title().get_viewport(), at.get_center())
+	await wait_physics_frames(2)
+	assert_true(_title().is_open())
+	assert_true(_title().find_child("QuestionLabel").is_visible_in_tree(), "still asking")
+	assert_true(main.store.has_save(), "the save is kept")
+
+
+func test_asking_moves_nothing_on_the_title() -> void:
+	await _boot_with_title(GameState.skirmish())
+	_let_clicks_past_the_runner()
+	var watched: Array[String] = ["TitleLabel", "ContinueButton", "ControlsButton"]
+	var before: Array[Rect2] = []
+	for name: String in watched:
+		before.append((_title().find_child(name) as Control).get_global_rect())
+	_press_at(_title().find_child("NewGameButton"))
+	await wait_physics_frames(2)
+	for index: int in watched.size():
+		assert_eq((_title().find_child(watched[index]) as Control).get_global_rect(), before[index], watched[index])
+
+
+func test_yes_takes_a_press_after_the_delay() -> void:
+	await _boot_with_title(GameState.skirmish())
+	_let_clicks_past_the_runner()
+	_press_at(_title().find_child("NewGameButton"))
+	await wait_seconds(TitleScreen.ANSWER_DELAY + 0.1)
+	_press_at(_title().find_child("YesButton"))
+	await wait_physics_frames(3)
+	assert_false(_title().is_open())
+	assert_eq(main.room.room_id, &"haven")
+	assert_eq(main.state.conscience, 7)
+
+
+func test_held_or_repeated_space_does_not_answer_and_enter_keeps_the_save() -> void:
+	await _boot_with_title(GameState.skirmish())
+	_let_clicks_past_the_runner()
+	watch_signals(_title())
+	_press_at(_title().find_child("NewGameButton"))
+	await wait_physics_frames(2)
+	for i: int in 3:
+		await _tap(&"pause")
+	Input.action_press(&"pause")
+	await wait_seconds(TitleScreen.ANSWER_DELAY + 0.1)
+	Input.action_release(&"pause")
+	await wait_physics_frames(2)
+	assert_true(_title().is_open())
+	assert_signal_not_emitted(_title(), "new_game_chosen")
+	assert_true(main.store.has_save())
+	# Enter keeps its meaning on the title: Continue, which keeps the save.
+	await _tap(&"confirm")
+	assert_signal_not_emitted(_title(), "new_game_chosen")
+	assert_eq(main.room.room_id, &"vault")
+	assert_true(main.store.has_save())

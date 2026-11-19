@@ -6,8 +6,10 @@ extends Control
 ## the buttons stop the mouse.
 ##
 ## New game starts at once when there is no save to lose. When there is, the first press asks first:
-## the button gives way to `Erase the saved game?` with `Yes, begin anew` and `No`. `No`, the `cancel`
-## action (Escape) or the title closing puts the button back. Controls opens the `ControlsCard`; while
+## `Erase the saved game?` shows above the button's place, `No` takes the button's place, under the
+## pointer, and `Yes, begin anew` stands to its right, away from it. Nothing else moves. Both answers
+## ignore presses for `ANSWER_DELAY` seconds, so a double click on New game answers nothing. `No`, the
+## `cancel` action (Escape) or the title closing puts the button back. Controls opens the `ControlsCard`; while
 ## it is open the title reads no keys, and Escape closes the card first.
 ##
 ## Texts: the buttons and the question have automatic translation off in the scene and get their text
@@ -17,12 +19,16 @@ signal continue_chosen
 ## The player chose to begin a new game, after saying yes when a save would be lost.
 signal new_game_chosen
 
+## Seconds after the question shows before its answers take a press.
+const ANSWER_DELAY: float = 0.5
+
 ## Whether a save would be lost by a new game: Continue is offered.
 var _has_save: bool = false
+## Seconds until the answers take a press.
+var _answer_wait: float = 0.0
 
 @onready var _continue_button: Button = %ContinueButton
 @onready var _new_game_button: Button = %NewGameButton
-@onready var _confirm: Control = %Confirm
 @onready var _question: Label = %QuestionLabel
 @onready var _yes_button: Button = %YesButton
 @onready var _no_button: Button = %NoButton
@@ -57,7 +63,12 @@ func is_open() -> bool:
 	return visible
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if _answer_wait > 0.0:
+		_answer_wait -= delta
+		if _answer_wait <= 0.0:
+			_yes_button.disabled = false
+			_no_button.disabled = false
 	# The card, a child, reads Escape itself after this.
 	if not visible or _controls_card.is_open():
 		return
@@ -91,11 +102,19 @@ func _on_new_game_pressed() -> void:
 	if not _has_save:
 		new_game_chosen.emit()
 		return
-	_new_game_button.visible = false
-	_confirm.visible = true
+	_set_asking(true)
+	_answer_wait = ANSWER_DELAY
+	_yes_button.disabled = true
+	_no_button.disabled = true
 
 
 ## Puts New game back in place of the question.
 func _take_back() -> void:
-	_confirm.visible = false
-	_new_game_button.visible = true
+	_set_asking(false)
+	_answer_wait = 0.0
+
+
+func _set_asking(on: bool) -> void:
+	_new_game_button.visible = not on
+	for control: Control in [_question, _yes_button, _no_button]:
+		control.visible = on
