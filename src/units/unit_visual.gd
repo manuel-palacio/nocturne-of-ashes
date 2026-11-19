@@ -72,6 +72,8 @@ const SELECTED_COLOUR: Color = Color(0.95, 0.74, 0.22)
 const DROP_ABOVE: float = 0.32
 ## Clips in which the legs barely move, so cloth settled in one stays settled.
 const STILL_CLIPS: Array[StringName] = [&"idle", &"talk", &"sit", &"sit_talk", &"death"]
+## Seconds of standing after which every cloth key has let go fully (see `ClothFit.SETTLE`).
+const SETTLED_AFTER: float = 1.0
 ## Regions of the palette, which is this many squares wide.
 const PALETTE_SQUARES: int = 8
 
@@ -199,6 +201,13 @@ func show_selected_mark(on: bool) -> void:
 func show_feed_mark(on: bool) -> void:
 	_feed_wanted = on
 	_show_marks()
+
+
+## Fits the cloth to the pose on show at once and lets it settle there fully, as if the figure had
+## stood in it a while: for a figure that does not process, such as a portrait's.
+func settle_cloth() -> void:
+	for fit: ClothFit in _fits:
+		fit.fit(SETTLED_AFTER)
 
 
 func is_selected_mark_shown() -> bool:

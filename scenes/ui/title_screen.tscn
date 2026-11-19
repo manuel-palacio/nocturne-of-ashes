@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://src/ui/title_screen.gd" id="1_title"]
 [ext_resource type="Theme" path="res://resources/ui/theme.tres" id="2_theme"]
-[ext_resource type="Texture2D" path="res://assets/portraits/alvar.png" id="3_alvar"]
+[ext_resource type="Texture2D" path="res://assets/portraits/title-alvar.png" id="3_alvar"]
 [ext_resource type="PackedScene" path="res://scenes/ui/controls_card.tscn" id="4_card"]
 
 [node name="TitleScreen" type="Control"]
@@ -28,15 +28,15 @@ mouse_filter = 2
 color = Color(0.025, 0.02, 0.018, 1)
 
 [node name="Portrait" type="TextureRect" parent="."]
-modulate = Color(0.62, 0.56, 0.52, 0.42)
+modulate = Color(0.62, 0.56, 0.52, 0.5)
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 40.0
-offset_top = -280.0
-offset_right = 600.0
-offset_bottom = 280.0
+offset_left = 60.0
+offset_top = -256.0
+offset_right = 572.0
+offset_bottom = 256.0
 grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("3_alvar")
