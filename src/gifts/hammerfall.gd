@@ -2,17 +2,9 @@ class_name Hammerfall
 extends Gift
 ## Every living hostile within `radius` of the caster, flat on XZ, is hit and stunned for a while.
 
-@export var radius: float = 3.5
-@export var damage: int = 15
-@export var stun_time: float = 2.5
-
-
-func _init() -> void:
-	id = &"hammerfall"
-	display_name = "Hammerfall"
-	blood_cost = 25
-	cooldown = 12.0
-	targeting = Targeting.SELF
+@export var radius: float = 0.0
+@export var damage: int = 0
+@export var stun_time: float = 0.0
 
 
 func apply(caster: Unit, _target: Unit) -> void:
