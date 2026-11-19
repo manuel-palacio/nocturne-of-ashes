@@ -87,6 +87,11 @@ func _init(mesh: MeshInstance3D, skeleton: Skeleton3D, bone: int, hang: Transfor
 	_points.resize(LEGS.size() * POINTS.size())
 
 
+## The piece it fits.
+func mesh() -> MeshInstance3D:
+	return _mesh
+
+
 func is_fitting() -> bool:
 	return not _indices.is_empty() or _flat >= 0
 
