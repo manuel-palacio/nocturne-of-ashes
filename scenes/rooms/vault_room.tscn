@@ -885,10 +885,13 @@ to_entry = &"from_vault"
 leader_only = true
 drawn_with = NodePath("../NavigationRegion3D/Walls/West/West6")
 
-[node name="LastLock" parent="." unique_id=225836557 instance=ExtResource("2_door")]
+[node name="LastLock" parent="." unique_id=225836557 node_paths=PackedStringArray("drawn_with", "drawn_also") instance=ExtResource("2_door")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 12.1, 0, -5)
 locked_text = "The last lock does not yield. Not yet."
 leader_only = true
+drawn_with = NodePath("../NavigationRegion3D/Walls/East/East2")
+shows_leaf = false
+drawn_also = [NodePath("Seal")]
 
 [node name="Leaf" parent="LastLock" index="1"]
 visible = false

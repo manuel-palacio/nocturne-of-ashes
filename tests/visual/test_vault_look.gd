@@ -192,6 +192,38 @@ func test_the_west_door_is_cut_with_its_wall_and_can_still_be_used() -> void:
 	assert_eq(users, [GameState.LEADER] as Array[StringName], "Álvar walked up to the door and used it")
 
 
+func test_the_last_locks_seal_is_cut_with_its_wall_and_the_lock_can_still_be_used() -> void:
+	story = Story.boot(self, GameState.skirmish())
+	await wait_physics_frames(3)
+	for enemy: Unit in story.enemies:
+		enemy.take_hit(999)
+	await wait_physics_frames(3)
+	var lock := story.room.get_node("LastLock") as Door
+	var seal := lock.get_node("Seal") as Node3D
+	var leaf := lock.get_node("Leaf") as Node3D
+	var frame := story.room.get_node("NavigationRegion3D/Walls/East/East2") as Node3D
+	story.player.global_position = Vector3(8, 0, -3)
+	# Looking west: the east wall, the lock's, is behind the camera.
+	story.rig.rotate_by(PI / 2)
+	await wait_process_frames(3)
+	assert_false(frame.is_visible_in_tree(), "the frame is cut with its wall")
+	assert_false(seal.is_visible_in_tree(), "the seal is cut with its frame")
+	assert_false(leaf.is_visible_in_tree(), "the sealed lock shows no leaf")
+	story.rig.rotate_by(-PI / 2)
+	await wait_process_frames(3)
+	assert_true(frame.is_visible_in_tree(), "the frame is drawn again")
+	assert_true(seal.is_visible_in_tree(), "and the seal with it")
+	assert_false(leaf.is_visible_in_tree(), "and still no leaf")
+	story.rig.rotate_by(PI / 2)
+	await wait_process_frames(3)
+	var users: Array[StringName] = []
+	lock.used.connect(func(by: Unit) -> void: users.append(by.member_id))
+	story.player.order_interact(lock)
+	await wait_until(func() -> bool: return not users.is_empty(), 10.0)
+	assert_eq(users, [GameState.LEADER] as Array[StringName], "Álvar walked up to the lock and used it")
+	assert_eq(story.hud.notice(), "The last lock does not yield. Not yet.")
+
+
 ## A unit by the west wall, where the camera's focus is held, at the story's entry from the haven:
 ## it stands right of the party panels or below them, not under them.
 func test_a_unit_at_the_west_wall_by_the_entry_stands_clear_of_the_party_panels() -> void:
