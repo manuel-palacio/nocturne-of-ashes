@@ -22,7 +22,7 @@ for the camera to see from above; the vault is drawn only from below, so the cam
 | vault_barrel | 4 x 2, from 4 to 6 | a barrel vault segment in brick, seen from below only | nothing |
 | door_frame | 2 x 0.5, 4 | a wall bay with a 1.4 x 2.4 doorway in dressed stone | walls |
 | door_leaf | 1.4 x 0.1, 2.4 | planked door with iron straps, studs and a ring | nothing (the door scene's body does) |
-| stair_down | 2 x 4, 2.4 below the floor | a flight going down toward -z under a lintel | walls (a low barrier round its mouth and sides) |
+| stair_down | 2 x 4, 2.4 below the floor | a flight going down toward -z under a lintel | walls (a low barrier round its mouth, sides and low end) |
 | forge | 2.6 x 1.4, 4 | hearth with a fire pan, a plastered hood and flue | world (hearth) |
 | embers | 1.5 x 0.7, from 0.72 to 0.81 | a bed of glowing coals that fills the forge's fire pan | nothing |
 | anvil, rack, barrel, bench | props | | world |
@@ -512,9 +512,11 @@ def stair_down() -> Piece:
     p.face([(-1, 0, -2), (1, 0, -2), (1, 0, cover), (-1, 0, cover)], (0, 1, 0), "stone")
     p.face([(-1, 0, cover), (1, 0, cover), (1, -lintel, cover), (-1, -lintel, cover)], (0, 0, 1), "stone")
     p.face([(-1, -lintel, -2), (1, -lintel, -2), (1, -lintel, cover), (-1, -lintel, cover)], (0, -1, 0), "stone")
-    # A low barrier on the walls layer round its mouth and sides: units cannot step in, and a click
-    # on the drawn steps passes through to the floor plane. Nothing stands on the world layer.
+    # A low barrier on the walls layer round its mouth, its sides and its low end: units cannot step
+    # in from any side, and a click on the drawn steps passes through to the floor plane. Nothing
+    # stands on the world layer.
     p.collider((-1, 0, 1.9), (1, 1.0, 2), "walls")
+    p.collider((-1, 0, -2), (1, 1.0, -1.9), "walls")
     for sign in (-1, 1):
         lo_x, hi_x = sorted((sign * 1.0, sign * 0.9))
         p.collider((lo_x, 0, -2), (hi_x, 1.0, 1.9), "walls")
