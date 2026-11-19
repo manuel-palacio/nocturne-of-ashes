@@ -100,8 +100,11 @@ msgstr "El cautivo"
 msgid "Enter or click"
 msgstr "Intro o clic"
 
-msgid "1–4 or click"
-msgstr "1–4 o clic"
+msgid "1 or click"
+msgstr "1 o clic"
+
+msgid "1–%d or click"
+msgstr "1–%d o clic"
 
 # Controls card
 msgid "Escape or click outside to close"

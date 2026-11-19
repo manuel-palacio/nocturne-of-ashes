@@ -25,3 +25,9 @@ Smith: Gonzalo will walk with you.
 do join("gonzalo")
 Smith: Look after him.
 => END
+
+~ one_way
+Smith: There is only the stair.
+- Climb it
+	Smith: Go, then.
+=> END

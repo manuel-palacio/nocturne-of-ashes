@@ -14,9 +14,11 @@ extends Control
 
 ## The actions that take the first, second… open choice.
 const CHOICE_ACTIONS: Array[StringName] = [&"choice_1", &"choice_2", &"choice_3", &"choice_4"]
-## The hints on a plain line and on a line with choices.
+## The hints on a plain line, on a line with one choice and on a line with several (the number of the
+## last one fills it in).
 const PLAIN_HINT: String = "Enter or click"
-const CHOICE_HINT: String = "1–4 or click"
+const ONE_CHOICE_HINT: String = "1 or click"
+const CHOICES_HINT: String = "1–%d or click"
 
 var _runner: DialogueRunner
 ## The process frame the conversation opened on: no key counts in it, so a press that opened a
@@ -103,7 +105,13 @@ func _close() -> void:
 
 
 func _show_hint() -> void:
-	_hint.text = tr(CHOICE_HINT if _choices.get_child_count() > 0 else PLAIN_HINT)
+	var count: int = _choices.get_child_count()
+	if count == 0:
+		_hint.text = tr(PLAIN_HINT)
+	elif count == 1:
+		_hint.text = tr(ONE_CHOICE_HINT)
+	else:
+		_hint.text = tr(CHOICES_HINT) % count
 
 
 ## Takes the choice buttons out of the tree at once, so none is found or drawn again, and frees them.
