@@ -34,6 +34,7 @@ var _answer_wait: float = 0.0
 @onready var _no_button: Button = %NoButton
 @onready var _controls_button: Button = %ControlsButton
 @onready var _controls_card: ControlsCard = %ControlsCard
+@onready var _preparing: Label = %PreparingLabel
 
 
 func _ready() -> void:
@@ -51,6 +52,16 @@ func open(can_continue: bool) -> void:
 	_continue_button.visible = can_continue
 	_take_back()
 	visible = true
+
+
+## Shows or hides the line saying the rooms are being prepared (their shaders compiled, see
+## `ShaderWarmup`). The buttons work all the while.
+func show_preparing(on: bool) -> void:
+	_preparing.visible = on
+
+
+func is_preparing_shown() -> bool:
+	return _preparing.visible
 
 
 func close() -> void:
@@ -96,6 +107,7 @@ func _show_texts() -> void:
 	_question.text = tr("Erase the saved game?")
 	_yes_button.text = tr("Yes, begin anew")
 	_no_button.text = tr("No")
+	_preparing.text = tr("Preparing the cellars…")
 
 
 func _on_new_game_pressed() -> void:
