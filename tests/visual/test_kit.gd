@@ -283,3 +283,41 @@ func test_a_unit_walks_through_the_openings_off_centre_too() -> void:
 			assert_false(_walk_blocked(piece, Vector3(x, 0, 2), Vector3(x, 0, -2)), "through %s at x = %.2f" % [opening, x])
 			x = side * (fits + 0.01)
 			assert_true(_walk_blocked(piece, Vector3(x, 0, 2), Vector3(x, 0, -2)), "not through %s at x = %.2f" % [opening, x])
+
+
+const KIT_IMPORT: String = "res://tools/kit_import.gd"
+
+
+## A scene holding one box whose single surface carries a material named `material_name`.
+func _scene_with_material(material_name: String) -> Node3D:
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, BoxMesh.new().get_mesh_arrays())
+	var material := StandardMaterial3D.new()
+	material.resource_name = material_name
+	mesh.surface_set_material(0, material)
+	var root: Node3D = autofree(Node3D.new())
+	var instance := MeshInstance3D.new()
+	instance.mesh = mesh
+	root.add_child(instance)
+	return root
+
+
+func test_the_import_swaps_a_shared_material_and_refuses_an_unknown_one() -> void:
+	var importer: GDScript = load(KIT_IMPORT)
+	var good: Node3D = _scene_with_material("iron")
+	assert_eq(importer.swap_materials(good), PackedStringArray(), "iron is a shared material")
+	var mesh: Mesh = (good.get_child(0) as MeshInstance3D).mesh
+	assert_eq(mesh.surface_get_material(0).resource_path, "res://resources/materials/iron.tres")
+	var wrong: PackedStringArray = importer.swap_materials(_scene_with_material("irno"))
+	assert_eq(wrong.size(), 1, "the misspelt material is reported")
+	assert_string_contains(wrong[0] if not wrong.is_empty() else "", "\"irno\"")
+
+
+## A piece without the second UV set would be left out of the light bake, so every piece's import
+## asks for it (light baking "static lightmaps", 2) and runs the kit's import script.
+func test_every_piece_is_imported_for_the_light_bake_by_the_kit_script() -> void:
+	for piece_name: String in BOUNDS:
+		var config := ConfigFile.new()
+		assert_eq(config.load(KIT_DIR + piece_name + ".glb.import"), OK, piece_name)
+		assert_eq(config.get_value("params", "meshes/light_baking", -1), 2, "%s: light baking" % piece_name)
+		assert_eq(config.get_value("params", "import_script/path", ""), KIT_IMPORT, "%s: import script" % piece_name)

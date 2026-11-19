@@ -73,6 +73,8 @@ MAX_TRIANGLES = 2000
 SCALE = {"stone": (2.0, 2.0), "brick": (2.0, 1.0), "plaster": (2.0, 2.0), "wood": (1.0, 1.0), "iron": (1.0, 1.0),
          "ember": (0.5, 0.5)}
 MATERIALS = list(SCALE)
+# The physics layers a collider can be on (see Collision above).
+LAYERS = ("world", "walls")
 
 IMPOST = 2.0  # height of the capitals that arches spring from
 HEIGHT = 4.0  # walls, piers and arch bays
@@ -221,7 +223,10 @@ class Piece:
             self.face([p for p, _ in grid[-1][:-1]], (0, 1, 0), material)
 
     def collider(self, lo, hi, layer: str = "world") -> None:
-        """A box that blocks movement, on the "world" layer or the "walls" layer."""
+        """A box that blocks movement, on the "world" layer or the "walls" layer; any other name is an
+        error, which would otherwise quietly mean "world"."""
+        if layer not in LAYERS:
+            raise ValueError(f"{self.name}: collider layer {layer!r} is not one of {', '.join(LAYERS)}")
         self.colliders.append((layer, [(x, y, z) for x in (lo[0], hi[0]) for y in (lo[1], hi[1]) for z in (lo[2], hi[2])]))
 
 
