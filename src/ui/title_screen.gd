@@ -1,8 +1,9 @@
 class_name TitleScreen
 extends Control
-## The title: the game's name, Continue (only when a save can be continued) and New game. The
-## `confirm` action chooses Continue when it is offered and New game otherwise. No control takes
-## keyboard focus, so Space and Enter stay game keys; only the buttons stop the mouse.
+## The title: the game's name over Álvar's portrait, large and dim, then Continue (only when a save
+## can be continued) and New game. The `confirm` action chooses Continue when it is offered and New
+## game otherwise. No control takes keyboard focus, so Space and Enter stay game keys; only the
+## buttons stop the mouse.
 ##
 ## Texts: the buttons have automatic translation off in the scene and get their text from `tr()` in
 ## code, set again when the language changes. The game's name is not translated.

@@ -1,20 +1,22 @@
 class_name PartyMemberPanel
 extends PanelContainer
-## One party member in the HUD: a swatch in the colour of the member's tunic, the name, health and
-## Blood bars, and whether the member is fallen, in the Fury or feeding. A left click asks to select
-## the member. The left button is consumed; the right button and the wheel pass through to the world.
+## One party member in the HUD: the member's portrait, the name, health and Blood bars (health the
+## taller, Blood the deeper, colder red), and whether the member is fallen, in the Fury or feeding. A
+## left click asks to select the member. The left button is consumed; the right button and the wheel
+## pass through to the world. Text and bars are written only when what they show changes.
 
 ## The panel was clicked; the click is consumed, so it gives no order in the world.
 signal pressed(unit: Unit)
 
-## The look while not selected, and while selected.
-@export var normal_style: StyleBox
-@export var selected_style: StyleBox
+## The theme's look for a selected member's panel.
+const SELECTED_LOOK: StringName = &"SelectedPanel"
 
 var _unit: Unit
 var _selected: bool = false
+## How many times a text or a bar has been written, for the tests.
+var _writes: int = 0
 
-@onready var _swatch: ColorRect = %Swatch
+@onready var _portrait: TextureRect = %Portrait
 @onready var _name_label: Label = %NameLabel
 @onready var _health_bar: ProgressBar = %HealthBar
 @onready var _blood_bar: ProgressBar = %BloodBar
@@ -42,8 +44,8 @@ func _gui_input(event: InputEvent) -> void:
 ## Follows `unit` from now on. A panel is bound once; the HUD makes new panels for a new party.
 func bind(unit: Unit) -> void:
 	_unit = unit
-	_name_label.text = tr(unit.display_name)
-	_swatch.color = _tunic_colour(unit)
+	_write(_name_label, tr(unit.display_name))
+	_portrait.texture = Portraits.of_dress(_dress(unit))
 	unit.stats.health_changed.connect(_on_health_changed)
 	unit.stats.blood_changed.connect(_on_blood_changed)
 	for changed: Signal in [unit.died, unit.revived]:
@@ -62,11 +64,16 @@ func unit() -> Unit:
 
 func set_selected(on: bool) -> void:
 	_selected = on
-	add_theme_stylebox_override(&"panel", selected_style if on else normal_style)
+	theme_type_variation = SELECTED_LOOK if on else &""
 
 
 func is_selected() -> bool:
 	return _selected
+
+
+## How many times the panel has written a text or a bar since it was made.
+func text_writes() -> int:
+	return _writes
 
 
 ## Fallen, then The Fury, then Feeding, else empty.
@@ -80,21 +87,30 @@ func _show_state() -> void:
 		state = tr("The Fury")
 	elif _unit.is_feeding():
 		state = tr("Feeding")
-	_state_label.text = state
+	_write(_state_label, state)
 
 
 func _on_health_changed(current: int, maximum: int) -> void:
-	_health_bar.max_value = maximum
-	_health_bar.value = current
+	_fill(_health_bar, current, maximum)
 
 
 func _on_blood_changed(current: int, maximum: int) -> void:
-	_blood_bar.max_value = maximum
-	_blood_bar.value = current
+	_fill(_blood_bar, current, maximum)
 
 
-func _tunic_colour(unit: Unit) -> Color:
+func _write(label: Label, text: String) -> void:
+	if label.text != text:
+		label.text = text
+		_writes += 1
+
+
+func _fill(bar: ProgressBar, current: int, maximum: int) -> void:
+	if bar.max_value != maximum or bar.value != current:
+		bar.max_value = maximum
+		bar.value = current
+		_writes += 1
+
+
+func _dress(unit: Unit) -> Dress:
 	var visual := unit.get_node_or_null(^"Visual") as UnitVisual
-	if visual == null or visual.dress == null:
-		return Color.GRAY
-	return visual.dress.colour(Dress.Region.TUNIC)
+	return visual.dress if visual != null else null

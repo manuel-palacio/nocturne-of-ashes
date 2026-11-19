@@ -2,7 +2,8 @@ class_name Hud
 extends CanvasLayer
 ## Shows a panel per party member, the selected member's Gifts, Conscience in a story, the conversation on show (in its
 ## `DialogueBox`), the prompts for a pause, a cleared room and Álvar's fall, and a passing notice.
-## Clicks on panels and Gift buttons go out through its signals.
+## Clicks on panels and Gift buttons go out through its signals. Every control draws with
+## `resources/ui/theme.tres`.
 ##
 ## Texts: every control whose text is set here or in a panel or button has automatic translation off
 ## in its scene and gets its text from `tr()` in code, so reading `text` gives what is shown. When the

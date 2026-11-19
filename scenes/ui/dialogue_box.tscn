@@ -1,32 +1,14 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://src/ui/dialogue_box.gd" id="1_box"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_frame"]
-bg_color = Color(0.06, 0.05, 0.05, 0.92)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.45, 0.32, 0.2, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-
-[sub_resource type="LabelSettings" id="LabelSettings_speaker"]
-font_size = 20
-font_color = Color(0.92, 0.72, 0.42, 1)
-outline_size = 4
-outline_color = Color(0, 0, 0, 1)
-
 [sub_resource type="LabelSettings" id="LabelSettings_text"]
 font_size = 20
-font_color = Color(0.9, 0.86, 0.8, 1)
+font_color = Color(0.92, 0.88, 0.81, 1)
 
 [sub_resource type="LabelSettings" id="LabelSettings_hint"]
-font_size = 14
-font_color = Color(0.62, 0.55, 0.46, 1)
+font_size = 16
+font_color = Color(0.66, 0.59, 0.5, 1)
 
 [node name="DialogueBox" type="Control"]
 layout_mode = 3
@@ -51,41 +33,62 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_frame")
 
 [node name="Margin" type="MarginContainer" parent="Frame"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 14
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
 
-[node name="Lines" type="VBoxContainer" parent="Frame/Margin"]
+[node name="Row" type="HBoxContainer" parent="Frame/Margin"]
 layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="PortraitFrame" type="PanelContainer" parent="Frame/Margin/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 0
+mouse_filter = 2
+theme_type_variation = &"PortraitFrame"
+
+[node name="Portrait" type="TextureRect" parent="Frame/Margin/Row/PortraitFrame"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Lines" type="VBoxContainer" parent="Frame/Margin/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_constants/separation = 8
 
-[node name="SpeakerLabel" type="Label" parent="Frame/Margin/Lines"]
+[node name="SpeakerLabel" type="Label" parent="Frame/Margin/Row/Lines"]
 auto_translate_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
-label_settings = SubResource("LabelSettings_speaker")
+theme_type_variation = &"HeaderLabel"
+theme_override_font_sizes/font_size = 22
 
-[node name="TextLabel" type="Label" parent="Frame/Margin/Lines"]
+[node name="TextLabel" type="Label" parent="Frame/Margin/Row/Lines"]
 auto_translate_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 label_settings = SubResource("LabelSettings_text")
 autowrap_mode = 3
 
-[node name="Choices" type="VBoxContainer" parent="Frame/Margin/Lines"]
+[node name="Choices" type="VBoxContainer" parent="Frame/Margin/Row/Lines"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="HintLabel" type="Label" parent="Frame/Margin/Lines"]
+[node name="HintLabel" type="Label" parent="Frame/Margin/Row/Lines"]
 auto_translate_mode = 2
 unique_name_in_owner = true
 layout_mode = 2

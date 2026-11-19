@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://src/ui/hud.gd" id="1_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/dialogue_box.tscn" id="2_dialogue_box"]
+[ext_resource type="Theme" path="res://resources/ui/theme.tres" id="3_theme"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_fallen"]
 font_size = 36
@@ -26,13 +27,14 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+theme = ExtResource("3_theme")
 
 [node name="PartyColumn" type="VBoxContainer" parent="Root"]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 12.0
 offset_top = 12.0
-offset_right = 232.0
+offset_right = 262.0
 offset_bottom = 12.0
 mouse_filter = 2
 theme_override_constants/separation = 6
