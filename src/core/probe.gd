@@ -67,6 +67,7 @@ func _write_state(_args: Array) -> void:
 		"party": party,
 		"selected": _main.party.find(selected),
 		"enemies": _main.enemies_alive(),
+		"marked": _marked(view),
 		"fallen": is_instance_valid(_main.player) and not _main.player.is_alive(),
 		"paused": _main.is_paused(),
 		"cleared": _main.is_cleared(),
@@ -103,8 +104,29 @@ func _member_state(member: Unit) -> Dictionary:
 		"blood": member.stats.blood,
 		"alive": member.is_alive(),
 		"fury": member.is_in_fury(),
+		# Has a feed order: walking in to a weakened enemy, or drinking.
+		"feeding": member.feed_target() != null,
 		"effects": effects,
 	}
+
+
+## The screen point of each enemy showing the feed mark, `PERSON_HEIGHT` up, in CSS pixels relative to
+## the canvas, as `_people()` gives them, in no particular order.
+func _marked(view: Vector2) -> Array[Array]:
+	var points: Array[Array] = []
+	var camera: Camera3D = get_viewport().get_camera_3d()
+	if camera == null:
+		return points
+	var to_css: Vector2 = view / get_viewport().get_visible_rect().size
+	for enemy: Unit in _main.enemies:
+		if not is_instance_valid(enemy) or not enemy.has_feed_mark():
+			continue
+		var point: Vector3 = enemy.global_position + Vector3.UP * PERSON_HEIGHT
+		if camera.is_position_behind(point):
+			continue
+		var at: Vector2 = camera.unproject_position(point) * to_css
+		points.append([roundi(at.x), roundi(at.y)])
+	return points
 
 
 ## Each visible character's and door's screen point, `PERSON_HEIGHT` up, in CSS pixels relative to the
