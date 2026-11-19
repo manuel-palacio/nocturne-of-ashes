@@ -247,3 +247,52 @@ func test_the_cleared_line_fades_after_four_seconds() -> void:
 	assert_true(label.visible)
 	await wait_seconds(0.3 + Hud.CLEARED_FADE + 0.2)
 	assert_false(label.visible)
+
+
+# --- New game asks first ---
+
+func test_new_game_with_a_save_asks_first_and_no_takes_it_back() -> void:
+	await _boot_with_title(GameState.skirmish())
+	watch_signals(_title())
+	var new_game := _title().find_child("NewGameButton") as Button
+	new_game.pressed.emit()
+	await wait_physics_frames(2)
+	assert_signal_not_emitted(_title(), "new_game_chosen")
+	assert_false(new_game.visible)
+	assert_eq((_title().find_child("QuestionLabel") as Label).text, "Erase the saved game?")
+	assert_true(_title().find_child("QuestionLabel").is_visible_in_tree())
+	var yes := _title().find_child("YesButton") as Button
+	var no := _title().find_child("NoButton") as Button
+	assert_eq(yes.text, "Yes, begin anew")
+	assert_eq(no.text, "No")
+	for button: Button in [yes, no]:
+		assert_eq(button.focus_mode, Control.FOCUS_NONE)
+	no.pressed.emit()
+	await wait_physics_frames(2)
+	assert_true(new_game.visible)
+	assert_false(_title().find_child("QuestionLabel").is_visible_in_tree())
+	new_game.pressed.emit()
+	await wait_physics_frames(2)
+	await _tap(&"cancel")
+	assert_true(new_game.visible, "Escape takes it back too")
+	assert_true(main.store.has_save())
+
+
+func test_yes_begins_anew() -> void:
+	await _boot_with_title(GameState.skirmish())
+	_title().find_child("NewGameButton").pressed.emit()
+	await wait_physics_frames(2)
+	_title().find_child("YesButton").pressed.emit()
+	await wait_physics_frames(3)
+	assert_false(_title().is_open())
+	assert_eq(main.room.room_id, &"haven")
+	assert_eq(main.state.conscience, 7)
+	assert_true(_title().find_child("NewGameButton").visible, "the title is as new when shown again")
+
+
+func test_without_a_save_new_game_starts_at_once() -> void:
+	await _boot_with_title(null)
+	_title().find_child("NewGameButton").pressed.emit()
+	await wait_physics_frames(3)
+	assert_false(_title().is_open())
+	assert_eq(main.room.room_id, &"haven")

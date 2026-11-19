@@ -84,6 +84,42 @@ layout_mode = 2
 size_flags_horizontal = 4
 focus_mode = 0
 
+[node name="Confirm" type="VBoxContainer" parent="Column"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="QuestionLabel" type="Label" parent="Column/Confirm"]
+auto_translate_mode = 2
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"HeaderLabel"
+horizontal_alignment = 1
+
+[node name="Answers" type="HBoxContainer" parent="Column/Confirm"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="YesButton" type="Button" parent="Column/Confirm/Answers"]
+auto_translate_mode = 2
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+focus_mode = 0
+
+[node name="NoButton" type="Button" parent="Column/Confirm/Answers"]
+auto_translate_mode = 2
+unique_name_in_owner = true
+custom_minimum_size = Vector2(90, 46)
+layout_mode = 2
+focus_mode = 0
+
 [node name="ControlsButton" type="Button" parent="Column"]
 auto_translate_mode = 2
 unique_name_in_owner = true
