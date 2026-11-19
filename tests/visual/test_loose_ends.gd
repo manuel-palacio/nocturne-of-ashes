@@ -102,3 +102,26 @@ func test_a_unit_walks_up_a_ramp_to_a_higher_floor_and_back() -> void:
 		assert_almost_eq(at.y, floor_y, 0.05, "on the floor at x = %.1f" % x)
 		assert_false(alvar.is_moving())
 	assert_push_warning_count(0)
+
+# 5. An order that waits for a landing that never comes is dropped with one warning after 5 s.
+
+func test_an_order_given_in_a_fall_that_never_lands_warns_once_and_is_dropped() -> void:
+	# Below the fixture's floor, falling with nothing under it.
+	var alvar: Unit = arena.spawn(Arena.ALVAR, Vector3(0, -2, -5))
+	var foe: Unit = arena.spawn(Arena.CRUSADER, Vector3(0, 0, 5))
+	await wait_physics_frames(3)
+	alvar.order_attack(foe)
+	# The target walks back and forth, so the chase is aimed again and again while it waits.
+	for leg: int in 3:
+		foe.order_move(Vector3(-4 if leg % 2 == 0 else 4, 0, 5))
+		await wait_seconds(1.5)
+	assert_false(alvar.is_on_floor())
+	assert_eq(alvar.current_order(), Unit.Order.ATTACK, "still waiting before 5 s")
+	assert_push_warning_count(0)
+	foe.order_move(Vector3(-4, 0, 5))
+	await wait_seconds(1.0)
+	assert_eq(alvar.current_order(), Unit.Order.NONE)
+	assert_false(alvar.is_moving())
+	assert_push_warning("could not plan its move order")
+	await wait_seconds(1.0)
+	assert_push_warning_count(1)
