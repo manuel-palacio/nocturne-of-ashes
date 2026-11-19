@@ -76,6 +76,7 @@ func steer() -> bool:
 			# Only frames that tried to plan count, so a stun or a hold does not use the time up.
 			_wait_for_plan(get_physics_process_delta_time())
 		return false
+	_measure_height()
 	if _agent.is_navigation_finished():
 		halt()
 		arrived.emit()
@@ -108,16 +109,27 @@ func _plan() -> void:
 	# The height gap below is measured from where the feet come to rest, so wait for the landing.
 	if not _unit.is_on_floor():
 		return
-	# The baked surface rarely lies exactly at the unit's feet. The agent compares positions in 3D,
-	# so its path points are lowered by the measured gap, and so is the target.
-	var surface_here: Vector3 = NavigationServer3D.map_get_closest_point(map, _unit.global_position)
-	_agent.path_height_offset = surface_here.y - _unit.global_position.y
+	# The agent compares positions in 3D, so the target is lowered by the gap as the path points are.
+	_measure_height()
 	var on_mesh: Vector3 = NavigationServer3D.map_get_closest_point(map, _destination)
 	_agent.target_position = on_mesh - Vector3(0.0, _agent.path_height_offset, 0.0)
 	_pending = false
 	_waiting_for = 0.0
 	_stall_from = _unit.global_position
 	_stall_timer = 0.0
+
+
+## The baked surface rarely lies exactly at the unit's feet, and how far above them it lies changes
+## along a walk, as on a ramp from one floor to another. The agent compares its path points with the
+## feet in 3D, so they are lowered by the gap, measured again on every frame the unit walks on the
+## floor: measured once per order, a walk whose gap has changed by more than a path point's reach
+## (`path_desired_distance`) never reaches its last point.
+func _measure_height() -> void:
+	if not _unit.is_on_floor():
+		return
+	var map: RID = _agent.get_navigation_map()
+	var surface_here: Vector3 = NavigationServer3D.map_get_closest_point(map, _unit.global_position)
+	_agent.path_height_offset = surface_here.y - _unit.global_position.y
 
 
 func _wait_for_plan(delta: float) -> void:
