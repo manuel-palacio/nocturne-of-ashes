@@ -3,7 +3,7 @@ extends GutTest
 ## The rooms' light and air: each keeps within its light and particle budgets, both share one
 ## environment with no fog measured from the camera, the baked light they draw with is exported in a
 ## form every browser reads, the air (torch flicker, embers) stops with the world on a pause but
-## keeps moving while people talk, and every figure carries a faint light of its own.
+## keeps moving while people talk (and stops on the title), and every figure carries a faint light of its own.
 
 const MAIN: PackedScene = preload("res://scenes/main.tscn")
 const ROOMS: Array[PackedScene] = [
@@ -125,10 +125,37 @@ func test_a_pause_freezes_the_air_with_the_units_but_a_conversation_does_not() -
 		main.set_paused(true)
 		await _check_air_moves(main, false, "paused")
 		main.set_paused(false)
-		hold.set_held(&"talk", true)
+		hold.set_held(WorldHold.TALK, true)
 		await _check_air_moves(main, true, "while people talk")
-		hold.set_held(&"talk", false)
+		hold.set_held(WorldHold.TALK, false)
 	Story.finish(story)
+
+
+
+## On the title there is no room yet; a room's air handed to the world then is held by the title.
+func test_the_title_freezes_the_rooms_air_too() -> void:
+	var main: Main = preload("res://scenes/game.tscn").instantiate()
+	main.store = SaveStore.new()
+	main.store.path = "user://test_atmosphere_%d.json" % randi()
+	main.store.clear()
+	add_child_autofree(main)
+	await wait_physics_frames(3)
+	assert_true(main.is_title_open())
+	var vault: Room = _room(ROOMS[0])
+	var hold: WorldHold = main.get_node("WorldHold")
+	hold.set_air(vault.air())
+	assert_true(hold.is_air_held(), "the title holds the air")
+	var air: Array[Node] = _air_nodes(vault)
+	assert_gt(air.size(), 0)
+	var before: Array[float] = _positions(air)
+	await wait_seconds(0.3)
+	var after: Array[float] = _positions(air)
+	for index: int in air.size():
+		assert_false(air[index].can_process(), "on the title: %s" % air[index].get_path())
+		if air[index] is AnimationPlayer:
+			assert_almost_eq(after[index], before[index], 0.0001, "on the title: the flicker of %s" % air[index].get_path())
+	hold.set_air(null)
+	Story.finish(main)
 
 
 ## Every party member and everyone to talk to carries a faint light of their own colours, so they stay
