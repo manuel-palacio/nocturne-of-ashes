@@ -235,3 +235,15 @@ func test_the_fallen_prompt_says_enter_or_click() -> void:
 	await wait_physics_frames(2)
 	assert_eq(main.hud.find_child("FallenLabel").text, "Has caído — pulsa Intro o haz clic")
 	TranslationServer.set_locale("en")
+
+
+func test_the_cleared_line_fades_after_four_seconds() -> void:
+	await _skirmish()
+	assert_eq(main.hud.cleared_time, 4.0)
+	main.hud.cleared_time = 0.3
+	var label := main.hud.find_child("ClearedLabel") as Label
+	main.hud.show_cleared()
+	await wait_seconds(0.2)
+	assert_true(label.visible)
+	await wait_seconds(0.3 + Hud.CLEARED_FADE + 0.2)
+	assert_false(label.visible)

@@ -4,8 +4,8 @@ extends CanvasLayer
 ## `DialogueBox`), the prompts for a pause, a cleared room and Álvar's fall, and a passing notice.
 ## Clicks on panels and Gift buttons go out through its signals. Its `?` button in the lower right
 ## corner opens the `ControlsCard`; whoever owns the HUD holds the world while the card is open
-## (`controls_toggled`), and the dialogue box reads no keys meanwhile. Every control draws with
-## `resources/ui/theme.tres`.
+## (`controls_toggled`), and the dialogue box reads no keys meanwhile. The cleared line fades out
+## `cleared_time` seconds after it shows. Every control draws with `resources/ui/theme.tres`.
 ##
 ## Texts: every control whose text is set here or in a panel or button has automatic translation off
 ## in its scene and gets its text from `tr()` in code, so reading `text` gives what is shown. When the
@@ -24,8 +24,13 @@ signal controls_toggled(open: bool)
 const PANEL: PackedScene = preload("res://scenes/ui/party_member_panel.tscn")
 const GIFT_BUTTON: PackedScene = preload("res://scenes/ui/gift_button.tscn")
 
+## Seconds the cleared line takes to fade out, once its time is up.
+const CLEARED_FADE: float = 1.0
+
 ## Seconds a notice stays on show, in real time: neither the pause nor a conversation holds the HUD.
 @export var notice_time: float = 2.5
+## Seconds the cleared line stays fully on show before it fades, in real time.
+@export var cleared_time: float = 4.0
 
 var _panels: Array[PartyMemberPanel] = []
 var _gift_buttons: Array[GiftButton] = []
@@ -39,6 +44,8 @@ var _state: GameState
 var _notice: String = ""
 ## Seconds until the notice goes.
 var _notice_left: float = 0.0
+## Seconds the cleared line has been on show.
+var _cleared_for: float = 0.0
 
 @onready var _party_column: VBoxContainer = %PartyColumn
 @onready var _gift_bar: HBoxContainer = %GiftBar
@@ -64,6 +71,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if _cleared_label.visible:
+		_fade_cleared(delta)
 	if _notice.is_empty():
 		return
 	_notice_left -= delta
@@ -153,7 +162,10 @@ func set_paused(on: bool) -> void:
 	_paused_label.visible = on
 
 
+## Shows the cleared line, fully, for `cleared_time` seconds; then it fades out over `CLEARED_FADE`.
 func show_cleared() -> void:
+	_cleared_for = 0.0
+	_cleared_label.modulate.a = 1.0
 	_cleared_label.visible = true
 
 
@@ -213,6 +225,15 @@ func _on_fallen_label_input(event: InputEvent) -> void:
 	var button := event as InputEventMouseButton
 	if button != null and button.pressed and button.button_index == MOUSE_BUTTON_LEFT:
 		fallen_pressed.emit()
+
+
+func _fade_cleared(delta: float) -> void:
+	_cleared_for += delta
+	var fading: float = _cleared_for - cleared_time
+	if fading >= CLEARED_FADE:
+		hide_cleared()
+	elif fading > 0.0:
+		_cleared_label.modulate.a = 1.0 - fading / CLEARED_FADE
 
 
 ## While the card is open the conversation on show waits: its keys are not read, and the card stops
