@@ -2,8 +2,8 @@
 extends GutTest
 ## The rooms' light and air: each keeps within its light and particle budgets, both share one
 ## environment with no fog measured from the camera, the baked light they draw with is exported in a
-## form every browser reads, and the air (torch flicker, embers) stops with the world on a pause but
-## keeps moving while people talk.
+## form every browser reads, the air (torch flicker, embers) stops with the world on a pause but
+## keeps moving while people talk, and every figure carries a faint light of its own.
 
 const MAIN: PackedScene = preload("res://scenes/main.tscn")
 const ROOMS: Array[PackedScene] = [
@@ -129,3 +129,29 @@ func test_a_pause_freezes_the_air_with_the_units_but_a_conversation_does_not() -
 		await _check_air_moves(main, true, "while people talk")
 		hold.set_held(&"talk", false)
 	Story.finish(story)
+
+
+## Every party member and everyone to talk to carries a faint light of their own colours, so they stay
+## distinguishable in a room's darkest corner (Step 5's rule: a lift on characters, not more room light).
+func test_every_figure_carries_a_lift_of_its_own_colours() -> void:
+	var state := GameState.new_game()
+	state.join(&"zahra")
+	state.join(&"gonzalo")
+	var main: Main = Story.boot(self, state)
+	await wait_physics_frames(3)
+	var figures: Array[Node] = []
+	figures.append_array(main.party)
+	figures.append_array(main.room.npcs().filter(func(npc: Npc) -> bool: return npc.visible))
+	assert_gt(figures.size(), 3, "the party and the people in the haven")
+	for figure: Node in figures:
+		var meshes: Array[Node] = figure.get_node("Visual").find_children("*", "MeshInstance3D", true, false)
+		var lifted: int = 0
+		for mesh: MeshInstance3D in meshes:
+			var material := mesh.material_override as StandardMaterial3D
+			if material == null or not material.emission_enabled:
+				continue
+			assert_eq(material.emission_texture, material.albedo_texture, "%s: its own colours" % mesh.get_path())
+			assert_almost_eq(material.emission_energy_multiplier, UnitVisual.LIFT, 0.001, str(mesh.get_path()))
+			lifted += 1
+		assert_gt(lifted, 0, "%s is lifted" % figure.name)
+	Story.finish(main)
