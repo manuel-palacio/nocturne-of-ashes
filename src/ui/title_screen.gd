@@ -64,6 +64,16 @@ func is_preparing_shown() -> bool:
 	return _preparing.visible
 
 
+## Whether it asks if the save may be erased.
+func is_asking() -> bool:
+	return _question.visible
+
+
+## The middle of New game's place, where `No` stands while it asks, in the viewport's coordinates.
+func new_game_point() -> Vector2:
+	return _new_game_button.get_global_rect().get_center()
+
+
 func close() -> void:
 	_take_back()
 	_controls_card.close()
