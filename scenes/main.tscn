@@ -45,6 +45,7 @@ distance = 32.0
 min_distance = 16.0
 max_distance = 40.0
 zoom_step = 2.0
+panel_reserve_px = 220.0
 
 [node name="Camera" type="Camera3D" parent="CameraRig"]
 current = true

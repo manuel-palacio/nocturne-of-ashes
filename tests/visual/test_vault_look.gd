@@ -190,3 +190,27 @@ func test_the_west_door_is_cut_with_its_wall_and_can_still_be_used() -> void:
 	story.player.order_interact(door)
 	await wait_until(func() -> bool: return not users.is_empty(), 10.0)
 	assert_eq(users, [GameState.LEADER] as Array[StringName], "Álvar walked up to the door and used it")
+
+
+## A unit by the west wall, where the camera's focus is held, at the story's entry from the haven:
+## it stands right of the party panels or below them, not under them.
+func test_a_unit_at_the_west_wall_by_the_entry_stands_clear_of_the_party_panels() -> void:
+	# The frame the game is played and shown in, not the headless window's square one.
+	var window_size: Vector2i = get_tree().root.size
+	get_tree().root.size = Vector2i(1280, 720)
+	story = Story.boot(self, PageBoot.haven_finished())
+	await wait_physics_frames(3)
+	assert_eq(story.room.room_id, &"vault")
+	assert_eq(story.party.size(), 3)
+	story.rig.snap_to_target()
+	await wait_process_frames(2)
+	var panels: Rect2 = (story.hud.find_child("PartyColumn") as Control).get_global_rect()
+	assert_gt(panels.size.y, 200.0, "three panels")
+	var map: RID = story.get_world_3d().navigation_map
+	var entry: Vector3 = story.player.global_position
+	for z: float in [entry.z - 1.5, entry.z, entry.z + 1.5]:
+		var edge: Vector3 = NavigationServer3D.map_get_closest_point(map, Vector3(-12.0, 0.0, z))
+		var at: Vector2 = story.rig.camera().unproject_position(edge)
+		assert_true(at.x > panels.end.x or at.y > panels.end.y,
+				"a unit at %s is drawn at %s, clear of the panels %s" % [edge, at, panels])
+	get_tree().root.size = window_size

@@ -7,7 +7,9 @@ extends Node3D
 ## on the floor; from the wall at its bottom, nearest the camera, `near_fraction` of how far the floor
 ## is seen toward the camera, which leaves room for the HUD along the bottom edge; from the wall at its
 ## top, `far_fraction` of that, less, so the wall ahead and its doors stay in sight. At a fraction of 1
-## a wall comes to the screen's edge and no further in.
+## a wall comes to the screen's edge and no further in. The wall at the screen's left, where the HUD's
+## party panels are, is held further off when `panel_reserve_px` asks for it, so a unit by that wall
+## stands right of the panels (the dark beyond the wall goes under them).
 
 @export var pitch_degrees: float = 50.0
 @export var distance: float = 12.0
@@ -24,6 +26,9 @@ extends Node3D
 @export var near_fraction: float = 0.8
 ## The margin from the wall at the screen's top, as a fraction of the view's reach toward the camera.
 @export var far_fraction: float = 0.5
+## How far in from the screen's left edge, in the viewport's pixels, a unit at the wall on that side
+## stands at least: the party panels' width and a ring's. At 0 that wall is held like the right one.
+@export var panel_reserve_px: float = 0.0
 
 var target: Node3D
 ## The room's floor in world x and z (a `Rect2`'s y is z); without area the focus is not held in.
@@ -69,9 +74,12 @@ func margin_toward(outward: Vector2) -> float:
 	var reach: Vector2 = view_reach()
 	# Where the camera looks, along the floor: -z unturned.
 	var look := Vector2(-sin(rotation.y), -cos(rotation.y))
+	# To the screen's right, along the floor: +x unturned.
+	var right := Vector2(cos(rotation.y), -sin(rotation.y))
 	var ahead: float = outward.normalized().dot(look)
 	var depth: float = (far_fraction if ahead > 0.0 else near_fraction) * reach.y
-	return (1.0 - absf(ahead)) * side_fraction * reach.x + absf(ahead) * depth
+	var side: float = _left_fraction() if outward.normalized().dot(right) < 0.0 else side_fraction
+	return (1.0 - absf(ahead)) * side * reach.x + absf(ahead) * depth
 
 
 ## How far the view reaches on the floor from the focus point: across the screen to its side edge (x),
@@ -87,6 +95,17 @@ func view_reach() -> Vector2:
 	var lowest: float = minf(pitch + half_fov, deg_to_rad(89.0))
 	var toward: float = distance * cos(pitch) - distance * sin(pitch) / tan(lowest)
 	return Vector2(across, toward)
+
+
+## The margin from the wall at the screen's left, as a fraction of the view's half-width: the side
+## fraction, or less, so that a unit at that wall stands `panel_reserve_px` in from the screen's edge.
+func _left_fraction() -> float:
+	if panel_reserve_px <= 0.0:
+		return side_fraction
+	var half_width: float = get_viewport().get_visible_rect().size.x / 2.0
+	if half_width <= 0.0:
+		return side_fraction
+	return clampf(1.0 - panel_reserve_px / half_width, 0.0, side_fraction)
 
 
 func rotate_by(radians: float) -> void:
