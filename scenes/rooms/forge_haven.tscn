@@ -127,7 +127,7 @@ _data = {
 script = ExtResource("1_rrw2c")
 room_id = &"haven"
 floor_rect = Rect2(-9, -6, 18, 12)
-camera_far_fraction = 0.1
+camera_far_fraction = 0.3
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=2129957403]
 navigation_mesh = SubResource("NavigationMesh_klwib")

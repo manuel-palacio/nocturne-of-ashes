@@ -16,7 +16,8 @@ func test_the_haven_lets_the_focus_come_close_to_its_north_wall() -> void:
 	assert_almost_eq(main.rig.far_fraction, main.room.camera_far_fraction, 0.0001)
 	var wall: float = main.room.floor_bounds().position.y
 	var focus: Vector3 = main.rig.focus_for(AT_THE_ARCHES)
-	assert_lt(focus.z - wall, 1.0, "the focus comes within a metre of the north wall, at %.2f" % focus.z)
+	assert_lt(focus.z - wall, 1.5, "the focus comes within 1.5 m of the north wall, at %.2f" % focus.z)
+	assert_gt(focus.z - wall, 1.0, "but not so near that the dark above the wall fills the screen's top")
 	Story.finish(main)
 
 
