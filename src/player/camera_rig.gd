@@ -39,7 +39,9 @@ func _ready() -> void:
 	_place_camera()
 
 
-func _process(delta: float) -> void:
+# In the physics step, where units move: followed once per frame instead, the focus would chase a
+# target that moves on some frames and not on others, and the target would shake on screen.
+func _physics_process(delta: float) -> void:
 	if not is_instance_valid(target):
 		return
 	var weight: float = 1.0 - exp(-follow_sharpness * delta)
