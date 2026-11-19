@@ -245,3 +245,19 @@ func test_pieces_draw_only_with_the_shared_materials_and_textures() -> void:
 			assert_lte(maxi(texture.get_width(), texture.get_height()), MAX_TEXTURE, texture.resource_path)
 			for side: int in [texture.get_width(), texture.get_height()]:
 				assert_eq(side & (side - 1), 0, "%s is a power of two" % texture.resource_path)
+
+
+## The kit materials share the ember's shader (emission on, multiplied), so that a browser compiles one
+## shader for the whole kit; their own emission is black, so they give off no light.
+func test_the_kit_materials_share_the_embers_flags_and_give_off_no_light() -> void:
+	var ember := load("res://resources/materials/ember.tres") as BaseMaterial3D
+	for material_name: String in MATERIALS:
+		var material := load("res://resources/materials/%s.tres" % material_name) as BaseMaterial3D
+		assert_true(material.emission_enabled, material_name)
+		assert_eq(material.emission_operator, ember.emission_operator, material_name)
+		assert_eq(material.emission_operator, BaseMaterial3D.EMISSION_OP_MULTIPLY, material_name)
+		assert_eq(material.normal_enabled, ember.normal_enabled, material_name)
+		assert_eq(material.texture_filter, ember.texture_filter, material_name)
+		if material_name == "ember":
+			continue
+		assert_eq(material.emission, Color.BLACK, "%s gives off no light" % material_name)
