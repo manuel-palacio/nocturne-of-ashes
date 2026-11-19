@@ -91,6 +91,25 @@ func test_the_baked_light_is_exported_in_a_form_browsers_read() -> void:
 						"%s is not left out of the export by %s" % [file, pattern])
 
 
+
+## The ambient fill is set in three places: the shared environment the game draws with, and each
+## room's LightmapGI, which bakes it into the bounce light. They hold one colour and one energy.
+func test_the_ambient_fill_is_the_same_in_the_environment_and_both_bakes() -> void:
+	var environment := load(ENVIRONMENT) as Environment
+	assert_eq(environment.ambient_light_source, Environment.AMBIENT_SOURCE_COLOR)
+	for scene: PackedScene in ROOMS:
+		var room: Room = _room(scene)
+		var bakes: Array[Node] = room.find_children("*", "LightmapGI", true, false)
+		assert_eq(bakes.size(), 1, "%s: one LightmapGI" % room.room_id)
+		if bakes.is_empty():
+			continue
+		var bake := bakes[0] as LightmapGI
+		assert_eq(bake.environment_mode, LightmapGI.ENVIRONMENT_MODE_CUSTOM_COLOR, "%s: a custom fill" % room.room_id)
+		assert_eq(bake.environment_custom_color, environment.ambient_light_color, "%s: the fill's colour" % room.room_id)
+		assert_almost_eq(bake.environment_custom_energy, environment.ambient_light_energy, 0.0001,
+				"%s: the fill's energy" % room.room_id)
+
+
 func _positions(nodes: Array[Node]) -> Array[float]:
 	var at: Array[float] = []
 	for node: Node in nodes:
