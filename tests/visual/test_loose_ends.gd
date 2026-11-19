@@ -146,3 +146,25 @@ func test_every_room_is_baked_for_the_units_radius_in_cells_that_hold_it_exactly
 		var cells: float = navmesh.agent_radius / navmesh.cell_size
 		assert_almost_eq(cells, roundf(cells), 0.001, "%s: the radius is %.2f cells of %.2f m, not rounded up" % [path, cells, navmesh.cell_size])
 		assert_almost_eq(navmesh.cell_size, map_cell, 0.0001, "%s: the map's own cell size" % path)
+
+# k. The brain's memory that its leader walked lately is not handed on to a new leader.
+
+func test_a_new_leader_standing_still_is_not_followed_as_one_that_walked() -> void:
+	var zahra: Unit = arena.spawn(Arena.ZAHRA, Vector3(-4, 0, -6), true)
+	var alvar: Unit = arena.spawn(Arena.ALVAR, Vector3(-7, 0, -8))
+	# 4.5 m off: beyond the follow distance and the slack for a leader walking (3 + 1 m), within the
+	# slack for one standing still (3 + 2 m).
+	var gonzalo: Unit = arena.spawn(Arena.GONZALO, Vector3(0.5, 0, -6))
+	var brain: CombatBrain = zahra.get_node(^"Brain")
+	brain.leader = alvar
+	await wait_physics_frames(3)
+	# He walks past her, never far enough off to be followed.
+	alvar.order_move(Vector3(-1, 0, -8))
+	await wait_seconds(0.5)
+	assert_true(alvar.is_moving())
+	assert_ne(zahra.current_order(), Unit.Order.MOVE, "Álvar is not followed")
+	brain.leader = gonzalo
+	# Two thinks, both within `follow_recent` of Álvar's last step.
+	await wait_seconds(0.5)
+	assert_false(gonzalo.is_moving())
+	assert_ne(zahra.current_order(), Unit.Order.MOVE, "Gonzalo, standing still, is not followed")
