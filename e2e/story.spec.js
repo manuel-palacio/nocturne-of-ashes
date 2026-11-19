@@ -93,6 +93,30 @@ test('the title leads into a new game', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test('a double click on New game with a save keeps the save and asks', async ({ page }) => {
+  test.setTimeout(120000);
+  // A save: the vault's start is a checkpoint.
+  await open(page, 'probe=1&fresh=1&at=vault&calm=1');
+  expect((await state(page)).saved).toBe(true);
+  const errors = await open(page, 'probe=1&title=1');
+  const s = await state(page);
+  expect(s.title).toBe(true);
+  expect(s.asking).toBe(false);
+  const box = await page.locator('canvas').boundingBox();
+  const [x, y] = s.new_game;
+  // Two presses 0.1 s apart, at New game's place, where No takes over after the first.
+  await page.mouse.click(box.x + x, box.y + y);
+  await page.waitForTimeout(100);
+  await page.mouse.click(box.x + x, box.y + y);
+  await page.waitForTimeout(1000);
+  const after = await state(page);
+  expect(after.title).toBe(true);
+  expect(after.asking).toBe(true);
+  expect(after.saved).toBe(true);
+  expect(after.room).toBe('');
+  expect(errors).toEqual([]);
+});
+
 test('clicking someone starts a conversation and a choice moves Conscience', async ({ page }) => {
   test.setTimeout(120000);
   const errors = await open(page, 'probe=1&fresh=1');

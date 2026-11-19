@@ -85,6 +85,8 @@ func _write_state(_args: Array) -> void:
 		"notice": _main.hud.notice(),
 		"title": title,
 		"saved": _main.store != null and _main.store.has_save(),
+		"asking": _title() != null and _title().is_asking(),
+		"new_game": _title_point(view),
 		"people": _people(view),
 	}
 	# The selected member's, under the names the single-character tests read.
@@ -136,6 +138,20 @@ func _enemy_points(view: Vector2, marked_only: bool) -> Array[Array]:
 ## Each visible character's and door's screen point, `PERSON_HEIGHT` up, in CSS pixels relative to the
 ## canvas, whose size is `view`: a character under its untranslated label, a door under its node name.
 ## A point off screen is reported as it is, outside the canvas; only those behind the camera are left out.
+func _title() -> TitleScreen:
+	return _main.find_child("TitleScreen", true, false) as TitleScreen
+
+
+## The middle of the title's New game place, in CSS pixels relative to the canvas; empty without a
+## title.
+func _title_point(view: Vector2) -> Array[int]:
+	var title: TitleScreen = _title()
+	if title == null:
+		return []
+	var at: Vector2 = title.new_game_point() * view / get_viewport().get_visible_rect().size
+	return [roundi(at.x), roundi(at.y)]
+
+
 func _people(view: Vector2) -> Dictionary:
 	var people: Dictionary = {}
 	var camera: Camera3D = get_viewport().get_camera_3d()
