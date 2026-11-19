@@ -3,7 +3,7 @@ extends EditorPlugin
 ## Bakes the lightmap (`LightmapGI`) of every room listed in `ROOMS`, then quits the editor. It runs
 ## only when the editor is started with the user argument `--bake-light`, as `ops/bake-light.sh` does:
 ## the lightmapper needs the Forward+ renderer, while the game draws with Compatibility. Otherwise it
-## does nothing.
+## does nothing; the script enables it in `project.godot` for its run only.
 ##
 ## Godot binds no script method to bake a lightmap, so this presses the editor's own "Bake Lightmaps"
 ## button with the room's `LightmapGI` selected. Each room bakes into `<scene>.lmbake` and
