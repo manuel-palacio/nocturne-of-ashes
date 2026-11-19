@@ -83,6 +83,7 @@ var _last_checkpoint: Dictionary = {}
 @onready var _conversation: Conversation = $Conversation
 @onready var _world_hold: WorldHold = $WorldHold
 @onready var _travel: Travel = $Travel
+@onready var _warmup: ShaderWarmup = $ShaderWarmup
 ## Only the story scene has one.
 @onready var _title: TitleScreen = get_node_or_null(^"TitleLayer/TitleScreen")
 
@@ -269,6 +270,7 @@ func _locale_chosen_before_start() -> bool:
 ## Makes `from` the state and enters its room at its entry, or a new game's room and entry, with a
 ## warning, when its room does not exist; then saves. Closes the title first.
 func _play(from: GameState) -> void:
+	_warmup.stop()
 	if is_title_open():
 		_title.close()
 		_world_hold.set_held(&"title", false)
@@ -343,6 +345,8 @@ func _open_title() -> void:
 	_world_hold.set_held(&"title", true)
 	input.enabled = false
 	_title.open(store.has_save())
+	# Behind the title, the rooms' shaders are compiled while the player reads it.
+	_warmup.start([ROOMS[&"haven"], ROOMS[&"vault"]])
 
 
 func _hand_control_to_alvar() -> void:
