@@ -17,6 +17,14 @@ module.exports = defineConfig({
     // Headed: headless Chromium reads every WebGL frame back through the CPU (or renders with
     // SwiftShader), so it measures the test harness, not the game. Headed runs on the GPU.
     { name: 'chromium', use: { ...devices['Desktop Chrome'], headless: false } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    // Tests tagged @alone time the page's load, which another browser rendering beside it slows: in
+    // Firefox they run in a project of their own, after the others are done.
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] }, grepInvert: /@alone/ },
+    {
+      name: 'firefox-alone',
+      use: { ...devices['Desktop Firefox'] },
+      grep: /@alone/,
+      dependencies: ['chromium', 'firefox'],
+    },
   ],
 });

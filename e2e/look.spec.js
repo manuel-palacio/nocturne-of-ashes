@@ -46,38 +46,50 @@ async function settle(page) {
   }
 }
 
-// Walks Álvar past the first group of crusaders (x ≈ 1) to between it and the second (x ≈ 9), so that
-// all six come at the party at once, then lets it fight for ten seconds without further orders. Logs
-// the frame rate of each of those seconds.
-async function fightForTenSeconds(page) {
-  const box = await page.locator('canvas').boundingBox();
-  const full = (await state(page)).party.map((m) => m.health);
-  for (let i = 0; i < 15 && (await state(page)).pos[0] < 3; i++) {
-    await page.mouse.click(box.x + box.width * 0.8, box.y + box.height * 0.5);
-    await page.waitForTimeout(800);
-  }
-  await until(page, (from) => {
-    window.nocturneProbe();
-    return window.nocturneState.party.some((m, k) => m.health < from[k]);
-  }, full, 20000);
-  await page.screenshot({ path: `build/e2e/budget-skirmish-${test.info().project.name}.png` });
-  const rates = [];
-  for (let i = 0; i < 10; i++) {
+// The frame rate of each of the next `seconds` seconds.
+async function rates(page, seconds) {
+  const found = [];
+  for (let i = 0; i < seconds; i++) {
     await page.waitForTimeout(1000);
-    rates.push((await state(page)).fps);
+    found.push((await state(page)).fps);
   }
-  console.log(`fighting, frames a second: ${rates.join(' ')}`);
+  return found;
 }
 
 test.describe('the frame rate with everyone on screen', () => {
   test('the skirmish holds 30 frames a second with the party and six crusaders fighting', async ({ page }) => {
     test.setTimeout(120000);
     const errors = await open(page, 'skirmish=1&probe=1');
-    await fightForTenSeconds(page);
-    const s = await state(page);
-    console.log(`skirmish: ${s.fps} fps, ${s.enemies} crusaders standing`);
-    expect(s.party.length).toBe(3);
-    expect(s.fps).toBeGreaterThanOrEqual(30);
+    const box = await page.locator('canvas').boundingBox();
+    // The camera drawn back as far as it goes, so that both groups of crusaders (x ≈ 1 and x ≈ 9)
+    // fit on screen with the party.
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    for (let i = 0; i < 6; i++) {
+      await page.mouse.wheel(0, 100);
+      await page.waitForTimeout(100);
+    }
+    // Álvar, quickened by Iron Sinew, runs east past the first group to between the two, so that
+    // all six come at the party while all six still stand.
+    const full = (await state(page)).party.map((m) => m.health);
+    await page.keyboard.press('1');
+    for (let i = 0; i < 15 && (await state(page)).pos[0] < 3; i++) {
+      await page.mouse.click(box.x + box.width * 0.9, box.y + box.height * 0.5);
+      await page.waitForTimeout(400);
+    }
+    // The fight's window starts at the first blow with all six standing and on screen.
+    await until(page, (from) => {
+      window.nocturneProbe();
+      const s = window.nocturneState;
+      const view = s.view;
+      const onScreen = s.foes.filter((p) => p[0] > 0 && p[0] < view[0] && p[1] > 0 && p[1] < view[1]);
+      return s.party.some((m, k) => m.health < from[k]) && s.enemies === 6 && onScreen.length === 6;
+    }, full, 20000);
+    await page.screenshot({ path: `build/e2e/budget-skirmish-${test.info().project.name}.png` });
+    const fighting = await rates(page, 10);
+    const end = await state(page);
+    console.log(`fighting, frames a second: ${fighting.join(' ')}; ${end.enemies} crusaders standing at the end`);
+    expect(end.party.length).toBe(3);
+    expect(Math.min(...fighting)).toBeGreaterThanOrEqual(30);
     expect(errors).toEqual([]);
   });
 
@@ -101,25 +113,58 @@ test.describe('the frame rate with everyone on screen', () => {
       await page.waitForTimeout(400);
     }
     expect(allInView((await state(page)).people)).toBe(true);
-    await page.waitForTimeout(3000);
-    const fps = (await state(page)).fps;
-    console.log(`haven: ${fps} fps`);
+    await page.waitForTimeout(1000);
+    const seconds = await rates(page, 5);
+    console.log(`haven, frames a second: ${seconds.join(' ')}`);
     await page.screenshot({ path: `build/e2e/budget-haven-${test.info().project.name}.png` });
-    expect(fps).toBeGreaterThanOrEqual(30);
+    expect(allInView((await state(page)).people)).toBe(true);
+    expect(Math.min(...seconds)).toBeGreaterThanOrEqual(30);
     expect(errors).toEqual([]);
   });
 });
 
-test('a first load starts the game in under 20 seconds', async ({ page }) => {
+// The moment, in the page's own clock (milliseconds since navigation), that `fn` first held there:
+// taken inside the page, so a main thread held by the engine cannot shift it.
+async function pageTimeWhen(page, fn, timeout) {
+  await page.waitForFunction(`(() => {
+    if (!(${fn})()) return false;
+    window.__heldAt = window.__heldAt || performance.now();
+    return true;
+  })()`, null, { timeout, polling: 50 });
+  const at = await page.evaluate(() => { const t = window.__heldAt; window.__heldAt = undefined; return t; });
+  return at;
+}
+
+const answers = () => {
+  if (window.nocturneStarted !== true) return false;
+  window.nocturneProbe();
+  return window.nocturneState !== undefined;
+};
+
+test('a first load has the title answering in under 20 seconds', { tag: '@alone' }, async ({ page }) => {
   test.setTimeout(90000);
   // Each test has a fresh browser context, so nothing is cached.
   await page.setViewportSize({ width: 1280, height: 720 });
-  const from = Date.now();
   await page.goto('/?probe=1&fresh=1&title=1');
-  await page.waitForFunction(() => window.nocturneStarted === true, null, { timeout: 60000, polling: 100 });
-  const seconds = (Date.now() - from) / 1000;
-  console.log(`first load: ${seconds.toFixed(1)} s`);
-  expect(seconds).toBeLessThan(20);
+  const at = await pageTimeWhen(page, answers.toString(), 60000);
+  console.log(`first load: the title answers at ${(at / 1000).toFixed(1)} s`);
+  expect((await state(page)).title).toBe(true);
+  expect(at).toBeLessThan(20000);
+});
+
+test('New game pressed as soon as the title answers reaches the haven within 15 s of the page opening', { tag: '@alone' }, async ({ page }) => {
+  test.setTimeout(90000);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto('/?probe=1&fresh=1&title=1');
+  const answered = await pageTimeWhen(page, answers.toString(), 60000);
+  await page.keyboard.press('Enter');
+  const haven = await pageTimeWhen(page, (() => {
+    window.nocturneProbe();
+    const s = window.nocturneState;
+    return !s.title && s.room === 'haven';
+  }).toString(), 30000);
+  console.log(`title answers at ${(answered / 1000).toFixed(1)} s; the haven at ${(haven / 1000).toFixed(1)} s`);
+  expect(haven).toBeLessThan(15000);
 });
 
 test.describe('the frames for the owner', () => {

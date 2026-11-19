@@ -67,7 +67,8 @@ func _write_state(_args: Array) -> void:
 		"party": party,
 		"selected": _main.party.find(selected),
 		"enemies": _main.enemies_alive(),
-		"marked": _marked(view),
+		"marked": _enemy_points(view, true),
+		"foes": _enemy_points(view, false),
 		"fallen": is_instance_valid(_main.player) and not _main.player.is_alive(),
 		"paused": _main.is_paused(),
 		"cleared": _main.is_cleared(),
@@ -110,16 +111,19 @@ func _member_state(member: Unit) -> Dictionary:
 	}
 
 
-## The screen point of each enemy showing the feed mark, `PERSON_HEIGHT` up, in CSS pixels relative to
-## the canvas, as `_people()` gives them, in no particular order.
-func _marked(view: Vector2) -> Array[Array]:
+## The screen point of each living enemy, or of each one showing the feed mark when `marked_only`,
+## `PERSON_HEIGHT` up, in CSS pixels relative to the canvas, as `_people()` gives them, in no
+## particular order; those behind the camera are left out.
+func _enemy_points(view: Vector2, marked_only: bool) -> Array[Array]:
 	var points: Array[Array] = []
 	var camera: Camera3D = get_viewport().get_camera_3d()
 	if camera == null:
 		return points
 	var to_css: Vector2 = view / get_viewport().get_visible_rect().size
 	for enemy: Unit in _main.enemies:
-		if not is_instance_valid(enemy) or not enemy.has_feed_mark():
+		if not is_instance_valid(enemy) or not enemy.is_alive():
+			continue
+		if marked_only and not enemy.has_feed_mark():
 			continue
 		var point: Vector3 = enemy.global_position + Vector3.UP * PERSON_HEIGHT
 		if camera.is_position_behind(point):
