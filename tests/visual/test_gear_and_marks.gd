@@ -212,3 +212,19 @@ func test_a_door_nothing_answers_shows_no_ring() -> void:
 	var door := main.room.find_child("WestDoor") as Door
 	await _place_alvar(door.global_position + Vector3(1.5, 0.3, 0.0))  # inside the room, by the west wall
 	assert_eq(_lit_interactables(), [])
+
+func test_a_story_flag_that_changes_what_can_be_used_moves_the_ring_at_once() -> void:
+	await _haven()
+	var gonzalo: Npc = _npc("Gonzalo")
+	# On his east side, over 4 m from the smith.
+	await _place_alvar(gonzalo.global_position + Vector3(1.5, 0.3, 1.0))
+	# Until Álvar, the camera and the mouse are all still.
+	await wait_seconds(2.0)
+	assert_true(gonzalo.has_use_mark(), "the nearest one to use")
+	main.state.set_flag(&"gonzalo_joined")
+	await wait_physics_frames(2)
+	assert_false(gonzalo.visible)
+	assert_false(gonzalo.has_use_mark(), "no ring on him once he is gone")
+	main.state.set_flag(&"gonzalo_joined", false)
+	await wait_physics_frames(2)
+	assert_true(gonzalo.has_use_mark(), "his ring again once he is back")
