@@ -5,6 +5,7 @@ const MAIN := preload("res://scenes/main.tscn")
 const GAME := preload("res://scenes/game.tscn")
 const HAVEN := preload("res://scenes/rooms/forge_haven.tscn")
 const BOX := preload("res://scenes/ui/dialogue_box.tscn")
+const THEME := preload("res://resources/ui/theme.tres")
 const PALETTES: Array[String] = ["alvar", "captive", "crusader", "gonzalo", "malakor", "sergeant", "smith", "zahra"]
 
 var main: Main
@@ -91,6 +92,33 @@ func test_a_portrait_exists_for_each_palette_at_256_px() -> void:
 		assert_lt(corner.get_luminance(), 0.12, path)
 
 
+func test_each_party_panel_shows_its_members_portrait() -> void:
+	await _skirmish()
+	var expected: Array[String] = ["alvar", "zahra", "gonzalo"]
+	for index: int in 3:
+		var portrait := main.hud.panels()[index].find_child("Portrait") as TextureRect
+		assert_not_null(portrait)
+		assert_eq(portrait.texture.resource_path, "res://assets/portraits/%s.png" % expected[index])
+		assert_eq(portrait.size, Vector2(64, 64))
+		assert_null(main.hud.panels()[index].find_child("Swatch"), "the swatch is gone")
+
+
+func test_the_dialogue_box_shows_the_speakers_portrait_and_none_for_a_stranger() -> void:
+	var box: DialogueBox = add_child_autofree(BOX.instantiate())
+	var runner: DialogueRunner = autofree(DialogueRunner.new())
+	box.bind(runner)
+	var lines: Array[String] = []
+	runner.line_shown.emit("Malakor", "You wake.", lines)
+	await wait_physics_frames(2)
+	var portrait := box.find_child("Portrait") as TextureRect
+	assert_true(portrait.is_visible_in_tree())
+	assert_eq(portrait.texture.resource_path, "res://assets/portraits/malakor.png")
+	assert_eq(portrait.size, Vector2(128, 128))
+	runner.line_shown.emit("Somebody", "Who am I?", lines)
+	await wait_physics_frames(2)
+	assert_false(portrait.is_visible_in_tree())
+
+
 func test_every_speaker_in_the_haven_wears_the_portrait_of_their_dress() -> void:
 	var haven: Node = autofree(HAVEN.instantiate())
 	var npcs: Array[Node] = haven.find_children("*", "Npc", true, false)
@@ -101,3 +129,35 @@ func test_every_speaker_in_the_haven_wears_the_portrait_of_their_dress() -> void
 		assert_eq(Portraits.of_speaker(npc.label), Portraits.of_dress(npc.dress), npc.label)
 	assert_eq(Portraits.of_speaker("Álvar").resource_path, "res://assets/portraits/alvar.png")
 	assert_null(Portraits.of_speaker("Somebody"))
+
+
+func test_every_control_of_the_hud_the_dialogue_box_and_the_title_uses_the_theme() -> void:
+	await _boot_with_title(null)
+	var title: TitleScreen = _title()
+	var hud: Hud = main.hud
+	var controls: Array[Control] = _controls(title) + _controls(hud)
+	assert_gt(controls.size(), 20)
+	for control: Control in controls:
+		assert_eq(_theme_of(control), THEME, str(control.get_path()))
+		assert_eq(control.get_theme_default_font(), THEME.default_font, str(control.get_path()))
+		var label := control as Label
+		if label != null and label.label_settings != null:
+			assert_null(label.label_settings.font, "%s keeps the theme's face" % label.get_path())
+
+
+func test_a_panel_and_a_gift_button_write_nothing_while_nothing_changes() -> void:
+	await _skirmish()
+	main.set_paused(true)
+	await wait_physics_frames(2)
+	var panel: PartyMemberPanel = main.hud.panels()[0]
+	var button: GiftButton = main.hud.gift_buttons()[0]
+	var panel_writes: int = panel.text_writes()
+	var button_writes: int = button.text_writes()
+	await wait_physics_frames(30)
+	assert_eq(panel.text_writes(), panel_writes)
+	assert_eq(button.text_writes(), button_writes)
+	main.player.stats.spend_blood(42)  # 18, too little for Iron Sinew's 20
+	main.player.take_hit(10)
+	await wait_physics_frames(2)
+	assert_gt(panel.text_writes(), panel_writes, "a change is written")
+	assert_gt(button.text_writes(), button_writes, "a change is written")

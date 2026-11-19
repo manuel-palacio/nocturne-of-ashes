@@ -1,0 +1,189 @@
+[gd_resource type="Theme" load_steps=30 format=3]
+
+[ext_resource type="FontFile" path="res://assets/ui/alegreya-medium.ttf" id="1_text"]
+[ext_resource type="FontFile" path="res://assets/ui/alegreya-bold.ttf" id="2_bold"]
+[ext_resource type="FontFile" path="res://assets/ui/pirata-one.ttf" id="3_display"]
+[ext_resource type="Texture2D" path="res://assets/ui/panel.png" id="4_panel"]
+[ext_resource type="Texture2D" path="res://assets/ui/panel_selected.png" id="5_panel_selected"]
+[ext_resource type="Texture2D" path="res://assets/ui/button.png" id="6_button"]
+[ext_resource type="Texture2D" path="res://assets/ui/button_hover.png" id="7_button_hover"]
+[ext_resource type="Texture2D" path="res://assets/ui/button_pressed.png" id="8_button_pressed"]
+[ext_resource type="Texture2D" path="res://assets/ui/button_disabled.png" id="9_button_disabled"]
+
+[sub_resource type="FontVariation" id="FontVariation_text"]
+base_font = ExtResource("1_text")
+opentype_features = {
+1819178349: 1
+}
+
+[sub_resource type="FontVariation" id="FontVariation_bold"]
+base_font = ExtResource("2_bold")
+opentype_features = {
+1819178349: 1
+}
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_panel"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+texture = ExtResource("4_panel")
+texture_margin_left = 7.0
+texture_margin_top = 7.0
+texture_margin_right = 7.0
+texture_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_panel_selected"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+texture = ExtResource("5_panel_selected")
+texture_margin_left = 7.0
+texture_margin_top = 7.0
+texture_margin_right = 7.0
+texture_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_button"]
+content_margin_left = 12.0
+content_margin_top = 5.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+texture = ExtResource("6_button")
+texture_margin_left = 7.0
+texture_margin_top = 7.0
+texture_margin_right = 7.0
+texture_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_button_hover"]
+content_margin_left = 12.0
+content_margin_top = 5.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+texture = ExtResource("7_button_hover")
+texture_margin_left = 7.0
+texture_margin_top = 7.0
+texture_margin_right = 7.0
+texture_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_button_pressed"]
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 5.0
+texture = ExtResource("8_button_pressed")
+texture_margin_left = 7.0
+texture_margin_top = 7.0
+texture_margin_right = 7.0
+texture_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_button_disabled"]
+content_margin_left = 12.0
+content_margin_top = 5.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+texture = ExtResource("9_button_disabled")
+texture_margin_left = 7.0
+texture_margin_top = 7.0
+texture_margin_right = 7.0
+texture_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_targeting"]
+content_margin_left = 12.0
+content_margin_top = 5.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+texture = ExtResource("5_panel_selected")
+texture_margin_left = 7.0
+texture_margin_top = 7.0
+texture_margin_right = 7.0
+texture_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_focus"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar_back"]
+bg_color = Color(0.02, 0.015, 0.015, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.18, 0.16, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health"]
+bg_color = Color(0.72, 0.1, 0.07, 1)
+border_width_top = 1
+border_color = Color(0.93, 0.38, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_blood"]
+bg_color = Color(0.36, 0.03, 0.15, 1)
+border_width_top = 1
+border_color = Color(0.55, 0.12, 0.3, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_portrait"]
+content_margin_left = 3.0
+content_margin_top = 3.0
+content_margin_right = 3.0
+content_margin_bottom = 3.0
+texture = ExtResource("4_panel")
+texture_margin_left = 7.0
+texture_margin_top = 7.0
+texture_margin_right = 7.0
+texture_margin_bottom = 7.0
+
+[resource]
+default_font = SubResource("FontVariation_text")
+default_font_size = 18
+Button/colors/font_color = Color(0.9, 0.84, 0.74, 1)
+Button/colors/font_disabled_color = Color(0.5, 0.46, 0.42, 1)
+Button/colors/font_focus_color = Color(0.9, 0.84, 0.74, 1)
+Button/colors/font_hover_color = Color(1, 0.87, 0.6, 1)
+Button/colors/font_hover_pressed_color = Color(1, 0.87, 0.6, 1)
+Button/colors/font_pressed_color = Color(0.82, 0.74, 0.62, 1)
+Button/colors/font_outline_color = Color(0, 0, 0, 1)
+Button/constants/outline_size = 3
+Button/font_sizes/font_size = 18
+Button/styles/disabled = SubResource("StyleBoxTexture_button_disabled")
+Button/styles/focus = SubResource("StyleBoxEmpty_focus")
+Button/styles/hover = SubResource("StyleBoxTexture_button_hover")
+Button/styles/hover_pressed = SubResource("StyleBoxTexture_button_pressed")
+Button/styles/normal = SubResource("StyleBoxTexture_button")
+Button/styles/pressed = SubResource("StyleBoxTexture_button_pressed")
+BloodBar/base_type = &"ProgressBar"
+BloodBar/styles/fill = SubResource("StyleBoxFlat_blood")
+HeaderLabel/base_type = &"Label"
+HeaderKeyLabel/base_type = &"Label"
+KeyLabel/colors/font_color = Color(0.93, 0.74, 0.44, 1)
+KeyLabel/fonts/font = SubResource("FontVariation_bold")
+Label/colors/font_color = Color(0.93, 0.74, 0.44, 1)
+HeaderLabel/colors/font_outline_color = Color(0, 0, 0, 1)
+HeaderLabel/constants/outline_size = 4
+HeaderLabel/font_sizes/font_size = 20
+HeaderLabel/fonts/font = SubResource("FontVariation_bold")
+HealthBar/base_type = &"ProgressBar"
+HealthBar/styles/fill = SubResource("StyleBoxFlat_health")
+KeyLabel/base_type = &"Label"
+KeyLabel/colors/font_color = Color(0.93, 0.74, 0.44, 1)
+KeyLabel/fonts/font = SubResource("FontVariation_bold")
+Label/colors/font_color = Color(0.9, 0.85, 0.76, 1)
+Label/colors/font_outline_color = Color(0, 0, 0, 1)
+Label/colors/font_shadow_color = Color(0, 0, 0, 0)
+Panel/styles/panel = SubResource("StyleBoxTexture_panel")
+PanelContainer/styles/panel = SubResource("StyleBoxTexture_panel")
+PortraitFrame/base_type = &"PanelContainer"
+PortraitFrame/styles/panel = SubResource("StyleBoxTexture_portrait")
+ProgressBar/styles/background = SubResource("StyleBoxFlat_bar_back")
+ProgressBar/styles/fill = SubResource("StyleBoxFlat_health")
+SelectedPanel/base_type = &"PanelContainer"
+SelectedPanel/styles/panel = SubResource("StyleBoxTexture_panel_selected")
+TargetingButton/base_type = &"Button"
+TargetingButton/styles/hover = SubResource("StyleBoxTexture_targeting")
+TargetingButton/styles/normal = SubResource("StyleBoxTexture_targeting")
+TitleLabel/base_type = &"Label"
+TitleKeyLabel/base_type = &"Label"
+KeyLabel/colors/font_color = Color(0.93, 0.74, 0.44, 1)
+KeyLabel/fonts/font = SubResource("FontVariation_bold")
+Label/colors/font_color = Color(0.86, 0.72, 0.52, 1)
+TitleLabel/colors/font_outline_color = Color(0, 0, 0, 1)
+TitleLabel/constants/outline_size = 10
+TitleLabel/font_sizes/font_size = 84
+TitleLabel/fonts/font = ExtResource("3_display")

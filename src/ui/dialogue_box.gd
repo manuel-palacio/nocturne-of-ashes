@@ -1,7 +1,8 @@
 class_name DialogueBox
 extends Control
-## The conversation on show, at the bottom of the screen: who speaks, what they say, and the open
-## choices numbered from 1, and at its lower right a hint saying how to go on. Visible exactly while
+## The conversation on show, at the bottom of the screen: who speaks, with their portrait beside the
+## line when they have one (`Portraits.of_speaker()`), what they say, and the open choices numbered
+## from 1, and at its lower right a hint saying how to go on. Visible exactly while
 ## its runner runs. A plain line goes on with the `confirm` or `pause` action (Enter or Space) or a
 ## left click on the box; a choice is taken by clicking it or pressing its number (`choice_1`…
 ## `choice_4`), read only while a conversation runs. No control takes keyboard focus, and the box stops
@@ -23,6 +24,8 @@ var _runner: DialogueRunner
 var _opened_on: int = -1
 
 @onready var _frame: Control = %Frame
+@onready var _portrait_frame: Control = %PortraitFrame
+@onready var _portrait: TextureRect = %Portrait
 @onready var _speaker: Label = %SpeakerLabel
 @onready var _text: Label = %TextLabel
 @onready var _choices: VBoxContainer = %Choices
@@ -76,6 +79,9 @@ func _show_line(speaker: String, text: String, choices: Array[String]) -> void:
 	visible = true
 	_speaker.text = speaker
 	_speaker.visible = not speaker.is_empty()
+	# Looked up by the speaker's name as the conversation gives it, which is also what is shown.
+	_portrait.texture = Portraits.of_speaker(speaker)
+	_portrait_frame.visible = _portrait.texture != null
 	_text.text = text
 	_clear_choices()
 	for index: int in choices.size():
@@ -84,7 +90,7 @@ func _show_line(speaker: String, text: String, choices: Array[String]) -> void:
 		choice.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 		choice.focus_mode = Control.FOCUS_NONE
 		choice.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		choice.add_theme_font_size_override(&"font_size", 18)
+		choice.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		# Deferred, so the button is not taken away while it is still sending its press.
 		choice.pressed.connect(_runner.choose.bind(index), CONNECT_DEFERRED)
 		_choices.add_child(choice)
