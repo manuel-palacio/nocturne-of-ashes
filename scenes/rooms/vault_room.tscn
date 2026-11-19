@@ -674,6 +674,31 @@ mesh = SubResource("SphereMesh_1l5qb")
 libraries/ = SubResource("gen_flicker_lib_0")
 autoplay = &"flicker"
 
+[node name="Embers" type="CPUParticles3D" parent="Lights/Torch1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.0, 0.0)
+cast_shadow = 0
+amount = 10
+mesh = SubResource("gen_spark")
+lifetime = 1.8
+randomness = 0.5
+local_coords = false
+emission_shape = 3
+emission_box_extents = Vector3(0.05, 0.03, 0.05)
+direction = Vector3(0, 1, 0)
+spread = 20.0
+gravity = Vector3(0, 0.35, 0)
+initial_velocity_min = 0.3
+initial_velocity_max = 0.8
+angular_velocity_min = -1.0
+angular_velocity_max = 1.0
+tangential_accel_min = -0.4
+tangential_accel_max = 0.4
+damping_min = 0.2
+damping_max = 0.4
+scale_amount_min = 0.5
+scale_amount_max = 1.2
+scale_amount_curve = SubResource("gen_ember_fade")
+
 [node name="Torch2" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.0, 2.7, 2.81)
 light_color = Color(1.0, 0.55, 0.24, 1)
@@ -689,6 +714,31 @@ mesh = SubResource("SphereMesh_1l5qb")
 libraries/ = SubResource("gen_flicker_lib_1")
 autoplay = &"flicker"
 
+[node name="Embers" type="CPUParticles3D" parent="Lights/Torch2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.0, 0.0)
+cast_shadow = 0
+amount = 10
+mesh = SubResource("gen_spark")
+lifetime = 1.8
+randomness = 0.5
+local_coords = false
+emission_shape = 3
+emission_box_extents = Vector3(0.05, 0.03, 0.05)
+direction = Vector3(0, 1, 0)
+spread = 20.0
+gravity = Vector3(0, 0.35, 0)
+initial_velocity_min = 0.3
+initial_velocity_max = 0.8
+angular_velocity_min = -1.0
+angular_velocity_max = 1.0
+tangential_accel_min = -0.4
+tangential_accel_max = 0.4
+damping_min = 0.2
+damping_max = 0.4
+scale_amount_min = 0.5
+scale_amount_max = 1.2
+scale_amount_curve = SubResource("gen_ember_fade")
+
 [node name="Torch3" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.0, 2.7, -2.81)
 light_color = Color(1.0, 0.55, 0.24, 1)
@@ -703,6 +753,31 @@ mesh = SubResource("SphereMesh_1l5qb")
 [node name="Flicker" type="AnimationPlayer" parent="Lights/Torch3"]
 libraries/ = SubResource("gen_flicker_lib_2")
 autoplay = &"flicker"
+
+[node name="Embers" type="CPUParticles3D" parent="Lights/Torch3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.0, 0.0)
+cast_shadow = 0
+amount = 10
+mesh = SubResource("gen_spark")
+lifetime = 1.8
+randomness = 0.5
+local_coords = false
+emission_shape = 3
+emission_box_extents = Vector3(0.05, 0.03, 0.05)
+direction = Vector3(0, 1, 0)
+spread = 20.0
+gravity = Vector3(0, 0.35, 0)
+initial_velocity_min = 0.3
+initial_velocity_max = 0.8
+angular_velocity_min = -1.0
+angular_velocity_max = 1.0
+tangential_accel_min = -0.4
+tangential_accel_max = 0.4
+damping_min = 0.2
+damping_max = 0.4
+scale_amount_min = 0.5
+scale_amount_max = 1.2
+scale_amount_curve = SubResource("gen_ember_fade")
 
 [node name="Torch4" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.0, 2.7, 2.81)
@@ -721,6 +796,31 @@ mesh = SubResource("SphereMesh_1l5qb")
 [node name="Flicker" type="AnimationPlayer" parent="Lights/Torch4"]
 libraries/ = SubResource("gen_flicker_lib_3")
 autoplay = &"flicker"
+
+[node name="Embers" type="CPUParticles3D" parent="Lights/Torch4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.0, 0.0)
+cast_shadow = 0
+amount = 10
+mesh = SubResource("gen_spark")
+lifetime = 1.8
+randomness = 0.5
+local_coords = false
+emission_shape = 3
+emission_box_extents = Vector3(0.05, 0.03, 0.05)
+direction = Vector3(0, 1, 0)
+spread = 20.0
+gravity = Vector3(0, 0.35, 0)
+initial_velocity_min = 0.3
+initial_velocity_max = 0.8
+angular_velocity_min = -1.0
+angular_velocity_max = 1.0
+tangential_accel_min = -0.4
+tangential_accel_max = 0.4
+damping_min = 0.2
+damping_max = 0.4
+scale_amount_min = 0.5
+scale_amount_max = 1.2
+scale_amount_curve = SubResource("gen_ember_fade")
 
 [node name="LockLight" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.3, 2.1, -5.0)

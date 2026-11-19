@@ -1,8 +1,9 @@
 # tests/visual/test_atmosphere.gd
 extends GutTest
-## The rooms' light and air: both share one environment with no fog measured from the camera, the
-## baked light they draw with is exported in a form every browser reads, and the air (torch flicker,
-## embers) stops with the world on a pause but keeps moving while people talk.
+## The rooms' light and air: each keeps within its light and particle budgets, both share one
+## environment with no fog measured from the camera, the baked light they draw with is exported in a
+## form every browser reads, and the air (torch flicker, embers) stops with the world on a pause but
+## keeps moving while people talk.
 
 const MAIN: PackedScene = preload("res://scenes/main.tscn")
 const ROOMS: Array[PackedScene] = [
@@ -10,6 +11,9 @@ const ROOMS: Array[PackedScene] = [
 	preload("res://scenes/rooms/forge_haven.tscn"),
 ]
 const ENVIRONMENT: String = "res://resources/environment/cellar.tres"
+const MAX_LIGHTS: int = 6
+const MAX_SHADOWED_LIGHTS: int = 2
+const MAX_PARTICLES: int = 200
 ## Lossless, in the lightmap's `.import`: a VRAM-compressed lightmap is stored in formats some
 ## browsers' WebGL cannot read.
 const LOSSLESS: int = 0
@@ -25,6 +29,23 @@ func _air_nodes(room: Room) -> Array[Node]:
 	found.append_array(room.air().find_children("*", "CPUParticles3D", true, false))
 	found.append_array(room.air().find_children("*", "GPUParticles3D", true, false))
 	return found
+
+
+func test_lights_and_particles_keep_within_the_budget() -> void:
+	for scene: PackedScene in ROOMS:
+		var room: Room = _room(scene)
+		var lights: Array[Node] = room.find_children("*", "Light3D", true, false)
+		var shadowed: int = lights.filter(func(light: Light3D) -> bool: return light.shadow_enabled).size()
+		assert_between(lights.size(), 1, MAX_LIGHTS, "%s: real-time lights" % room.room_id)
+		assert_lte(shadowed, MAX_SHADOWED_LIGHTS, "%s: lights with shadows" % room.room_id)
+		var particles: int = 0
+		for emitter: Node in room.find_children("*", "CPUParticles3D", true, false):
+			particles += (emitter as CPUParticles3D).amount
+		for emitter: Node in room.find_children("*", "GPUParticles3D", true, false):
+			particles += (emitter as GPUParticles3D).amount
+		assert_between(particles, 1, MAX_PARTICLES, "%s: particles" % room.room_id)
+		var flickers: Array[Node] = room.air().find_children("*", "AnimationPlayer", true, false)
+		assert_gt(flickers.size(), 0, "%s: the torches flicker" % room.room_id)
 
 
 func test_both_rooms_share_one_environment_without_distance_fog() -> void:
