@@ -262,3 +262,24 @@ func test_the_kit_materials_share_the_embers_flags_and_give_off_no_light() -> vo
 		if material_name == "ember":
 			continue
 		assert_eq(material.emission, Color.BLACK, "%s gives off no light" % material_name)
+
+
+## Each opening's half-width between its colliders: the arch bays' jambs stand 4 cm into the opening,
+## the door frame's reveals do not.
+const OPENING_HALF: Dictionary = {"arch_horseshoe": 0.56, "arch_round": 1.56, "arch_segmental": 2.56, "door_frame": 0.7}
+
+
+func test_a_unit_walks_through_the_openings_off_centre_too() -> void:
+	var slot: int = 0
+	for opening: String in OPENING_HALF:
+		var piece: Node3D = _placed(opening, slot)
+		slot += 1
+		await wait_physics_frames(1)
+		# As far to each side as a unit fits, less a centimetre where it would touch, and a centimetre
+		# further, where it is stopped.
+		var fits: float = OPENING_HALF[opening] - UNIT_RADIUS
+		for side: float in [-1.0, 1.0]:
+			var x: float = side * (fits - 0.01)
+			assert_false(_walk_blocked(piece, Vector3(x, 0, 2), Vector3(x, 0, -2)), "through %s at x = %.2f" % [opening, x])
+			x = side * (fits + 0.01)
+			assert_true(_walk_blocked(piece, Vector3(x, 0, 2), Vector3(x, 0, -2)), "not through %s at x = %.2f" % [opening, x])
