@@ -1,5 +1,6 @@
 extends Node
-## Lets browser tests read the game. Active only on the web with `probe=1` in the page URL:
+## Lets browser tests read the game. Active only when `ProbeGate` allows it: on the web with `probe=1`
+## in the page URL, in the test build (never in the public build the site serves):
 ## `Main` registers itself through `watch()`; the probe then sets `window.nocturneStarted` once `Main`
 ## is ready and installs `window.nocturneProbe()`, which writes the game's state to
 ## `window.nocturneState`. Two test aids go with it: with `calm=1` the enemies' brains are removed at
@@ -20,7 +21,7 @@ var _probe_callback: JavaScriptObject
 
 ## Starts reporting `main`, if the page asked for the probe.
 func watch(main: Main) -> void:
-	if not OS.has_feature("web") or not PageParams.is_on("probe"):
+	if not ProbeGate.allows():
 		return
 	_main = main
 	_calm = PageParams.is_on("calm")

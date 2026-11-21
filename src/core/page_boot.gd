@@ -5,7 +5,8 @@ extends RefCounted
 ##
 ## - `skirmish=1`: the vault skirmish, with no title and no save, whatever scene holds `Main`.
 ## - `probe=1`: in a story, the title is skipped, unless `title=1`: the game goes on from a usable
-##   save, else starts new. The parameters below take effect only with it.
+##   save, else starts new. The parameters below take effect only with it, and only where `ProbeGate`
+##   allows the probe: in the public build `probe=1` and they are all ignored.
 ## - `fresh=1`: the save is cleared before anything reads it. Without `probe=1` it is ignored, so a
 ##   shared or bookmarked link cannot wipe a player's progress.
 ## - `at=vault`, with `probe=1` and `fresh=1`: the story starts as `haven_finished()`, with no opening.
@@ -16,8 +17,11 @@ const HAVEN_FLAGS: Array[StringName] = [
 ]
 
 
-## Sets up `main` by `params`, the page's parameters by name (as `PageParams.all()` gives them).
-static func configure(main: Main, params: Dictionary = PageParams.all()) -> void:
+## Sets up `main` by `params`, the page's parameters by name (as `PageParams.all()` gives them), in a
+## build whose features `has_feature` answers for (by default this build's own).
+static func configure(
+		main: Main, params: Dictionary = PageParams.all(), has_feature: Callable = Callable(OS, "has_feature")
+) -> void:
 	if params.get("skirmish") == "1":
 		main.boot = Main.Boot.SKIRMISH
 		main.state = GameState.skirmish()
@@ -25,7 +29,7 @@ static func configure(main: Main, params: Dictionary = PageParams.all()) -> void
 		return
 	if main.boot != Main.Boot.STORY:
 		return
-	if params.get("probe") != "1":
+	if not ProbeGate.allows(params, has_feature):
 		return
 	var fresh: bool = params.get("fresh") == "1"
 	if fresh:

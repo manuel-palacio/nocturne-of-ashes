@@ -22,9 +22,10 @@ static func apply(locale: String) -> void:
 	TranslationServer.set_locale(locale)
 
 
-## On the web, the page URL's `lang` query parameter; elsewhere, or when absent, "".
-static func requested_from_page() -> String:
-	return PageParams.value("lang")
+## The `lang` parameter among `params`, the page's parameters by name: on the web, the page URL's
+## `lang` query parameter; elsewhere, or when absent, "". Not a test parameter: every build reads it.
+static func requested_from_page(params: Dictionary = PageParams.all()) -> String:
+	return params.get("lang", "")
 
 
 static func _language_part(locale: String) -> String:
