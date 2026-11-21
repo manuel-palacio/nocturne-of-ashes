@@ -17,6 +17,8 @@ const HEAD_UP: float = 0.3
 const HEAD_DOWN: float = 0.1
 const LONG_HAIR_DOWN: float = 0.3
 const LONG_HAIRED: Array[String] = ["malakor"]
+## The model, its head and its gear together.
+const FIGURE_TRIANGLES: int = 15000
 
 
 ## Every dress in `resources/dress/`, by file name without `.tres`.
@@ -148,3 +150,14 @@ func test_the_head_follows_the_head_bone_while_feeding() -> void:
 		seen.append(head.global_transform)
 	assert_false(seen[0].is_equal_approx(seen[1]), "the head moves as the bone does")
 
+
+
+func test_a_dressed_figure_stays_under_its_triangle_budget() -> void:
+	var dresses: Dictionary = _dresses()
+	for dress_name: String in dresses:
+		var figure: UnitVisual = _figure(dresses[dress_name])
+		var triangles: int = 0
+		for mesh: MeshInstance3D in figure.model().find_children("*", "MeshInstance3D", true, false):
+			triangles += mesh.mesh.get_faces().size() / 3
+		gut.p("%s: %d triangles" % [dress_name, triangles])
+		assert_lt(triangles, FIGURE_TRIANGLES, dress_name)
