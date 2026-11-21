@@ -2,10 +2,14 @@ class_name Dress
 extends Resource
 ## What a character wears on the human model: its palette, the gear hung on it and how tall it stands.
 
-## The palette's squares, left to right, as `tools/make_character.py` lays them out.
-enum Region { SKIN, HAIR, TUNIC, SLEEVES, SKIRT, HOSE, BOOTS, TRIM }
+## The palette's squares, left to right, as `tools/make_character.py` lays them out. The body uses the
+## first eight; the faces of the heads use the rest too.
+enum Region {
+	SKIN, HAIR, TUNIC, SLEEVES, SKIRT, HOSE, BOOTS, TRIM,
+	EYE_WHITE, IRIS, BROW, LIPS, BEARD, SOCKET, SHADE, STUBBLE,
+}
 
-## An 8 × 1 palette, `assets/characters/human/palette-<name>.png`.
+## A 16 × 1 palette, `assets/characters/human/palette-<name>.png`.
 @export var palette: Texture2D
 ## Pieces worn on the model, each hung from its bone; cloth among them is coloured from `palette`.
 @export var gear: Array[GearPiece] = []

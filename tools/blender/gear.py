@@ -26,8 +26,8 @@ characters scale the whole model, gear and all.
 Pieces with their own colours (steel, wood, leather) take them from one shared 8 x 1 palette,
 `assets/gear/palette-gear.png`, which this tool also writes: each face's texture coordinates point
 at its colour's square. Cloth pieces carry no colour: every texture coordinate points at the first
-square of a character's 8 x 1 palette, and the wearer's material shifts it to the square of a
-region, so the same file is white on one figure and teal on another. Either way a piece is drawn
+square of a character's 16 x 1 palette (`tools/make_character.py`), and the wearer's material
+shifts it to the square of a region, so the same file is white on one figure and teal on another. Either way a piece is drawn
 with the same kind of material as the body, so it adds no shader to compile. For the same reason
 cloth, and the mail coif, are made two-sided in their geometry (a second, inward-facing copy of
 each face) rather than by their material.
@@ -53,6 +53,8 @@ import zlib
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(1, str(Path(__file__).resolve().parents[1]))
+from make_character import REGION_NAMES  # noqa: E402
 from wearable import KEY_DIRECTIONS, Piece, add, cross, dot, export, mul, require_blender, sub, unit  # noqa: E402
 
 OUT = Path(__file__).resolve().parents[2] / "assets/gear"
@@ -85,7 +87,7 @@ STAFF_AXIS = (-0.8, 0.16, -0.57)
 # The squares of the gear palette, left to right.
 GEAR_PALETTE = ["#b8c0c6", "#6e757c", "#8e959b", "#8a5e36", "#a8804e", "#5a3c26", "#000000", "#000000"]
 STEEL, DARK_STEEL, MAIL, WOOD, PALE_WOOD, LEATHER = range(6)
-CLOTH_UV = (0.5 / 8, 0.5)  # the middle of the palette's first square
+CLOTH_UV = (0.5 / len(REGION_NAMES), 0.5)  # the middle of a character palette's first square
 
 # ---- the pieces --------------------------------------------------------------------------------
 

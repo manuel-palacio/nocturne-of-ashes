@@ -40,10 +40,11 @@ func test_it_stands_on_its_origin_up_to_the_neck() -> void:
 	assert_almost_eq(box.position.y, 0.0, 0.05)
 	assert_almost_eq(box.size.y, 1.67, 0.05)
 
-func test_every_palette_is_eight_by_one() -> void:
+func test_every_palette_is_sixteen_by_one() -> void:
 	for palette: String in PALETTES:
 		var image: Image = (load("res://assets/characters/human/palette-%s.png" % palette) as Texture2D).get_image()
-		assert_eq(image.get_size(), Vector2i(8, 1), palette)
+		assert_eq(image.get_size(), Vector2i(UnitVisual.PALETTE_SQUARES, 1), palette)
+		assert_eq(UnitVisual.PALETTE_SQUARES, 16)
 
 func test_no_two_palettes_are_the_same() -> void:
 	var seen: Dictionary = {}

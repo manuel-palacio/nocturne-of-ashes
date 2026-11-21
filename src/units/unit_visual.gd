@@ -75,7 +75,7 @@ const STILL_CLIPS: Array[StringName] = [&"idle", &"talk", &"sit", &"sit_talk", &
 ## Seconds of standing after which every cloth key has let go fully (see `ClothFit.SETTLE`).
 const SETTLED_AFTER: float = 1.0
 ## Regions of the palette, which is this many squares wide.
-const PALETTE_SQUARES: int = 8
+const PALETTE_SQUARES: int = 16
 
 ## The material every piece with its own colours shares: the body's, showing the gear palette.
 static var _own_colours: StandardMaterial3D
