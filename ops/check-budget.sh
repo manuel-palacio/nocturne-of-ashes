@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
-# Checks the browser build in build/web against its budget: at most 80 MB on disk, and no single file
+# Checks a browser build against its budget: at most 80 MB on disk, and no single file
 # other than the engine's .wasm over 30 MB. Prints the build's files and the ten largest assets inside
-# the pack (index.pck), read from the pack's own file table by a few lines of Python. Run it from the
-# repository root after ops/build-web.sh; it exits non-zero when the budget is broken, or when the
+# the pack (index.pck), read from the pack's own file table by a few lines of Python. The build is the
+# directory given as the argument, build/web (the test flavour) by default, or build/public. Run it
+# after ops/build-web.sh; it exits non-zero when the budget is broken, or when the
 # build lacks the credits (credits.txt, the same as CREDITS.md) or a licence text: licenses.txt must
 # hold the engine's licence and every licence file CREDITS.md names (ops/licence-files.sh).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-web=build/web
+web="${1:-build/web}"
+web="${web%/}"
 pack="$web/index.pck"
 total_limit=$((80 * 1024 * 1024))
 file_limit=$((30 * 1024 * 1024))
@@ -17,8 +19,8 @@ fail=0
 mb() { awk -v b="$1" 'BEGIN {printf "%.1f", b / 1048576}'; }
 total=0
 while IFS= read -r file; do total=$((total + $(wc -c < "$file"))); done < <(find "$web" -type f)
-echo "build/web: $(mb "$total") MB (limit 80 MB)"
-[ "$total" -le "$total_limit" ] || { echo "ops/check-budget.sh: build/web is over 80 MB" >&2; fail=1; }
+echo "$web: $(mb "$total") MB (limit 80 MB)"
+[ "$total" -le "$total_limit" ] || { echo "ops/check-budget.sh: $web is over 80 MB" >&2; fail=1; }
 
 echo "Files:"
 while IFS= read -r file; do

@@ -1,4 +1,5 @@
-# The image holds only the exported game (with its credits and licences) and the server config.
+# The image holds only the public flavour of the exported game (with its credits and licences) and
+# the server config.
 *
-!build/web/**
+!build/public/**
 !ops/nginx.conf
