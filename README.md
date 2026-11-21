@@ -13,13 +13,21 @@ with the licence texts it names, the engine's included, in https://nocturne-of-a
 
 Run the tests: `ops/test.sh`
 
-Build for the browser: `ops/build-web.sh`
+Build for the browser: `ops/build-web.sh` (the test flavour, into `build/web`) or
+`ops/build-web.sh public` (the public flavour, into `build/public`). The two come from the same source
+and differ in one thing: the public one is exported with the `public` feature (the "Web public" export
+preset), and there the [test parameters](#test-parameters), `probe=1` among them, do nothing. The site
+runs the public flavour; the browser tests use the test flavour. Each build holds a `flavour.txt`
+naming its flavour, and `tests/core/test_export_presets.gd` keeps the two presets alike.
 
-Browser tests: `npx playwright test` (after `npm install` and a browser build)
+Browser tests: `npx playwright test` (after `npm install` and both browser builds). Every test runs
+against `build/web` but `e2e/public.spec.js`, which runs in Chromium against `build/public` and checks
+that a `?probe=1&fresh=1` link leaves a visitor's save and title as they are.
 
 The Chromium run opens a browser window, because headless Chromium renders WebGL in software and cannot hold the frame rate.
 
-Check the browser build's budget: `ops/check-budget.sh` (after a browser build). It fails when `build/web`
+Check the browser build's budget: `ops/check-budget.sh` (after a browser build), or
+`ops/check-budget.sh build/public` for the public flavour. It fails when the build
 is over 80 MB or a file other than the engine's `.wasm` is over 30 MB, and lists the ten largest assets
 in the pack. `e2e/look.spec.js` holds the frame rate (30 a second with everyone in view) and the first
 load (the title answering in under 20 s), New game pressed at once (the haven within 15 s), and saves the frames to show of each browser's run as `build/e2e/look-*.png`.
@@ -106,7 +114,10 @@ is cleared. The title offers Continue when there is a save, and New game.
 ## Test parameters
 
 The browser tests start the game with query parameters in the page address (for example
-`/?probe=1&fresh=1`). They exist for those tests; players need none of them.
+`/?probe=1&fresh=1`). They exist for those tests; players need none of them. They work only in the
+test flavour (`build/web`): in the public flavour, the one the site runs, `probe=1` and the
+parameters that need it do nothing, and the game starts as for any visitor (`src/core/probe_gate.gd`).
+`skirmish=1` and `lang=es` are not test parameters and work in both.
 
 - `probe=1` — lets the tests read the game, and skips the title: Continue when there is a save, else New game.
 - `title=1` — with `probe=1`: shows the title anyway.
@@ -117,4 +128,7 @@ The browser tests start the game with query parameters in the page address (for 
 - `skirmish=1` — plays the vault skirmish with the whole party, with no title and no save.
 - `lang=es` — shows the game in Spanish.
 
-Deploy to Fly.io (needs the fly CLI, logged in): `ops/deploy-fly.sh`
+Deploy to Fly.io (needs the fly CLI, logged in): `ops/deploy-fly.sh`. It builds the public flavour
+into `build/public`, the only directory the image is made from, and stops before deploying unless
+`ops/check-public-build.sh` finds that build to be the public flavour (its `flavour.txt` and the
+feature in its pack).

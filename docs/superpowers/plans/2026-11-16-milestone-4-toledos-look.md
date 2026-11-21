@@ -558,7 +558,6 @@ These decisions changed what the tasks above describe. The code follows the amen
 - The party panels or the dialogue box can cover a character.
 - Units can stand inside the people they talk to (`Npc`).
 - Conversations are not yet translated (milestone 5).
-- The `?probe=1` test parameters are open on the public site.
 - `ops/bake-light.sh` has not been run end to end since its last edit.
 - The texture path for GPUs without S3TC has never run on real hardware.
 - `unit_visual.gd` is due for a split.
