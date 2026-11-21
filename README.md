@@ -20,9 +20,10 @@ preset), and there the [test parameters](#test-parameters), `probe=1` among them
 runs the public flavour; the browser tests use the test flavour. Each build holds a `flavour.txt`
 naming its flavour, and `tests/core/test_export_presets.gd` keeps the two presets alike.
 
-Browser tests: `npx playwright test` (after `npm install` and both browser builds). Every test runs
+Browser tests: `npx playwright test` (after `npm install` and the browser builds). Every test runs
 against `build/web` but `e2e/public.spec.js`, which runs in Chromium against `build/public` and checks
-that a `?probe=1&fresh=1` link leaves a visitor's save and title as they are.
+that a `?probe=1&fresh=1` link leaves a visitor's save and title as they are. Without a public build
+(no `build/public/index.html`) that test is left out and its server is not started; the rest run.
 
 The Chromium run opens a browser window, because headless Chromium renders WebGL in software and cannot hold the frame rate.
 
