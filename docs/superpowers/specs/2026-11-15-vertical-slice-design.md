@@ -23,7 +23,7 @@ something.
 - Playable in a desktop browser from a URL, no install.
 - About 20–30 minutes of play, start to finish **(call)**.
 - Set in medieval Toledo.
-- Party combat, blood powers, feeding and a conscience score all present
+- Party combat, blood powers, feeding and an Alma score all present
   in simple form.
 - A Gothic night-time mood that holds up within browser rendering limits.
 
@@ -77,23 +77,27 @@ Toledo also supplies the rest of the story for free:
 - **Elena** — a Mozarab translator at the School. She is smuggling
   manuscripts and a relic out of the burning quarter.
 - **Malakor** — warlord of the **Blood-Forged**, a rebellious warrior
-  bloodline. Turns Álvar to use him as a shock trooper. Wants the vault
+  line, the Sangre. Turns Álvar to use him as a shock trooper. Wants the vault
   under the city opened.
 - **Zahra** — companion. An Andalusi physician, turned decades ago;
   healer and blood-caster, sceptical of Malakor.
 - **Gonzalo** — companion. An old Blood-Forged swordsmith; heavy
-  fighter, loyal to the bloodline, torn when Álvar defies it.
+  fighter, loyal to the Sangre, torn when Álvar defies it.
 
 ### Our own vocabulary **(call)**
 
 | Idea | Our term |
 |---|---|
 | Being made a vampire | the Turning |
-| Vampire powers | Gifts |
-| Morality score | Conscience |
+| Vampire powers | Rites |
+| Morality score | Alma |
 | Centuries of sleep | the Long Sleep |
-| Secrecy from mortals | the Veil |
+| Secrecy from mortals | the Silence |
 | Hunger-driven loss of control | the Fury |
+| A vampire line (Malakor's) | the Sangre |
+| The place of rest (the forge-house under Toledo) | the Fragua |
+
+In Spanish: los Ritos (un Rito), el Alma, el Silencio, la Sangre, la Fragua.
 
 ### The slice, beat by beat
 
@@ -101,10 +105,10 @@ Toledo also supplies the rest of the story for free:
    reach the School. Teaches movement and combat. Alone.
 2. **The escort.** He leads Elena toward the Tagus gate. Malakor
    ambushes them; Álvar falls; the Turning. Elena escapes with the relic.
-3. **The forge-haven.** Álvar wakes in the Blood-Forged haven, a
+3. **The Fragua.** Álvar wakes in the Fragua of the Blood-Forged, a
    swordsmiths' cellar complex. Small hub: four or five characters to
    talk to, first feeding (a captive crusader: sip, drain, or refuse —
-   the first Conscience choice), first Gifts, Zahra and Gonzalo join.
+   the first Alma choice), first Rites, Zahra and Gonzalo join.
 4. **The Cave of Hercules.** Malakor sends the three below to break the
    old locks. Dungeon of Roman vaults and flooded galleries, three or
    four combat encounters, one simple lock puzzle.
@@ -122,23 +126,23 @@ instead of Istanbul and London **(call; outside this slice)**.
 - **Camera:** elevated third-person, rotatable and zoomable, following
   the selected character **(call)**.
 - **Control:** click to move, click an enemy to attack, number keys for
-  Gifts, Tab or portraits to switch character, Space to pause and give
+  Rites, Tab or portraits to switch character, Space to pause and give
   orders **(call)**. Companions fight on their own when not directed.
-- **Stats:** Health, Blood, Conscience. No experience levels in the
-  slice; Gifts unlock at story beats **(call)**.
-- **Blood:** Gifts cost Blood. Blood is regained by feeding on a
+- **Stats:** Health, Blood, Alma. No experience levels in the
+  slice; Rites unlock at story beats **(call)**.
+- **Blood:** Rites cost Blood. Blood is regained by feeding on a
   weakened enemy in combat or on mortals in the hub. At very low Blood
   the Fury takes over: the character attacks the nearest target for a
   few seconds.
-- **Gifts (six, two per character) (call):**
+- **Rites (six, two per character) (call):**
   - Álvar — *Iron Sinew* (short burst of strength and speed),
     *Baleful Eye* (stuns one enemy).
   - Zahra — *Mend Flesh* (heal an ally), *Blood Lance* (ranged damage).
   - Gonzalo — *Stone Hide* (damage reduction, draws enemies),
     *Hammerfall* (area knock-down).
-- **Conscience:** moves on about four choices in the slice (how he
+- **Alma:** moves on about four choices in the slice (how he
   feeds, mercy to a wounded crusader, carrying out or quietly dodging
-  an order from Malakor in the haven, a dying mortal in the cave). The
+  an order from Malakor in the Fragua, a dying mortal in the cave). The
   final choice of Elena over Malakor is fixed story, not a branch. It changes some dialogue lines and the
   wording of the final scene. Its combat effects belong to the full game.
 - **Death:** a fallen companion revives after the fight; if Álvar
@@ -176,7 +180,7 @@ objected to.
   pathfinding; a maintained dialogue add-on (Dialogue Manager) for
   conversations and choices; GUT for unit tests; Playwright for browser
   tests of the exported build. Godot has no off-the-shelf ability
-  framework comparable to Unreal's, so Gifts use a small resource-based
+  framework comparable to Unreal's, so Rites use a small resource-based
   ability system written for this game.
 - **Characters and portraits (call):** CC0 base characters and
   animation sets, re-dressed and re-textured in Blender by script so the
@@ -199,7 +203,7 @@ objected to.
   about 80 MB.
 - **If the slice runs long, cut in this order (call):** Spanish, the
   lock puzzle, Safari, then merge beats 1 and 2 into one street scene.
-  The haven, the cave, the party of three and the six Gifts are
+  The Fragua, the cave, the party of three and the six Rites are
   protected. No deadline has been set.
 
 ## Left to the builder
@@ -208,7 +212,7 @@ objected to.
 - Enemy types and numbers per encounter, damage numbers and tuning.
 - The exact lock puzzle.
 - Dialogue wording, within the beats and the vocabulary table.
-- UI layout: portraits with Health and Blood bars, Gift bar, dialogue
+- UI layout: portraits with Health and Blood bars, Rite bar, dialogue
   box, pause indicator.
 - Which specific CC0 packs to use.
 - Build order, provided an early milestone puts one character walking

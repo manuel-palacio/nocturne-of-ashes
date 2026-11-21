@@ -15,7 +15,7 @@
 ## Global Constraints
 
 - Godot **4.7**, GDScript only, rendering method `gl_compatibility`. Web export with threads and extensions off.
-- No name, term, text, sound or image from *Vampire: The Masquerade – Redemption* or the World of Darkness. Use the spec's vocabulary: the Turning, Gifts, Conscience, the Long Sleep, the Veil, the Fury.
+- No name, term, text, sound or image from *Vampire: The Masquerade – Redemption* or the World of Darkness. Use the spec's vocabulary: the Turning, Rites, Alma, the Long Sleep, the Silence, the Fury, the Sangre, the Fragua.
 - Third-party assets and add-ons are CC0, CC-BY or MIT, each listed in `CREDITS.md`.
 - Commits: Conventional Commits, subject 72 characters or fewer, one logical change each, authored as `Manuel <emanuel.palacio@gmail.com>`, ending with `Co-Authored-By: Claude <noreply@anthropic.com>`. No absolute paths, hostnames or machine details in any file or message. Never `--no-verify`.
 - Typed GDScript throughout, tabs, one class per file with `class_name` (the `Probe` autoload is the one exception).
@@ -1757,21 +1757,21 @@ These decisions changed what the tasks above describe. The code follows the amen
 **Milestone 3, further**
 - One snapshot and restore per unit (health, Blood, effects, cooldowns) before checkpoints; replace the Enter restart with a checkpoint reload, and add a deterministic browser test of fall and reload.
 - Split party, selection and revival out of `Main` before a second room exists.
-- Every player-facing string through `tr()`: prompts, state labels, Gift names, unit names.
+- Every player-facing string through `tr()`: prompts, state labels, Rite names, unit names.
 - After "The vault is quiet" there is nothing to do; room flow decides what comes next.
 - A dead companion stays selected if it falls after Álvar. Right click and the wheel are swallowed over HUD panels and buttons.
-- Untested: resuming an attack after a stun; the calm timer held while paused; Tab ignored while input is disabled; Gift and cancel key polling; right-click cancel; a real mouse click on a party panel.
+- Untested: resuming an attack after a stun; the calm timer held while paused; Tab ignored while input is disabled; Rite and cancel key polling; right-click cancel; a real mouse click on a party panel.
 - GUT reports orphan nodes at the end of the run.
 - Effects can be added to a fallen unit; `was_hit` fires after `died` on a killing blow.
 
 **Milestone 4 (Toledo's look)**
 - Units pass through each other and have no avoidance, so attackers on one target stand inside each other.
-- HUD panels and Gift buttons reassign their text every frame instead of on change.
+- HUD panels and Rite buttons reassign their text every frame instead of on change.
 - Camera follow runs per frame while units move per physics tick.
-- Gift numbers live in both each Gift's script defaults and its resource file; the resource wins.
+- Rite numbers live in both each Rite's script defaults and its resource file; the resource wins.
 
 **Milestone 5 (the night of 1212)**
-- Enemies have no leash. A chaser halted in range stops striking if its target shifts less than 0.5 m. A feed ordered while stunned breaks at once. A brain obeys a hostile taunt before a player's order. The ally-Gift rule looks only at the most hurt ally. The stall check would misfire for a heavily slowed unit.
+- Enemies have no leash. A chaser halted in range stops striking if its target shifts less than 0.5 m. A feed ordered while stunned breaks at once. A brain obeys a hostile taunt before a player's order. The ally-Rite rule looks only at the most hurt ally. The stall check would misfire for a heavily slowed unit.
 - The selected character does not defend itself when its target dies. Gonzalo walks slower than the others, so the tank arrives last. A companion in the Fury can end the round if Álvar is nearest; companions do not defend themselves against a friend. Fallen companions rise beside whatever felled them.
 - Balance after real play: sergeant numbers, starting Blood, feed threshold.
 - A friend's brain that thinks in the same frame as a feed order, and before it, can still strike the meal; from the next frame the meal is safe.

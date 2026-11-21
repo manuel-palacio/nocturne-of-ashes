@@ -546,6 +546,7 @@ These decisions changed what the tasks above describe. The code follows the amen
 - **Task 10.** The camera keeps 220 px clear for the party panels; 320 px moved an earlier browser test's clicks. A selection ring may touch the panels' edge.
 - **Commits.** Commit types are the seven in the rules; `perf:` and `build:` commits were reworded, two of them after they had been pushed, with the owner's agreement to rewrite the public branch once.
 - **Final fix wave.** The credits name the Godot Engine, and every web build serves `credits.txt` and `licenses.txt` (the engine's licence and notices, then every licence file the credits name). The dialogue hint names the number of choices; the keypad's Enter confirms. A browser test walks the story from New game to the last lock and back by Continue.
+- **After the milestone.** Five terms were renamed in the game's text, its Spanish and the docs, old → new: Conscience → Alma, the Veil → the Silence, the haven (the forge-haven) → the Fragua, the bloodline → the Sangre, Gifts → Rites. Code identifiers, files, save keys and room ids are unchanged (`conscience`, `Gift`, `GiftUser`, `haven`, `forge_haven`…).
 
 ## Carried forward
 

@@ -30,7 +30,7 @@ Check the browser build's budget: `ops/check-budget.sh` (after a browser build),
 `ops/check-budget.sh build/public` for the public flavour. It fails when the build
 is over 80 MB or a file other than the engine's `.wasm` is over 30 MB, and lists the ten largest assets
 in the pack. `e2e/look.spec.js` holds the frame rate (30 a second with everyone in view) and the first
-load (the title answering in under 20 s), New game pressed at once (the haven within 15 s), and saves the frames to show of each browser's run as `build/e2e/look-*.png`.
+load (the title answering in under 20 s), New game pressed at once (the Fragua within 15 s), and saves the frames to show of each browser's run as `build/e2e/look-*.png`.
 What the game never loads (unused kit pieces, the npm files) is left out by the export preset's exclude
 filter. While the title is up, the rooms' shaders are compiled behind it a few at a time
 (`ShaderWarmup`), with "Preparing the cellars…" showing; the title keeps answering between steps. In
@@ -87,10 +87,10 @@ frame edges and the faces, and together they add only a few hundred kilobytes to
 
 ## Story so far
 
-Brother Álvar wakes after his Turning in the forge-haven of the Blood-Forged, under Toledo, and
-Malakor, its master, speaks to him first. In the haven he can talk with Malakor, with Íñigo the
+Brother Álvar wakes after his Turning in the Fragua, the forge-house of the Blood-Forged under Toledo,
+and Malakor, its master, speaks to him first. In the Fragua he can talk with Malakor, with Íñigo the
 smith, with a captive crusader in his alcove, and with Zahra and Gonzalo, who join the party. Two
-choices move his Conscience: what he does with the captive, and what he tells Malakor about the
+choices move his Alma: what he does with the captive, and what he tells Malakor about the
 letter he carried. Once Malakor gives the order, the stair opens onto the vault below, where the
 crusaders wait; its last lock does not open yet.
 
@@ -99,13 +99,13 @@ crusaders wait; its last lock does not open yet.
 - Left click on the floor to move the selected party member, on an enemy to attack it.
 - Left click on a weakened enemy to feed on it; a red mark shows an enemy weak enough to feed on. Each group of crusaders has a tougher sergeant.
 - Left click on a companion, or press Tab, to select another party member.
-- 1 and 2 use the selected member's Gifts; a Gift that needs a target waits for a click on one.
-- Escape (or a right click) cancels a Gift's targeting.
+- 1 and 2 use the selected member's Rites; a Rite that needs a target waits for a click on one.
+- Escape (or a right click) cancels a Rite's targeting.
 - Space pauses and resumes the world; orders given while paused begin on resume.
 - Q and E turn the camera; the mouse wheel zooms.
 - Left click on someone to have Álvar walk up and talk with them, whoever is selected; Enter, Space or a click on the box goes on, and 1–4 (or a click) take a choice.
 - Left click on a door to have Álvar take the party through it, whoever is selected; a door stays shut while a fight is on or until the story opens it.
-- Entering a room with no enemies left, such as the haven, restores the party's health; Blood is not restored.
+- Entering a room with no enemies left, such as the Fragua, restores the party's health; Blood is not restored.
 - Enter, after Álvar falls, plays on from the last checkpoint.
 
 Progress is saved in the browser: on entering a room, at the end of each conversation and when a room
@@ -124,7 +124,7 @@ parameters that need it do nothing, and the game starts as for any visitor (`src
 - `fresh=1` — with `probe=1`: clears the save first; ignored without it.
 - `calm=1` — with `probe=1`: the enemies stand still.
 - `frail=1` — with `probe=1`: Álvar's health is set to 1 when a room with enemies starts.
-- `at=vault` — with `probe=1` and `fresh=1`: starts in the vault as if the haven were finished.
+- `at=vault` — with `probe=1` and `fresh=1`: starts in the vault as if the Fragua were finished.
 - `skirmish=1` — plays the vault skirmish with the whole party, with no title and no save.
 - `lang=es` — shows the game in Spanish.
 

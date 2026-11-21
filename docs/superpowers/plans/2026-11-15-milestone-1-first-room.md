@@ -30,7 +30,7 @@ Milestone 1 uses placeholder shapes (capsules, boxes). No Blender work, no party
 - Godot **4.7** (4.7.2 stable and its export templates are installed), GDScript only, rendering method `gl_compatibility`.
 - Export preset `Web`: `variant/thread_support=false`, `variant/extensions_support=false`.
 - Required browsers: Chrome and Firefox on desktop. Safari best effort.
-- No name, term, text, sound or image from *Vampire: The Masquerade – Redemption* or the World of Darkness. Use the spec's vocabulary table (the Turning, Gifts, Conscience, the Long Sleep, the Veil, the Fury).
+- No name, term, text, sound or image from *Vampire: The Masquerade – Redemption* or the World of Darkness. Use the spec's vocabulary table (the Turning, Rites, Alma, the Long Sleep, the Silence, the Fury, the Sangre, the Fragua).
 - Third-party assets and add-ons are CC0, CC-BY or MIT, and each is listed in `CREDITS.md`.
 - Commits: Conventional Commits, subject 72 characters or fewer, one logical change each, authored as `Manuel <emanuel.palacio@gmail.com>`, ending with `Co-Authored-By: Claude <noreply@anthropic.com>`. No absolute paths, hostnames or machine details in any file or message. Never `--no-verify`.
 - Typed GDScript throughout (`var x: int`, `func f() -> void`). One class per file, `class_name` declared.
@@ -848,7 +848,7 @@ Known and accepted at the end of this milestone, with the milestone that should 
 **Milestone 2 (party and blood)**
 - Give `Unit` an explicit order state in place of its three flags, and move its navigation plumbing into a child node, before adding stun, feeding, the Fury or casting.
 - Add a `Unit` entry point for taking a hit and one for reviving; melee damage currently goes straight to `Stats`. Death presentation must be reversible and rest on the floor (the body currently pivots at mid-height).
-- Split click picking into "unit under the cursor" and "ground under the cursor", shared by select, attack, Gift targeting and move. Clicking the controlled unit currently orders a move.
+- Split click picking into "unit under the cursor" and "ground under the cursor", shared by select, attack, Rite targeting and move. Clicking the controlled unit currently orders a move.
 - `Main.player` becomes a party with a selected unit; `Probe` and the browser tests change with it, and `Main` should register with `Probe`.
 - Enemies never reconsider a target and have no leash; they measure aggro in 3D while melee range is flat. A chaser idles until its target drifts 0.5 m, and a chaser blocked forever never ends its attack.
 - `Stats` does not guard a maximum of zero or less; `MeleeAttack.try_hit` does not check its own unit is alive.

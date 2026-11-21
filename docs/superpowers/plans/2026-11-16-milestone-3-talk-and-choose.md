@@ -15,7 +15,7 @@
 ## Global Constraints
 
 - Godot **4.7**, GDScript only, rendering method `gl_compatibility`. Web export with threads and extensions off.
-- No name, term, text, sound or image from *Vampire: The Masquerade – Redemption* or the World of Darkness. The game's own terms: the Turning, Gifts, Conscience, the Long Sleep, the Veil, the Fury, the Blood-Forged. Each term appears in code as one translatable string in one place, so a later rename is one edit.
+- No name, term, text, sound or image from *Vampire: The Masquerade – Redemption* or the World of Darkness. The game's own terms: the Turning, Rites, Alma, the Long Sleep, the Silence, the Fury, the Blood-Forged, the Sangre, the Fragua. Each term appears in code as one translatable string in one place, so a later rename is one edit.
 - Third-party assets and add-ons are CC0, CC-BY or MIT, each listed in `CREDITS.md`. Add-ons are committed unmodified under `addons/`.
 - Commits: Conventional Commits, subject 72 characters or fewer, one logical change each, authored as `Manuel <emanuel.palacio@gmail.com>`, ending with `Co-Authored-By: Claude <noreply@anthropic.com>`. No absolute paths, hostnames or machine details in any file or message. Never `--no-verify`.
 - Typed GDScript throughout, tabs, one class per file with `class_name` (the `Probe` autoload is the one exception).
@@ -2032,7 +2032,7 @@ These decisions changed what the tasks above describe. The code follows the amen
 - Joining is recorded twice (the joined set and the `*_joined` flags), and the test start `at=vault` copies the flag list by hand.
 - Conversations are English only; the HUD follows the system language. Translate them, or offer Spanish only on request until they are.
 - "The vault is quiet" is the cleared line for every room. After the vault there is nothing more to do.
-- Balance: draining the captive gains little over a sip; the Fury in the haven wounds companions who do not defend themselves.
+- Balance: draining the captive gains little over a sip; the Fury in the Fragua wounds companions who do not defend themselves.
 - A deliberate wait longer than 2 s inside a conversation is cut off by the watchdog.
 
 **Milestone 6 (out the door)**
