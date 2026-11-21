@@ -544,7 +544,7 @@ These decisions changed what the tasks above describe. The code follows the amen
 - **Task 10.** The title is never dead: shaders are compiled over several frames behind a "preparing" line, New game works at once, and a test holds that path to 15 s.
 - **Task 10.** Warm-up frames of up to about 2.7 s in Firefox are accepted: one shader's two programs link in one frame and cannot be split.
 - **Task 10.** The camera keeps 220 px clear for the party panels; 320 px moved an earlier browser test's clicks. A selection ring may touch the panels' edge.
-- **Commits.** Commit types are the seven in the rules; unpushed `perf:` and `build:` commits were reworded. Two `perf:` commits already pushed stay: rewording them would mean force-pushing public history.
+- **Commits.** Commit types are the seven in the rules; `perf:` and `build:` commits were reworded, two of them after they had been pushed, with the owner's agreement to rewrite the public branch once.
 - **Final fix wave.** The credits name the Godot Engine, and every web build serves `credits.txt` and `licenses.txt` (the engine's licence and notices, then every licence file the credits name). The dialogue hint names the number of choices; the keypad's Enter confirms. A browser test walks the story from New game to the last lock and back by Continue.
 
 ## Carried forward
@@ -562,4 +562,3 @@ These decisions changed what the tasks above describe. The code follows the amen
 - `ops/bake-light.sh` has not been run end to end since its last edit.
 - The texture path for GPUs without S3TC has never run on real hardware.
 - `unit_visual.gd` is due for a split.
-- Two early commits on the public branch use the type `perf:`; they were left rather than force-pushed.
