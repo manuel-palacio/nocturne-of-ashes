@@ -41,21 +41,20 @@ The output is byte-identical from one run to the next: the mesh is built in a fi
 exporter's generator string (which names the Blender version) is replaced by this tool's name.
 Every piece stays under 600 triangles.
 
+The mesh machinery (`Piece`, the export) is shared with `heads.py` in `wearable.py`.
+
 For each cloth piece with shape keys it also writes `assets/gear/<piece>_cloth.tres`, a `ClothShape`:
 per key and per ring of the mesh, how far the piece reaches that way at rest and how much further the
 key takes it. The game fits the cloth from these tables and never reads the mesh back.
 """
-import json
-import math
 import struct
 import sys
 import zlib
 from pathlib import Path
 
-import bmesh
-import bpy
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from wearable import KEY_DIRECTIONS, Piece, add, cross, dot, export, mul, require_blender, sub, unit  # noqa: E402
 
-BLENDER = (5, 3)  # the version the output is pinned to
 OUT = Path(__file__).resolve().parents[2] / "assets/gear"
 MAX_TRIANGLES = 600
 
@@ -87,161 +86,6 @@ STAFF_AXIS = (-0.8, 0.16, -0.57)
 GEAR_PALETTE = ["#b8c0c6", "#6e757c", "#8e959b", "#8a5e36", "#a8804e", "#5a3c26", "#000000", "#000000"]
 STEEL, DARK_STEEL, MAIL, WOOD, PALE_WOOD, LEATHER = range(6)
 CLOTH_UV = (0.5 / 8, 0.5)  # the middle of the palette's first square
-
-FLAT_DEPTH, FLAT_WIDTH = 0.35, 0.15
-KEY_DIRECTIONS = {"fore": (0, 0, -1), "aft": (0, 0, 1), "left": (-1, 0, 0), "right": (1, 0, 0)}
-
-
-def add(a, b):
-    return tuple(x + y for x, y in zip(a, b))
-
-
-def sub(a, b):
-    return tuple(x - y for x, y in zip(a, b))
-
-
-def mul(a, k):
-    return tuple(x * k for x in a)
-
-
-def dot(a, b):
-    return sum(x * y for x, y in zip(a, b))
-
-
-def cross(a, b):
-    return (a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0])
-
-
-def unit(a):
-    length = math.sqrt(dot(a, a))
-    return mul(a, 1.0 / length)
-
-
-class Piece:
-    """A mesh in the model's frame: vertices, faces wound to face `out`, a colour per face, and
-    shape-key offsets per vertex."""
-
-    def __init__(self, name: str, bone: str, cloth: bool):
-        self.name, self.bone, self.cloth = name, bone, cloth
-        self.verts: list[tuple] = []
-        self.faces: list[tuple] = []
-        self.colours: list[tuple] = []
-        self.keys: dict[str, list[tuple]] = {}
-
-    def vertex(self, p) -> int:
-        self.verts.append(tuple(float(c) for c in p))
-        for offsets in self.keys.values():
-            offsets.append((0.0, 0.0, 0.0))
-        return len(self.verts) - 1
-
-    def face(self, indices, out, colour=None) -> None:
-        """Adds a face, reversed if its normal does not point along `out`."""
-        points = [self.verts[i] for i in indices]
-        normal = (0.0, 0.0, 0.0)
-        for a, b in zip(points, points[1:] + points[:1]):  # Newell's method
-            normal = add(normal, ((a[1] - b[1]) * (a[2] + b[2]), (a[2] - b[2]) * (a[0] + b[0]),
-                                  (a[0] - b[0]) * (a[1] + b[1])))
-        if dot(normal, out) < 0:
-            indices = list(reversed(indices))
-        self.faces.append(tuple(indices))
-        self.colours.append(colour)
-
-    def two_sided(self) -> None:
-        """Adds an inward-facing copy of every face, on vertices of its own, so both sides are drawn
-        with back faces culled and each side is lit by its own normals."""
-        count = len(self.verts)
-        for v in list(self.verts):
-            self.verts.append(v)
-        for name, offsets in self.keys.items():
-            self.keys[name] = offsets + offsets[:count]
-        for face, colour in list(zip(self.faces, self.colours)):
-            self.faces.append(tuple(i + count for i in reversed(face)))
-            self.colours.append(colour)
-
-    def triangles(self) -> int:
-        return sum(len(f) - 2 for f in self.faces)
-
-    def box(self, centre, size, colour, axes=((1, 0, 0), (0, 1, 0), (0, 0, 1))) -> None:
-        """A box of `size` along the unit `axes`."""
-        corners = []
-        for i in range(8):
-            p = centre
-            for axis, half, sign in zip(axes, mul(size, 0.5), ((i >> 0) & 1, (i >> 1) & 1, (i >> 2) & 1)):
-                p = add(p, mul(axis, half if sign else -half))
-            corners.append(self.vertex(p))
-        for axis in range(3):
-            for sign in (0, 1):
-                quad = [i for i in range(8) if (i >> axis) & 1 == sign]
-                quad = [quad[0], quad[1], quad[3], quad[2]]
-                out = mul(axes[axis], 1 if sign else -1)
-                self.face([corners[i] for i in quad], out, colour)
-
-    def tube(self, start, end, radius, sides, colour, end_radius=None, caps=True) -> None:
-        """A closed prism (or a cone, with `end_radius`) from `start` to `end`."""
-        axis = unit(sub(end, start))
-        side = unit(cross(axis, (0, 1, 0) if abs(axis[1]) < 0.9 else (1, 0, 0)))
-        other = cross(axis, side)
-        rings = []
-        for centre, r in ((start, radius), (end, radius if end_radius is None else end_radius)):
-            ring = []
-            for i in range(sides):
-                a = 2 * math.pi * i / sides
-                ring.append(self.vertex(add(centre, add(mul(side, r * math.cos(a)), mul(other, r * math.sin(a))))))
-            rings.append(ring)
-        for i in range(sides):
-            j = (i + 1) % sides
-            a = 2 * math.pi * (i + 0.5) / sides
-            self.face([rings[0][i], rings[0][j], rings[1][j], rings[1][i]],
-                      add(mul(side, math.cos(a)), mul(other, math.sin(a))), colour)
-        if caps:
-            self.face(rings[0], mul(axis, -1), colour)
-            self.face(rings[1], axis, colour)
-
-    def lathe(self, rings, sides, colour=None, closed=True, cap=False, keys=None, flat=None) -> None:
-        """Rings, top to bottom, of `(y, rx, rz, cz, half_arc)`: an ellipse of half-widths `rx`, `rz`
-        about `(0, y, cz)`. Angle 0 is the back (+z), 90 degrees the right (+x). A closed lathe goes
-        all round; an open one spans `half_arc` degrees either side of the back. `cap` closes the
-        top with a point. `keys` maps a shape key's name to `(reach, top, hem)`: at full weight the
-        vertices facing the key's way move that way by up to `reach`, from nothing at height `top`
-        to all of it at `hem` and below, rising fastest near the top. `flat`, as `(top, hem)`, adds a `flat` key that, as deep,
-        squeezes the hem front to back to `FLAT_DEPTH` of its depth and widens it by `FLAT_WIDTH`."""
-        for name in list(keys or {}) + (["flat"] if flat else []):
-            self.keys.setdefault(name, [(0.0, 0.0, 0.0)] * len(self.verts))
-        count = sides if closed else sides + 1
-        grid = []
-        for y, rx, rz, cz, half_arc in rings:
-            ring = []
-            for i in range(count):
-                if closed:
-                    a = 2 * math.pi * i / sides
-                else:
-                    a = math.radians(-half_arc + 2 * half_arc * i / sides)
-                index = self.vertex((rx * math.sin(a), y, cz + rz * math.cos(a)))
-                radial = (math.sin(a), 0.0, math.cos(a))
-                for name, (reach, top, hem) in (keys or {}).items():
-                    toward = KEY_DIRECTIONS[name]
-                    # Rising fast below the top, as cloth gives most round a knee lifted high.
-                    depth = min(max((top - y) / (top - hem), 0.0), 1.0) ** 0.6
-                    self.keys[name][index] = mul(toward, reach * depth * max(dot(radial, toward), 0.0))
-                if flat:
-                    depth = min(max((flat[0] - y) / (flat[0] - flat[1]), 0.0), 1.0)
-                    self.keys["flat"][index] = (rx * math.sin(a) * FLAT_WIDTH * depth, 0.0,
-                                                -rz * math.cos(a) * (1 - FLAT_DEPTH) * depth)
-                ring.append(index)
-            grid.append(ring)
-        for upper, lower, (y, rx, rz, cz, _) in zip(grid, grid[1:], rings):
-            for i in range(count if closed else count - 1):
-                j = (i + 1) % count
-                a = (2 * math.pi * (i + 0.5) / sides) if closed else math.radians(
-                    -rings[0][4] + 2 * rings[0][4] * (i + 0.5) / sides)
-                self.face([upper[i], upper[j], lower[j], lower[i]], (math.sin(a), 0.0, math.cos(a)), colour)
-        if cap:
-            y, rx, rz, cz, _ = rings[0]
-            tip = self.vertex((0.0, y + 0.02, cz))
-            for i in range(count if closed else count - 1):
-                j = (i + 1) % count
-                self.face([grid[0][i], grid[0][j], tip], (0, 1, 0), colour)
-
 
 # ---- the pieces --------------------------------------------------------------------------------
 
@@ -416,64 +260,10 @@ PIECES = [sword, hammer, staff, lambda: shield("shield", 0.85, 0.5), lambda: shi
 
 # ---- writing them ------------------------------------------------------------------------------
 
-def blender_point(p, origin) -> tuple:
-    """A point of the model's frame (y up, -z forward), relative to `origin`, in Blender's frame
-    (z up), which the exporter turns back: Blender (x, y, z) is glTF (x, z, -y)."""
-    x, y, z = sub(p, origin)
-    return (x, -z, y)
-
-
 def build(piece: Piece) -> None:
-    bpy.ops.wm.read_factory_settings(use_empty=True)
-    origin = BONES[piece.bone]
-    mesh = bpy.data.meshes.new(piece.name)
-    bm = bmesh.new()
-    verts = [bm.verts.new(blender_point(v, origin)) for v in piece.verts]
-    bm.verts.index_update()
-    for indices in piece.faces:
-        bm.faces.new([verts[i] for i in indices])
-    bm.faces.index_update()
-    bm.to_mesh(mesh)
-    bm.free()
-    layer = mesh.uv_layers.new(name="UVMap")
-    for polygon, colour in zip(mesh.polygons, piece.colours):
-        uv = CLOTH_UV if piece.cloth else ((colour + 0.5) / len(GEAR_PALETTE), 0.5)
-        for loop in polygon.loop_indices:
-            layer.data[loop].uv = uv
-        polygon.use_smooth = piece.cloth
-    obj = bpy.data.objects.new(piece.name, mesh)
-    bpy.context.scene.collection.objects.link(obj)
-    if piece.keys:
-        obj.shape_key_add(name="Basis", from_mix=False)
-        for name, offsets in piece.keys.items():
-            key = obj.shape_key_add(name=name, from_mix=False)
-            key.value = 0.0
-            for point, v, offset in zip(key.data, piece.verts, offsets):
-                point.co = blender_point(add(v, offset), origin)
-    path = OUT / f"{piece.name}.glb"
-    bpy.ops.export_scene.gltf(
-        filepath=str(path), export_format="GLB", export_yup=True, export_apply=False,
-        export_materials="NONE", export_vertex_color="NONE", export_texcoords=True, export_normals=True, export_tangents=False, export_extras=False,
-        export_morph=True, export_morph_normal=True, export_animations=False, export_skins=False,
-        export_cameras=False, export_lights=False)
-    fix_generator(path)
-
-
-def fix_generator(path: Path) -> None:
-    """Replaces the exporter's generator string, which names its version, with this tool's name."""
-    data = path.read_bytes()
-    magic, version, _ = struct.unpack_from("<III", data, 0)
-    assert magic == 0x46546C67 and version == 2, f"{path.name} is not a glTF 2 binary"
-    length, kind = struct.unpack_from("<II", data, 12)
-    assert kind == 0x4E4F534A, f"{path.name} does not start with its JSON"
-    document = json.loads(data[20:20 + length])
-    document["asset"] = {"generator": "tools/blender/gear.py", "version": "2.0"}
-    text = json.dumps(document, separators=(",", ":")).encode()
-    text += b" " * (-len(text) % 4)
-    rest = data[20 + length:]
-    out = struct.pack("<III", 0x46546C67, 2, 12 + 8 + len(text) + len(rest)) + struct.pack(
-        "<II", len(text), 0x4E4F534A) + text + rest
-    path.write_bytes(out)
+    export(piece, BONES[piece.bone], OUT / f"{piece.name}.glb",
+           lambda colour: CLOTH_UV if piece.cloth else ((colour + 0.5) / len(GEAR_PALETTE), 0.5),
+           piece.cloth, "tools/blender/gear.py")
 
 
 def write_shape(piece: Piece) -> None:
@@ -519,9 +309,7 @@ def write_palette() -> None:
 
 
 def main() -> None:
-    if tuple(bpy.app.version[:2]) != BLENDER:
-        sys.exit("gear: written for Blender %d.%d, not %s; its exporter may write other bytes"
-                 % (BLENDER + (bpy.app.version_string,)))
+    require_blender("gear")
     OUT.mkdir(parents=True, exist_ok=True)
     write_palette()
     for make in PIECES:
@@ -535,4 +323,5 @@ def main() -> None:
         print(f"wrote {piece.name}.glb: {triangles} triangles")
 
 
-main()
+if __name__ == "__main__":
+    main()
