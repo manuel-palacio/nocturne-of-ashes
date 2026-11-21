@@ -17,7 +17,7 @@ const ROWS: Array[Array] = [
 	["Left click", "Move; on an enemy, attack it"],
 	["Left click a weakened enemy", "Feed on them, when short of Blood"],
 	["Tab, or click a companion or a panel", "Select a party member"],
-	["1, 2, or click a Gift", "Use a Gift, then click its target if it needs one; Escape or a right click cancels"],
+	["1, 2, or click a Rite", "Use a Rite, then click its target if it needs one; Escape or a right click cancels"],
 	["Space", "Pause and resume; orders given while paused begin on resume"],
 	["Q and E, mouse wheel", "Turn the camera, zoom"],
 	["Left click someone", "Walk up and talk; Enter or a click goes on, 1–4 choose"],

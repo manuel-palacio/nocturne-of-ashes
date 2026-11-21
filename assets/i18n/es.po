@@ -18,8 +18,8 @@ msgstr "En pausa — da tus órdenes"
 msgid "The vault is quiet"
 msgstr "La cripta está en silencio"
 
-msgid "Conscience"
-msgstr "Conciencia"
+msgid "Alma"
+msgstr "Alma"
 
 # Party member states
 msgid "Fallen"
@@ -41,7 +41,7 @@ msgstr "Cruzado"
 msgid "Sergeant"
 msgstr "Sargento"
 
-# Gift names
+# Rite names
 msgid "Iron Sinew"
 msgstr "Tendón de Hierro"
 
@@ -128,11 +128,11 @@ msgstr "Tab, o clic en un compañero o en su panel"
 msgid "Select a party member"
 msgstr "Elegir a un miembro del grupo"
 
-msgid "1, 2, or click a Gift"
-msgstr "1, 2, o clic en un Don"
+msgid "1, 2, or click a Rite"
+msgstr "1, 2, o clic en un Rito"
 
-msgid "Use a Gift, then click its target if it needs one; Escape or a right click cancels"
-msgstr "Usar un Don y, si lo necesita, hacer clic en su objetivo; Escape o clic derecho lo cancela"
+msgid "Use a Rite, then click its target if it needs one; Escape or a right click cancels"
+msgstr "Usar un Rito y, si lo necesita, hacer clic en su objetivo; Escape o clic derecho lo cancela"
 
 msgid "Space"
 msgstr "Espacio"

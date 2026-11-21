@@ -4,7 +4,7 @@ Malakor: You wake. Good. Not all of them do.
 Malakor: The woman you guarded got away through the Tagus gate, and what she carried went with her.
 Malakor: You did not. My people cut you down in the burning quarter. You died there, in the smoke, and I gave you my blood. That is the Turning.
 Malakor: You belong to the Blood-Forged now. This forge is your house, and I am its master.
-Malakor: Take this. Iron in the sinew, when you call on the Blood. The first of your Gifts.
+Malakor: Take this. Iron in the sinew, when you call on the Blood. The first of your Rites.
 do learn("alvar", "iron_sinew")
 do set_flag("met_malakor")
 Malakor: Íñigo will tell you the rest. I do not say a thing twice.
@@ -52,10 +52,10 @@ if has_flag("captive_done")
 	Íñigo: Stand clear of the quench. You have been to the alcove, I can see it on you. Listen while I work.
 else
 	Íñigo: Stand there, out of the sparks. He told me to tell you how things are.
-Íñigo: The Blood in you is not your own now. Every Gift you call on spends some of it, the way this fire spends charcoal.
+Íñigo: The Blood in you is not your own now. Every Rite you call on spends some of it, the way this fire spends charcoal.
 Íñigo: When it runs low you drink. The weak, the hurt, the ones who cannot fight you off. A sleeping man, a wounded one.
 Íñigo: Let it run dry and the Fury takes you. Then you do not choose whom you drink from. You drink from whoever is near.
-Íñigo: And the Veil. The living up there must never learn what walks beneath them. Not one of them, not ever.
+Íñigo: And the Silence. The living up there must never learn what walks beneath them. Not one of them, not ever.
 Íñigo: That is all. Hand me the tongs on your way out.
 => END
 
@@ -103,7 +103,7 @@ Zahra: It costs Blood, like everything here. Who do you think pays for it in the
 
 ~ gonzalo
 Gonzalo: You are the new one.
-Gonzalo: I made blades in this cellar before your grandfather was born. I serve the bloodline.
+Gonzalo: I made blades in this cellar before your grandfather was born. I serve the Sangre.
 Gonzalo: Zahra asks the questions. I carry the hammer.
 Gonzalo: Malakor says I go below with you. So I go.
 do join("gonzalo")

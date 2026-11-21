@@ -217,7 +217,7 @@ func _show_texts() -> void:
 
 func _show_conscience() -> void:
 	if _state != null:
-		_conscience_label.text = "%s %d/%d" % [tr("Conscience"), _state.conscience, GameState.CONSCIENCE_MAX]
+		_conscience_label.text = "%s %d/%d" % [tr("Alma"), _state.conscience, GameState.CONSCIENCE_MAX]
 
 
 ## The prompt covers the screen while it shows and takes every mouse button; a left press is a click.

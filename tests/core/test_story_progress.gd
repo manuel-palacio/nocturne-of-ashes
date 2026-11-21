@@ -15,9 +15,9 @@ func _label() -> Label:
 
 func test_conscience_is_shown_and_follows_changes() -> void:
 	assert_true(_label().visible)
-	assert_eq(_label().text, "Conscience 7/10")
+	assert_eq(_label().text, "Alma 7/10")
 	main.state.change_conscience(-2)
-	assert_eq(_label().text, "Conscience 5/10")
+	assert_eq(_label().text, "Alma 5/10")
 
 func test_it_is_hidden_in_a_skirmish() -> void:
 	var skirmish: Main = add_child_autofree(load("res://scenes/main.tscn").instantiate())
@@ -30,9 +30,9 @@ func test_it_follows_the_state_after_a_reload() -> void:
 	main.state.change_conscience(-3)
 	main.reload_checkpoint()
 	await wait_physics_frames(3)
-	assert_eq(_label().text, "Conscience 4/10")
+	assert_eq(_label().text, "Alma 4/10")
 	main.state.change_conscience(1)
-	assert_eq(_label().text, "Conscience 5/10")
+	assert_eq(_label().text, "Alma 5/10")
 
 func test_a_learned_gift_appears_at_once() -> void:
 	assert_eq(main.hud.gift_buttons().size(), 0)
