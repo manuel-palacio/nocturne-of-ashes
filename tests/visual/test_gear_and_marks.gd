@@ -70,17 +70,20 @@ func test_gear_hangs_from_bones_and_stays_small() -> void:
 	for unit: Unit in figures:
 		var visual: UnitVisual = _visual(unit)
 		var attachments: Array[Node] = visual.model().find_children("*", "BoneAttachment3D", true, false)
-		assert_eq(attachments.size(), visual.dress.gear.size(), unit.name)
-		for i: int in attachments.size():
+		# The head first, then the gear.
+		var pieces: Array[GearPiece] = [visual.dress.head]
+		pieces.append_array(visual.dress.gear)
+		assert_eq(attachments.size(), pieces.size(), unit.name)
+		for i: int in mini(attachments.size(), pieces.size()):
 			var attachment := attachments[i] as BoneAttachment3D
-			var piece: GearPiece = visual.dress.gear[i]
+			var piece: GearPiece = pieces[i]
 			assert_true(attachment.get_parent() is Skeleton3D, "%s hangs from the skeleton" % attachment.name)
 			assert_eq(attachment.bone_name, String(piece.bone), "%s of %s" % [attachment.name, unit.name])
 			var meshes: Array[Node] = attachment.find_children("*", "MeshInstance3D", true, false)
 			assert_gt(meshes.size(), 0, "%s has a mesh" % attachment.name)
 			for mesh: MeshInstance3D in meshes:
 				var triangles: int = mesh.mesh.surface_get_array_index_len(0) / 3
-				assert_lt(triangles, 600, "%s triangles" % attachment.name)
+				assert_lt(triangles, 900 if i == 0 else 600, "%s triangles" % attachment.name)
 
 func test_exactly_one_member_shows_the_selected_ring_and_it_follows_selection() -> void:
 	await _skirmish()

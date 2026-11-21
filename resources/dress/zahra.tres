@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="Dress" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="Dress" load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://src/units/dress.gd" id="1_dress"]
 [ext_resource type="Texture2D" uid="uid://d03jjfrybmkp4" path="res://assets/characters/human/palette-zahra.png" id="2_palette"]
 [ext_resource type="Script" path="res://src/units/gear_piece.gd" id="3_piece"]
+[ext_resource type="Resource" path="res://resources/gear/head_zahra.tres" id="head"]
 [ext_resource type="Resource" path="res://resources/gear/skirt_long.tres" id="gear_skirt_long"]
 [ext_resource type="Resource" path="res://resources/gear/veil.tres" id="gear_veil"]
 [ext_resource type="Resource" path="res://resources/gear/staff.tres" id="gear_staff"]
@@ -10,5 +11,6 @@
 [resource]
 script = ExtResource("1_dress")
 palette = ExtResource("2_palette")
+head = ExtResource("head")
 gear = Array[ExtResource("3_piece")]([ExtResource("gear_skirt_long"), ExtResource("gear_veil"), ExtResource("gear_staff")])
 height = 1.7

@@ -18,10 +18,11 @@ extends Node3D
 ## The model's animation runs in the parent's subtree, so it stops whenever the parent stops
 ## processing.
 ##
-## The dress's gear hangs from the model's bones, each piece under its own `BoneAttachment3D`. Cloth is
-## coloured from the dress's palette and stretched round the legs by a `ClothFit`; everything else
-## shares one material that shows the gear palette. Every one of these materials is the body's with
-## another texture or offset, so the gear adds no shader to compile.
+## The dress's head and gear hang from the model's bones, each piece under its own `BoneAttachment3D`,
+## the head first. The head is drawn with the body's own material, as its faces point at the
+## palette's own squares. Cloth is coloured from the dress's palette and stretched round the legs by a
+## `ClothFit`; everything else shares one material that shows the gear palette. Every one of these
+## materials is the body's with another texture or offset, so the gear adds no shader to compile.
 ##
 ## A unit's marks are drawn here, unshaded so the room's light never changes them: a gold ring on
 ## the floor while it is the selected member, and a pale drop over its head while it can be fed on.
@@ -241,7 +242,8 @@ func _wear() -> void:
 	_hang_gear()
 
 
-## Hangs each piece of the dress from its bone, in place of any hung before.
+## Hangs the dress's head and then each piece of its gear from its bone, in place of any hung before.
+## A dress without a head is an error, and the figure is drawn headless.
 func _hang_gear() -> void:
 	for attachment: BoneAttachment3D in _gear:
 		_skeleton.remove_child(attachment)
@@ -250,27 +252,39 @@ func _hang_gear() -> void:
 	_fits.clear()
 	_cloth_settled = false
 	_materials.resize(1)
+	if dress.head == null:
+		push_error("The dress %s has no head" % (dress.palette_name() if dress.resource_path.is_empty() else dress.resource_path))
+	else:
+		_hang(dress.head, true)
 	for piece: GearPiece in dress.gear:
-		var bone: int = _skeleton.find_bone(piece.bone)
-		if bone < 0 or piece.scene == null:
-			push_error("The model has no bone %s for %s" % [piece.bone, piece.resource_path])
-			continue
-		var attachment := BoneAttachment3D.new()
-		attachment.name = piece.scene.resource_path.get_file().get_basename()
-		attachment.bone_name = piece.bone
-		_skeleton.add_child(attachment)
-		_gear.append(attachment)
-		var worn: Node3D = piece.scene.instantiate()
-		attachment.add_child(worn)
-		worn.transform = _hang_at_rest(bone)
-		var material: StandardMaterial3D = _cloth_material(piece.region) if piece.cloth else _shared_own_colours(_material)
-		for mesh: MeshInstance3D in worn.find_children("*", "MeshInstance3D", true, false):
-			mesh.material_override = material
-			if piece.cloth:
-				var fit := ClothFit.new(mesh, _skeleton, bone, worn.transform * mesh.transform, piece.clearance,
-						piece.shape)
-				if fit.is_fitting():
-					_fits.append(fit)
+		_hang(piece, false)
+
+
+## Hangs `piece` from its bone: a head drawn with the body's material, cloth with its region's, anything
+## else with the shared one of its own colours.
+func _hang(piece: GearPiece, head: bool) -> void:
+	var bone: int = _skeleton.find_bone(piece.bone)
+	if bone < 0 or piece.scene == null:
+		push_error("The model has no bone %s for %s" % [piece.bone, piece.resource_path])
+		return
+	var attachment := BoneAttachment3D.new()
+	attachment.name = piece.scene.resource_path.get_file().get_basename()
+	attachment.bone_name = piece.bone
+	_skeleton.add_child(attachment)
+	_gear.append(attachment)
+	var worn: Node3D = piece.scene.instantiate()
+	attachment.add_child(worn)
+	worn.transform = _hang_at_rest(bone)
+	var material: StandardMaterial3D = _material
+	if not head:
+		material = _cloth_material(piece.region) if piece.cloth else _shared_own_colours(_material)
+	for mesh: MeshInstance3D in worn.find_children("*", "MeshInstance3D", true, false):
+		mesh.material_override = material
+		if piece.cloth:
+			var fit := ClothFit.new(mesh, _skeleton, bone, worn.transform * mesh.transform, piece.clearance,
+					piece.shape)
+			if fit.is_fitting():
+				_fits.append(fit)
 
 
 ## Where a piece modelled in the model's frame at rest, with its origin at `bone`'s rest head, lies
