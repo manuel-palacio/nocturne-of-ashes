@@ -34,10 +34,11 @@ func test_it_is_one_mesh_with_one_surface_under_the_triangle_budget() -> void:
 	assert_eq(mesh.get_surface_count(), 1)
 	assert_lt(mesh.get_faces().size() / 3, 15000)
 
-func test_it_stands_on_its_origin_at_human_height() -> void:
+## Up to the neck: each dress gives it a head.
+func test_it_stands_on_its_origin_up_to_the_neck() -> void:
 	var box: AABB = _mesh().global_transform * _mesh().get_aabb()
 	assert_almost_eq(box.position.y, 0.0, 0.05)
-	assert_almost_eq(box.size.y, 1.8, 0.1)
+	assert_almost_eq(box.size.y, 1.67, 0.05)
 
 func test_every_palette_is_eight_by_one() -> void:
 	for palette: String in PALETTES:

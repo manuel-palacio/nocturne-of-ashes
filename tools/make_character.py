@@ -18,7 +18,11 @@ The mannequin is built of rigid pieces: segments (head and chest, upper arm, for
 foot...) and small joint pieces between them (neck, elbow, wrist, waist, hip, knee, ankle). Region
 borders are put on the borders between pieces wherever possible, because a border drawn through a
 piece follows its triangles and comes out ragged. A segment's vertices take the region of the bone
-that moves them; a joint piece takes one region as a whole. Only the hair is cut by height.
+that moves them; a joint piece takes one region as a whole.
+
+The mannequin's own head is taken off: every segment triangle the head bone moves is dropped, and
+the neck joint piece stays, so nothing of the model is above `NECK_TOP`. Each character wears a
+head of its own instead (`tools/blender/heads.py`), which closes over the neck joint.
 
 The model keeps only the clips in CLIPS, renamed; `stagger` is made here from `Hit_Head` and `feed`
 from `PickUp_Table` (the library has no feeding clip: the figure bows its head and leans in, as over
@@ -40,8 +44,8 @@ REGION_NAMES = ["skin", "hair", "tunic", "sleeves", "skirt", "hose", "boots", "t
 SKIN, HAIR, TUNIC, SLEEVES, SKIRT, HOSE, BOOTS, TRIM = range(len(REGION_NAMES))
 
 # Heights in metres on the 1.83 m mannequin, in its own frame (y up, facing +z before the turn).
-CROWN = 1.745          # hair above this on the head
-NAPE = 1.60            # and down to here at the back of the head
+NECK_TOP = 1.666       # the top of the neck joint piece: nothing of the model is above it
+HEAD_BONE = "DEF-head"  # the bone whose segment triangles are taken off
 SEGMENTS, JOINTS = "M_Main", "M_Joints"  # the library's materials for the two kinds of piece
 BELT = (0.99, 1.12)    # segment pieces wholly inside this band (the rims round the waist joint) are belt
 BELT_PIECES = 2        # the abdomen's lower rim and the pelvis's upper rim
@@ -96,10 +100,8 @@ ARRAY_BUFFER, ELEMENT_ARRAY_BUFFER = 34962, 34963
 NEAREST, CLAMP_TO_EDGE = 9728, 33071
 
 
-def segment_region(bone: str, y: float, z: float) -> int | None:
-    """The region of a segment vertex moved most by `bone`, at height `y`; `z` < 0 is the back."""
-    if "head" in bone:
-        return HAIR if y > CROWN or (y > NAPE and z < -0.02) else SKIN
+def segment_region(bone: str) -> int | None:
+    """The region of a segment vertex moved most by `bone`."""
     if "neck" in bone or "hand" in bone or "f_" in bone or "thumb" in bone:
         return SKIN
     if "forearm" in bone:
@@ -204,10 +206,21 @@ def main(source: str) -> None:
     position, normal, joints, weights, triangles, joint_piece = (np.concatenate(parts[k]) for k in (
         "position", "normal", "joints", "weights", "triangles", "joint_piece"))
     lead = joints[np.arange(len(joints)), weights.argmax(axis=1)]
+    # The head comes off: every segment triangle with a corner the head bone moves. The neck joint
+    # piece stays, and the head each character wears closes over it.
+    head = np.array([bones[b] == HEAD_BONE for b in lead])
+    off = ~joint_piece[triangles[:, 0]] & head[triangles].any(axis=1)
+    assert off.any(), f"no segment triangle follows {HEAD_BONE}"
+    triangles = triangles[~off]
+    used = np.zeros(len(position), dtype=bool)
+    used[triangles.reshape(-1)] = True
+    highest = position[used, 1].max()
+    assert highest <= NECK_TOP, f"the model reaches {highest:.3f} m, above NECK_TOP"
+    assert highest > NECK_TOP - 0.002, f"the model's top, {highest:.3f} m, is below NECK_TOP"
     of_vertex = np.full(len(position), -1)
     unmapped = set()
-    for i in np.flatnonzero(~joint_piece):
-        region = segment_region(bones[lead[i]], position[i, 1], position[i, 2])
+    for i in np.flatnonzero(~joint_piece & used):
+        region = segment_region(bones[lead[i]])
         if region is None:
             unmapped.add(bones[lead[i]])
         else:
