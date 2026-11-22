@@ -36,9 +36,9 @@ each face) rather than by their material.
 Cloth pieces are rigid, but have shape keys (`fore`, `aft`, `left`, `right`) that stand the cloth
 out that way as over a knee, to at most 1.4 times the hem's reach, and lift the hem over a leg it
 cannot hold: the game sets them from the legs each frame, so a striding leg stays inside the skirt
-and a running figure's mantle swings back. Skirts also have a `flat` key that lays the hem flat
-round the legs for a figure lying on the floor, and a `seat` key that lays the front over a seated
-figure's lap.
+and a running figure's mantle swings back. Skirts and the apron also have a `flat` key that lays
+the hem flat round the legs for a figure lying on the floor, and skirts a `seat` key that lays the
+front over a seated figure's lap.
 
 The output is byte-identical from one run to the next: the mesh is built in a fixed order, and the
 exporter's generator string (which names the Blender version) is replaced by this tool's name.
@@ -104,6 +104,9 @@ OWN_SQUARES = {"skirt_long"}
 SPREAD, MANTLE_SPREAD = 0.4, 0.25
 # How far a skirt's hem rides up, at most, where a leg pushes it out squarely: over a knee it cannot hold.
 LONG_LIFT, SHORT_LIFT = 0.45, 0.1
+
+# How far the apron's hem comes back to lie on the legs when its wearer lies down.
+APRON_FLAT = 0.11
 
 # ---- the pieces --------------------------------------------------------------------------------
 
@@ -249,6 +252,7 @@ def skirt_short() -> Piece:
 def apron() -> Piece:
     p = Piece("apron", "DEF-hips", True)
     p.keys["fore"] = []
+    p.keys["flat"] = []
     rows = [(1.32, 0.3, -0.15), (1.1, 0.32, -0.15), (0.95, 0.34, -0.15), (0.75, 0.37, -0.16), (0.5, 0.4, -0.17)]
     columns = 6
     grid = []
@@ -259,6 +263,8 @@ def apron() -> Piece:
             index = p.vertex((x, y, z + 0.03 * (2 * x / width) ** 2))
             depth = min(max((0.95 - y) / (0.95 - 0.5), 0.0), 1.0)
             p.keys["fore"][index] = (0.0, 0.0, -0.4 * depth)
+            # Laid flat: the hanging part back against the legs of a figure lying on its back.
+            p.keys["flat"][index] = (0.0, 0.0, APRON_FLAT * depth)
             row.append(index)
         grid.append(row)
     for upper, lower in zip(grid, grid[1:]):

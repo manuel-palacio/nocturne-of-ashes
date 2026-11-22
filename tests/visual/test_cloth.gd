@@ -10,7 +10,7 @@ const GEAR: String = "res://resources/gear/"
 ## stands out like cloth over a knee, no further than its hem goes (the apron, a board on a strap,
 ## swings out from its top instead, furthest at the hem).
 const TABLES: Dictionary = {
-	"apron": [["fore"], false, false],
+	"apron": [["fore"], true, false],
 	"mantle": [["aft"], false, true],
 	"skirt_long": [["fore", "aft", "left", "right"], true, true],
 	"skirt_short": [["fore", "aft", "left", "right"], true, true],
