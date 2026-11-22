@@ -245,7 +245,8 @@ func _wear() -> void:
 
 
 ## Hangs the dress's head and then each piece of its gear from its bone, in place of any hung before.
-## A dress without a head is an error, and the figure is drawn headless.
+## A dress without a head is an error, and the figure is drawn headless; so is one with no garment on
+## any of `Dress.CLOTHED_BONES`, and the figure is drawn hollow there.
 func _hang_gear() -> void:
 	for attachment: BoneAttachment3D in _gear:
 		_skeleton.remove_child(attachment)
@@ -255,11 +256,19 @@ func _hang_gear() -> void:
 	_cloth_settled = false
 	_materials.resize(1)
 	if dress.head == null:
-		push_error("The dress %s has no head" % (dress.palette_name() if dress.resource_path.is_empty() else dress.resource_path))
+		push_error("The dress %s has no head" % _dress_name())
 	else:
 		_hang(dress.head, true)
+	var bare: Array[StringName] = Dress.CLOTHED_BONES.duplicate()
 	for piece: GearPiece in dress.gear:
 		_hang(piece, false)
+		bare.erase(piece.bone)
+	if not bare.is_empty():
+		push_error("The dress %s leaves the body bare at %s" % [_dress_name(), ", ".join(bare)])
+
+
+func _dress_name() -> String:
+	return dress.palette_name() if dress.resource_path.is_empty() else dress.resource_path
 
 
 ## Hangs `piece` from its bone: a head or a piece of the palette's own squares drawn with the body's

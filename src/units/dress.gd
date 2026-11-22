@@ -10,6 +10,10 @@ enum Region {
 	EYE_WHITE, IRIS, BROW, LIPS, BEARD, SOCKET, SHADE, STUBBLE,
 }
 
+## The bones whose body the model no longer has (`tools/make_character.py` takes it off, its
+## `CLOTHED`): every dress hangs a garment from each of them, or the figure is hollow there.
+const CLOTHED_BONES: Array[StringName] = [&"DEF-spine.003", &"DEF-spine.001", &"DEF-upper_arm.L", &"DEF-upper_arm.R"]
+
 ## A 16 × 1 palette, `assets/characters/human/palette-<name>.png`.
 @export var palette: Texture2D
 ## Its head, made by `tools/blender/heads.py` and hung from `DEF-head`: the model has none of its own.

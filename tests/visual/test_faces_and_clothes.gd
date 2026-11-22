@@ -215,13 +215,32 @@ const FIGURE_MATERIALS: int = 4
 
 
 func test_every_dress_covers_its_chest_abdomen_and_upper_arms() -> void:
+	assert_eq(Dress.CLOTHED_BONES, [CHEST_BONE, ABDOMEN_BONE] + UPPER_ARM_BONES)
+	var source: String = FileAccess.get_file_as_string(CHARACTER_TOOL)
+	var clothed := RegEx.create_from_string("(?ms)^CLOTHED = \\{(.*?)\\}").search(source)
+	assert_not_null(clothed, "the character tool names CLOTHED")
+	for bone: StringName in Dress.CLOTHED_BONES:
+		assert_true(clothed != null and ('"%s"' % bone) in clothed.get_string(1), "the tool takes the body off at %s" % bone)
 	var dresses: Dictionary = _dresses()
 	for dress_name: String in dresses:
 		var bones: Array[StringName] = []
 		for piece: GearPiece in (dresses[dress_name] as Dress).gear:
 			bones.append(piece.bone)
-		for bone: StringName in [CHEST_BONE, ABDOMEN_BONE] + UPPER_ARM_BONES:
+		for bone: StringName in Dress.CLOTHED_BONES:
 			assert_has(bones, bone, "%s wears a piece on %s" % [dress_name, bone])
+
+
+func test_a_dress_that_leaves_the_body_bare_logs_one_error_and_still_builds_the_figure() -> void:
+	var dress: Dress = (load(DRESSES + "alvar.tres") as Dress).duplicate()
+	var kept: Array[GearPiece] = []
+	for piece: GearPiece in dress.gear:
+		if piece.bone != CHEST_BONE and piece.bone != &"DEF-upper_arm.L":
+			kept.append(piece)
+	dress.gear = kept
+	var figure: UnitVisual = _figure(dress)
+	assert_push_error("leaves the body bare at DEF-spine.003, DEF-upper_arm.L")
+	assert_push_error_count(1, "only the one")
+	assert_eq(_attachments(figure).size(), kept.size() + 1, "the head and the rest of its gear")
 
 
 func test_every_worn_piece_is_small() -> void:
