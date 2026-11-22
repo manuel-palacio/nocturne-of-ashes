@@ -18,6 +18,9 @@ msgstr "En pausa — da tus órdenes"
 msgid "The vault is quiet"
 msgstr "La cripta está en silencio"
 
+msgid "The vault is quiet. The story rests here, for now."
+msgstr "La cripta está en silencio. La historia se detiene aquí, por ahora."
+
 msgid "Alma"
 msgstr "Alma"
 
@@ -92,6 +95,9 @@ msgstr "La escalera está cerrada hasta que Malakor diga otra cosa"
 msgid "The last lock does not yield. Not yet."
 msgstr "El último cerrojo no cede. Aún no."
 
+msgid "The last lock does not yield. This is where the story rests, for now."
+msgstr "El último cerrojo no cede. Aquí se detiene la historia, por ahora."
+
 # People
 msgid "The captive"
 msgstr "El cautivo"
@@ -163,3 +169,13 @@ msgstr "Intro o clic, tras caer"
 
 msgid "Begin again from the last checkpoint"
 msgstr "Volver a empezar desde el último punto de control"
+
+# Closing card
+msgid "Here the descent rests"
+msgstr "Aquí se detiene el descenso"
+
+msgid "The last lock of Toledo's vaults is still shut, and what waits behind it is not yet written. Your game is saved: when the story goes on, it goes on from here, with the Alma you carry (%d of 10)."
+msgstr "El último cerrojo bajo Toledo sigue echado, y lo que aguarda tras él aún no está escrito. Tu partida está guardada: cuando la historia continúe, lo hará desde aquí, con el Alma que llevas (%d de 10)."
+
+msgid "Enter or click to stay in the vault"
+msgstr "Intro o clic para quedarte en la cripta"

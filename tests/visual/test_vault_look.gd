@@ -169,6 +169,9 @@ func test_the_west_door_is_cut_with_its_wall_and_can_still_be_used() -> void:
 	for enemy: Unit in story.enemies:
 		enemy.take_hit(999)
 	await wait_physics_frames(3)
+	# The story's vault, cleared, says the story rests here: the card is dismissed to play on.
+	assert_true(story.is_closing_open())
+	story.hud.hide_closing()
 	var door := story.room.get_node("WestDoor") as Door
 	var leaf := door.get_node("Leaf") as Node3D
 	var frame := story.room.get_node("NavigationRegion3D/Walls/West/West6") as Node3D
@@ -198,6 +201,8 @@ func test_the_last_locks_seal_is_cut_with_its_wall_and_the_lock_can_still_be_use
 	for enemy: Unit in story.enemies:
 		enemy.take_hit(999)
 	await wait_physics_frames(3)
+	assert_true(story.is_closing_open())
+	story.hud.hide_closing()
 	var lock := story.room.get_node("LastLock") as Door
 	var seal := lock.get_node("Seal") as Node3D
 	var leaf := lock.get_node("Leaf") as Node3D
@@ -221,7 +226,7 @@ func test_the_last_locks_seal_is_cut_with_its_wall_and_the_lock_can_still_be_use
 	story.player.order_interact(lock)
 	await wait_until(func() -> bool: return not users.is_empty(), 10.0)
 	assert_eq(users, [GameState.LEADER] as Array[StringName], "Álvar walked up to the lock and used it")
-	assert_eq(story.hud.notice(), "The last lock does not yield. Not yet.")
+	assert_eq(story.hud.notice(), "The last lock does not yield. This is where the story rests, for now.")
 
 
 ## A unit by the west wall, where the camera's focus is held, at the story's entry from the haven:

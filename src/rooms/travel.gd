@@ -2,8 +2,8 @@ class_name Travel
 extends Node
 ## The doors of `Main`'s rooms in a story: takes the doors of each room entered and answers their uses.
 ## A use while a fight is on, while Álvar is in the Fury or while a member feeds or walks to a feed
-## shows a notice; a use of a barred door shows its `Door.locked_text`; any other use takes the whole
-## party through, wherever its members stand.
+## shows a notice; a use of a barred door shows its `Door.locked_text_for()` the state; any other use
+## takes the whole party through, wherever its members stand.
 ##
 ## Doors are used from a unit's physics step, and changing room removes every unit and the room at once,
 ## so the party goes through at the end of the frame, if it still may then. No door is used while player
@@ -45,7 +45,7 @@ func doors_usable() -> bool:
 func _take(door: Door) -> void:
 	door.use_allowed = doors_usable
 	door.travel_requested.connect(_on_travel_requested)
-	door.refused.connect(_hud.show_notice)
+	door.refused.connect(_on_refused.bind(door))
 
 
 ## The notice for going through `door` now, or empty when the party may go.
@@ -53,8 +53,13 @@ func _refusal(door: Door) -> String:
 	if _encounter.fight_is_on() or _party.is_busy():
 		return FIGHT_TEXT
 	if door.is_locked(_state):
-		return door.locked_text
+		return door.locked_text_for(_state)
 	return ""
+
+
+## A door leading nowhere was used: it says what it says with the state's flags.
+func _on_refused(_text: String, door: Door) -> void:
+	_hud.show_notice(door.locked_text_for(_state))
 
 
 func _on_travel_requested(door: Door) -> void:

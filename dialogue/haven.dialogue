@@ -11,7 +11,9 @@ Malakor: Íñigo will tell you the rest. I do not say a thing twice.
 => END
 
 ~ malakor
-if has_flag("order_given")
+if has_flag("vault_cleared")
+	Malakor: The first hall is quiet, then. The lock beneath it has outlasted kings. It will keep until I say.
+elif has_flag("order_given")
 	Malakor: The stair is open. Go down.
 	if conscience() <= 4
 		Malakor: You are becoming what I made you. Good.

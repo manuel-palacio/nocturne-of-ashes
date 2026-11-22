@@ -4,7 +4,8 @@ extends CanvasLayer
 ## `DialogueBox`), the prompts for a pause, a cleared room and Álvar's fall, and a passing notice.
 ## Clicks on panels and Gift buttons go out through its signals. Its `?` button in the lower right
 ## corner opens the `ControlsCard`; whoever owns the HUD holds the world while the card is open
-## (`controls_toggled`), and the dialogue box reads no keys meanwhile. The cleared line fades out
+## (`controls_toggled`), and the dialogue box reads no keys meanwhile. Its `ClosingCard`, opened by
+## `show_closing()` where the story rests, is held for the same way (`closing_toggled`). The cleared line fades out
 ## `cleared_time` seconds after it shows. Every control draws with `resources/ui/theme.tres`.
 ##
 ## Texts: every control whose text is set here or in a panel or button has automatic translation off
@@ -20,6 +21,8 @@ signal gift_chosen(index: int)
 signal fallen_pressed
 ## The controls card opened (`open` true) or closed.
 signal controls_toggled(open: bool)
+## The closing card opened (`open` true) or closed.
+signal closing_toggled(open: bool)
 
 const PANEL: PackedScene = preload("res://scenes/ui/party_member_panel.tscn")
 const GIFT_BUTTON: PackedScene = preload("res://scenes/ui/gift_button.tscn")
@@ -57,12 +60,14 @@ var _cleared_for: float = 0.0
 @onready var _dialogue_box: DialogueBox = %DialogueBox
 @onready var _controls_button: Button = %ControlsButton
 @onready var _controls_card: ControlsCard = %ControlsCard
+@onready var _closing_card: ClosingCard = %ClosingCard
 
 
 func _ready() -> void:
 	_fallen_label.gui_input.connect(_on_fallen_label_input)
 	_controls_button.pressed.connect(_controls_card.toggle)
 	_controls_card.toggled.connect(_on_controls_toggled)
+	_closing_card.toggled.connect(closing_toggled.emit)
 	_show_texts()
 	hide_fallen()
 	hide_cleared()
@@ -175,6 +180,19 @@ func hide_cleared() -> void:
 
 func is_controls_open() -> bool:
 	return _controls_card.is_open()
+
+
+## Opens the closing card, with `alma`, the Alma carried, in its text.
+func show_closing(alma: int) -> void:
+	_closing_card.open(alma)
+
+
+func hide_closing() -> void:
+	_closing_card.close()
+
+
+func is_closing_open() -> bool:
+	return _closing_card.is_open()
 
 
 ## Shows `text`, an English source text, in the middle of the screen for `notice_time` seconds, in

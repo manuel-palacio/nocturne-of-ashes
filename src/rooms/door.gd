@@ -22,6 +22,10 @@ const USE_MARK_AHEAD: float = 0.9
 @export var needs_flags: Array[StringName] = []
 ## Shown when it is used while barred; translatable.
 @export var locked_text: String = ""
+## Once this story flag is set, a use while barred shows `later_text` in place of `locked_text`.
+@export var later_flag: StringName = &""
+## What it says, barred, once `later_flag` is set; translatable.
+@export var later_text: String = ""
 ## When set, the door's leaf and `drawn_also` are drawn exactly while this node is drawn, so a door set
 ## in a wall that the camera cuts (its frame) goes and comes back with it; unset, they are always drawn.
 ## Only what is drawn: the door's body, its ring and its use never depend on it.
@@ -86,6 +90,14 @@ func use(by: Unit) -> bool:
 	else:
 		travel_requested.emit(self)
 	return true
+
+
+## What it says when used while barred with the flags of `state`: `later_text` once `later_flag` is
+## set, else `locked_text`.
+func locked_text_for(state: GameState) -> String:
+	if not later_flag.is_empty() and not later_text.is_empty() and state != null and state.has_flag(later_flag):
+		return later_text
+	return locked_text
 
 
 ## Whether it stays shut with the flags of `state`: it leads nowhere, or one of `needs_flags` is unset.

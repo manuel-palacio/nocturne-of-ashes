@@ -59,7 +59,7 @@ func test_the_last_lock_never_opens() -> void:
 	_door("LastLock").use(main.player)
 	await wait_physics_frames(2)
 	assert_eq(main.room.room_id, &"vault")
-	assert_eq(main.hud.notice(), "The last lock does not yield. Not yet.")
+	assert_eq(main.hud.notice(), "The last lock does not yield. This is where the story rests, for now.")
 
 func test_only_alvar_opens_doors() -> void:
 	var state := GameState.skirmish()

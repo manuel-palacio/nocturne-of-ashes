@@ -8,6 +8,9 @@ extends Node3D
 ## The skirmish (`main.tscn`) always plays the vault with the whole party at full strength and restarts
 ## it after Álvar's fall. The story (`game.tscn`) plays from a `GameState`, saves it at checkpoints and
 ## reloads the last checkpoint after Álvar's fall; it opens on the title, with Continue and New game.
+## Where the story rests for now, the room `STORY_REST_ROOM` once cleared, the HUD's closing card says
+## so, once, holding the world as the controls card does; it waits for the pause, a conversation and
+## the controls card to close first.
 
 ## Emitted whenever a room is entered (also on a reload and a new game), once its units are in place.
 signal room_started
@@ -27,6 +30,13 @@ const ROOMS: Dictionary = {
 	&"vault": preload("res://scenes/rooms/vault_room.tscn"),
 	&"haven": preload("res://scenes/rooms/forge_haven.tscn"),
 }
+
+## Where the story rests for now: once this room is cleared, the closing card says so.
+const STORY_REST_ROOM: StringName = &"vault"
+## Set when the closing card is dismissed, so it is shown once; saved with the state.
+const REST_SHOWN_FLAG: StringName = &"rest_shown"
+## Shown on entering the cleared `STORY_REST_ROOM` once the closing card has been seen.
+const REST_NOTICE: String = "The vault is quiet. The story rests here, for now."
 
 enum Boot { SKIRMISH, STORY }
 
@@ -71,6 +81,10 @@ var opening_enabled: bool = true
 var _paused: bool = false
 ## The state at the last checkpoint, as `GameState.to_dict()`, for a reload when the store has none.
 var _last_checkpoint: Dictionary = {}
+## Whether the closing card is due, waiting for the pause, a conversation or the controls card to end.
+var _closing_due: bool = false
+## True while the closing card is closed by a room change rather than by the player.
+var _closing_put_away: bool = false
 
 @onready var input: PlayerInput = $PlayerInput
 @onready var rig: CameraRig = $CameraRig
@@ -115,11 +129,13 @@ func _ready() -> void:
 	hud.gift_chosen.connect(input.press_gift)
 	hud.fallen_pressed.connect(reload_checkpoint)
 	hud.controls_toggled.connect(_on_controls_toggled)
+	hud.closing_toggled.connect(_on_closing_toggled)
 	selection_changed.connect(hud.show_selected)
 	pause_changed.connect(hud.set_paused)
 	room_cleared.connect(hud.show_cleared)
 	# A cleared room stays cleared even if Álvar falls right after.
 	room_cleared.connect(checkpoint)
+	room_cleared.connect(_on_room_cleared)
 	_conversation.setup(dialogue, input, _party, _encounter, _world_hold)
 	hud.bind_dialogue(dialogue)
 	# An ended conversation is a checkpoint, a stopped one is not, a failed one reloads the last (deferred).
@@ -139,8 +155,10 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	# While talking, the dialogue box has the keys; while the controls card is open, the card has them.
-	if is_title_open() or is_talking() or hud.is_controls_open():
+	if _closing_due:
+		_open_closing_when_free()
+	# While talking, the dialogue box has the keys; while a card is open, the card has them.
+	if is_title_open() or is_talking() or hud.is_controls_open() or hud.is_closing_open():
 		return
 	# Polled rather than read from events, so presses made with Input.action_press count too.
 	if not player.is_alive() and Input.is_action_just_pressed(&"confirm"):
@@ -235,6 +253,11 @@ func is_title_open() -> bool:
 	return _title != null and _title.is_open()
 
 
+## Whether the closing card, saying the story rests here, is open.
+func is_closing_open() -> bool:
+	return hud.is_closing_open()
+
+
 ## True from the fall of the room's last enemy, or from entering a cleared room, until the next round.
 func is_cleared() -> bool:
 	return _encounter.is_cleared()
@@ -289,6 +312,7 @@ func _play(from: GameState) -> void:
 ## characters, with Álvar selected and nothing paused or targeted.
 func _enter(room_id: StringName, entry_name: StringName) -> void:
 	_conversation.stop()
+	_put_closing_away()
 	set_paused(false)
 	input.cancel_targeting()
 	_clear_units()
@@ -306,6 +330,11 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	rig.far_fraction = room.camera_far_fraction
 	rig.set_bounds(room.floor_bounds())
 	_hand_control_to_alvar()
+	if _is_story_rest():
+		if state.has_flag(REST_SHOWN_FLAG):
+			hud.show_notice(REST_NOTICE)
+		else:
+			_closing_due = true
 	room_started.emit()
 
 
@@ -399,6 +428,51 @@ func _on_controls_toggled(open: bool) -> void:
 		input.suspended = true
 	else:
 		input.set_deferred(&"suspended", false)
+
+
+## Whether this is the story, in its resting room, cleared: where the story rests for now.
+func _is_story_rest() -> bool:
+	return (boot == Boot.STORY and room != null and room.room_id == STORY_REST_ROOM
+			and _encounter.is_cleared())
+
+
+func _on_room_cleared() -> void:
+	if _is_story_rest():
+		_closing_due = true
+		_open_closing_when_free()
+
+
+## Opens the closing card once nothing else holds the screen: not on the title, in a conversation, over
+## the controls card, in the pause or after Álvar's fall.
+func _open_closing_when_free() -> void:
+	if (is_title_open() or is_talking() or hud.is_controls_open() or _paused or player == null
+			or not player.is_alive()):
+		return
+	_closing_due = false
+	hud.show_closing(state.conscience)
+
+
+## Closes the closing card without counting it as seen, as a room change does; nothing is due after.
+func _put_closing_away() -> void:
+	_closing_due = false
+	if not hud.is_closing_open():
+		return
+	_closing_put_away = true
+	hud.hide_closing()
+	_closing_put_away = false
+
+
+## The closing card holds the world and the input as the controls card does. Dismissed by the player,
+## it is seen: the flag is set and saved, so it does not show again.
+func _on_closing_toggled(open: bool) -> void:
+	_world_hold.set_held(&"closing", open)
+	if open:
+		input.suspended = true
+		return
+	input.set_deferred(&"suspended", false)
+	if not _closing_put_away:
+		state.set_flag(REST_SHOWN_FLAG)
+		checkpoint()
 
 
 func _on_member_revived(_unit: Unit) -> void:

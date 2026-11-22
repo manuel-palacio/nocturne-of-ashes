@@ -84,6 +84,7 @@ func _write_state(_args: Array) -> void:
 		"line": _main.dialogue.line_text(),
 		"choices": _main.dialogue.choice_texts(),
 		"notice": _main.hud.notice(),
+		"closing": _main.is_closing_open(),
 		"title": title,
 		"saved": _main.store != null and _main.store.has_save(),
 		"asking": _title() != null and _title().is_asking(),
