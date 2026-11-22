@@ -329,7 +329,6 @@ func test_every_figure_in_the_game_wears_a_dress_with_a_head() -> void:
 	for path: String in scenes:
 		var root: Node = autofree((load(path) as PackedScene).instantiate())
 		var found: Array[Node] = root.find_children("*", "Npc", true, false)
-		found.append_array(root.find_children("Visual", "UnitVisual", true, false) if root is Unit else [])
 		if root is Unit:
 			found.append(root.get_node(^"Visual"))
 		for node: Node in found:
@@ -338,6 +337,7 @@ func test_every_figure_in_the_game_wears_a_dress_with_a_head() -> void:
 			assert_not_null(dress, "%s: %s" % [path, node.name])
 			if dress != null:
 				assert_not_null(dress.head, "%s: %s's dress has a head" % [path, node.name])
+	gut.p("%d figures" % figures)
 	assert_gte(figures, 10, "every unit and every person in the rooms")
 
 
