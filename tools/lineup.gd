@@ -1,16 +1,23 @@
 extends SceneTree
 ## Captures frames of the dressed figures for judging their look, into `build/shots/`.
 ##
-##     godot --path . -s tools/lineup.gd -- <name>.png [view=front|side|back|three_quarter]
-##         [frame=head|body] [clip=idle] [time=0.0] [dress names...]
-##     godot --path . -s tools/lineup.gd -- <name>.png game
+##     godot --path . -s tools/lineup.gd -- <name>.png [view=front|side|back|three_quarter,...]
+##         [frame=head|body] [clip=idle,...] [time=0.0|<percent>%] [per_row=4] [dress names...]
+##     godot --path . -s tools/lineup.gd -- <name>.png game [fight|dark|fury|dead]
 ##
 ## The first form draws each dress (every one in `resources/dress/`, sorted, unless names are given)
-## as the game builds it (a `UnitVisual`), held in `clip` at `time` seconds, in an even, neutral light
-## on a mid-grey ground, each in its own square side by side, four to a row: `frame=head` is the head
-## and shoulders, centred on the head bone; `frame=body` the whole figure, centred on its hips. The figure's own faint light
-## is turned off. The second form boots the skirmish, stills everyone's brain, and captures the game
-## camera as it starts, two of the enemies brought in beside the party. It draws, so it needs a window (not `--headless`).
+## as the game builds it (a `UnitVisual`), held in `clip` at `time` seconds (or at that share of the
+## clip's length), its cloth settled there as the game settles it (laid flat in `death`), in an even,
+## neutral light on a mid-grey ground, each in its own square side by side, `per_row` to a row:
+## `frame=head` is the head and shoulders, centred on the head bone; `frame=body` the whole figure,
+## centred on its hips. Several views or clips, comma-separated, give a square for each, views
+## outermost, then clips, then dresses. The figure's own faint light is turned off.
+##
+## The second form boots the skirmish and captures the game camera, two of the enemies brought in
+## beside the party: as it starts, everyone's brain stilled; with `fight`, after the fight has run a
+## while; with `dark`, everyone moved to the floor's corner furthest from any light; with `fury`,
+## Alvar in the Fury; with `dead`, those two enemies fallen. It draws, so it needs a window (not
+## `--headless`).
 
 const DRESSES: String = "res://resources/dress/"
 const OUT: String = "res://build/shots/"
@@ -37,9 +44,9 @@ func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
 	var out: String = OUT + args[0]
 	if args.has("game"):
-		quit(await _game(out))
+		quit(await _game(out, args[args.size() - 1] if args.size() > 2 else "start"))
 		return
-	var options: Dictionary = {"view": "front", "frame": "head", "clip": "idle", "time": "0.0"}
+	var options: Dictionary = {"view": "front", "frame": "head", "clip": "idle", "time": "0.0", "per_row": str(PER_ROW)}
 	var names: PackedStringArray = []
 	for arg: String in args.slice(1):
 		if "=" in arg:
@@ -52,12 +59,22 @@ func _run() -> void:
 				names.append(file.get_basename())
 		names.sort()
 	_viewport = _stage()
-	var sheet := Image.create_empty(CELL * mini(names.size(), PER_ROW),
-			CELL * ceili(names.size() / float(PER_ROW)), false, Image.FORMAT_RGB8)
-	for i: int in names.size():
-		var dress := load(DRESSES + names[i] + ".tres") as Dress
-		var drawn: Image = await _render(dress, options)
-		sheet.blit_rect(drawn, Rect2i(Vector2i.ZERO, drawn.get_size()), Vector2i(i % PER_ROW, i / PER_ROW) * CELL)
+	var cells: Array[Dictionary] = []
+	for view: String in options["view"].split(","):
+		for clip: String in options["clip"].split(","):
+			for dress_name: String in names:
+				var cell: Dictionary = options.duplicate()
+				cell["view"] = view
+				cell["clip"] = clip
+				cell["dress"] = dress_name
+				cells.append(cell)
+	var per_row: int = int(options["per_row"])
+	var sheet := Image.create_empty(CELL * mini(cells.size(), per_row),
+			CELL * ceili(cells.size() / float(per_row)), false, Image.FORMAT_RGB8)
+	for i: int in cells.size():
+		var dress := load(DRESSES + cells[i]["dress"] + ".tres") as Dress
+		var drawn: Image = await _render(dress, cells[i])
+		sheet.blit_rect(drawn, Rect2i(Vector2i.ZERO, drawn.get_size()), Vector2i(i % per_row, i / per_row) * CELL)
 	quit(_save(sheet, out))
 
 
@@ -107,10 +124,13 @@ func _render(dress: Dress, options: Dictionary) -> Image:
 		if material != null:
 			material.emission_energy_multiplier = 0.0
 	var player := figure.model().find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer
-	player.play(StringName(options["clip"]))
-	player.seek(float(options["time"]), true)
+	var clip := StringName(options["clip"])
+	var time: String = options["time"]
+	player.play(clip)
+	player.seek(player.get_animation(clip).length * float(time.trim_suffix("%")) / 100.0 if time.ends_with("%")
+			else float(time), true)
 	player.advance(0.0)
-	figure.settle_cloth()
+	figure.settle_cloth(clip == &"death")
 	var skeleton := figure.model().find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
 	await RenderingServer.frame_post_draw
 	var target: Vector3 = _bone(skeleton, &"DEF-hips")
@@ -135,26 +155,64 @@ func _bone(skeleton: Skeleton3D, bone: StringName) -> Vector3:
 	return (skeleton.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone(bone))).origin
 
 
-## The skirmish as it starts, at the game camera, with every brain stilled.
-func _game(out: String) -> int:
+## The skirmish at the game camera, two of the enemies beside the party, in the `moment` asked for.
+func _game(out: String, moment: String) -> int:
 	root.size = Vector2i(1600, 900)
 	var main: Main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	main.show_title = false
 	root.add_child(main)
 	for frame: int in 30:
 		await process_frame
-	for unit: Node in get_nodes_in_group(&"units"):
-		var brain: Node = unit.get_node_or_null("Brain")
-		if brain != null:
-			brain.set(&"enabled", false)
+	if moment != "fight":
+		_still(main)
+	var anchor: Vector3 = main.player.global_position
+	if moment == "dark":
+		anchor = _darkest_corner(main)
+		var places: Array[Vector3] = [Vector3.ZERO, Vector3(-0.9, 0.0, 0.5), Vector3(0.9, 0.0, 0.6)]
+		for i: int in mini(main.party.size(), places.size()):
+			main.party[i].global_position = anchor + places[i]
 	# Two of the enemies brought in beside the party, so both kinds of figure share the frame.
 	var beside: Array[Vector3] = [Vector3(1.6, 0.0, -0.6), Vector3(2.2, 0.0, 0.8)]
 	for i: int in mini(main.enemies.size(), beside.size()):
-		main.enemies[i].global_position = main.player.global_position + beside[i]
+		main.enemies[i].global_position = anchor + beside[i]
+	if moment == "fury":
+		var stats: Stats = main.player.stats
+		stats.gain_blood(1000)
+		stats.spend_blood(stats.blood - main.player.fury_threshold + 1)
+	elif moment == "dead":
+		for i: int in mini(main.enemies.size(), beside.size()):
+			main.enemies[i].take_hit(9999)
 	main.rig.snap_to_target()
-	for frame: int in 30:
+	var frames: int = {"fight": 150, "dead": 300}.get(moment, 30)
+	for frame: int in frames:
 		await process_frame
 	await RenderingServer.frame_post_draw
 	var image: Image = root.get_texture().get_image()
 	image.convert(Image.FORMAT_RGB8)
 	return _save(image, out)
+
+
+func _still(main: Main) -> void:
+	for unit: Node in get_nodes_in_group(&"units"):
+		var brain: Node = unit.get_node_or_null("Brain")
+		if brain != null:
+			brain.set(&"enabled", false)
+
+
+## The corner of the room's floor, a metre and a half in, furthest from its nearest light.
+func _darkest_corner(main: Main) -> Vector3:
+	var bounds: Rect2 = main.room.floor_bounds().grow(-1.5)
+	var lights: Array[Node] = main.room.find_children("*", "Light3D", true, false)
+	var best := Vector3.ZERO
+	var furthest: float = -1.0
+	for corner: Vector2 in [bounds.position, bounds.position + Vector2(bounds.size.x, 0.0), bounds.end,
+			bounds.position + Vector2(0.0, bounds.size.y)]:
+		var at := Vector3(corner.x, main.player.global_position.y, corner.y)
+		var nearest: float = INF
+		for light: Node in lights:
+			if light is OmniLight3D or light is SpotLight3D:
+				nearest = minf(nearest, at.distance_to((light as Node3D).global_position))
+		if nearest > furthest:
+			furthest = nearest
+			best = at
+	return best

@@ -205,10 +205,11 @@ func show_feed_mark(on: bool) -> void:
 
 
 ## Fits the cloth to the pose on show at once and lets it settle there fully, as if the figure had
-## stood in it a while: for a figure that does not process, such as a portrait's.
-func settle_cloth() -> void:
+## stood in it a while: for a figure that does not process, such as a portrait's. A figure `lying` on the
+## floor (in `death`) has its hem laid flat, as in the game.
+func settle_cloth(lying: bool = false) -> void:
 	for fit: ClothFit in _fits:
-		fit.fit(SETTLED_AFTER)
+		fit.fit(SETTLED_AFTER, lying)
 
 
 ## The fits of its cloth pieces that stretch, so a test can call them: headless no figure is on screen,
