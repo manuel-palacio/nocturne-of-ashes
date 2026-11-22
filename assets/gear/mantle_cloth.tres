@@ -8,3 +8,4 @@ keys = PackedStringArray("aft")
 rings = Array[PackedVector3Array]([PackedVector3Array(-0.93500, 0.38500, 0.09000, -0.66500, 0.35500, 0.09965, -0.36500, 0.31500, 0.09396, -0.06500, 0.26500, 0.00000, 0.12500, 0.20500, 0.00000, 0.18500, 0.15500, 0.00000)])
 flattens = false
 seats = false
+hangs = true

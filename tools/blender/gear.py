@@ -38,7 +38,8 @@ out that way as over a knee, to at most 1.4 times the hem's reach, and lift the 
 cannot hold: the game sets them from the legs each frame, so a striding leg stays inside the skirt
 and a running figure's mantle swings back. Skirts and the apron also have a `flat` key that lays
 the hem flat round the legs for a figure lying on the floor, and skirts a `seat` key that lays the
-front over a seated figure's lap.
+front over a seated figure's lap. The mantle has a `hang` key that lays it against the back when
+its wearer leans over or lies down.
 
 The output is byte-identical from one run to the next: the mesh is built in a fixed order, and the
 exporter's generator string (which names the Blender version) is replaced by this tool's name.
@@ -105,6 +106,9 @@ SPREAD, MANTLE_SPREAD = 0.4, 0.25
 # How far a skirt's hem rides up, at most, where a leg pushes it out squarely: over a knee it cannot hold.
 LONG_LIFT, SHORT_LIFT = 0.45, 0.1
 
+# The mantle laid against the back: how far behind the middle the back is, and what share of its
+# width and of its depth behind that the cloth keeps.
+MANTLE_BACK, MANTLE_HUG = 0.12, (0.8, 0.0)
 # How far the apron's hem comes back to lie on the legs when its wearer lies down.
 APRON_FLAT = 0.11
 
@@ -282,6 +286,13 @@ def mantle() -> Piece:
     rings = [(1.5, 0.19, 0.14, 0.02, arc), (1.44, 0.27, 0.19, 0.02, arc), (1.25, 0.34, 0.24, 0.03, arc),
              (0.95, 0.4, 0.29, 0.03, arc), (0.65, 0.42, 0.33, 0.03, arc), (0.38, 0.44, 0.36, 0.03, arc)]
     p.lathe(rings, 14, closed=False, keys={"aft": (MANTLE_SPREAD, 0.0, 1.25, 0.38)})
+    # Hanging: when its wearer leans over, or lies on it, the cloth lies against the back instead of
+    # standing off it as hung from the shoulders.
+    p.keys["hang"] = []
+    for x, y, z in p.verts:
+        share = min(max((rings[1][0] - y) / (rings[1][0] - rings[-1][0]), 0.0), 1.0)
+        p.keys["hang"].append((-x * (1 - MANTLE_HUG[0]) * share, 0.0,
+                               -max(z - MANTLE_BACK, 0.0) * (1 - MANTLE_HUG[1]) * share))
     p.two_sided()
     return p
 
@@ -326,7 +337,8 @@ def write_shape(piece: Piece) -> None:
         "keys = PackedStringArray(%s)" % ", ".join(f'"{n}"' for n in names),
         "rings = Array[PackedVector3Array]([%s])" % ", ".join(tables),
         "flattens = %s" % ("true" if "flat" in piece.keys else "false"),
-        "seats = %s" % ("true" if "seat" in piece.keys else "false"), ""])
+        "seats = %s" % ("true" if "seat" in piece.keys else "false"),
+        "hangs = %s" % ("true" if "hang" in piece.keys else "false"), ""])
     (OUT / f"{piece.name}_cloth.tres").write_text(text)
     print(f"wrote {piece.name}_cloth.tres")
 

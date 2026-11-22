@@ -21,6 +21,10 @@ const POINTS: Array[Vector2] = [
 const LEGS: Array[Array] = [
 	[&"DEF-thigh.L", &"DEF-shin.L", &"DEF-foot.L"], [&"DEF-thigh.R", &"DEF-shin.R", &"DEF-foot.R"],
 ]
+## The `hang` key starts to lay the cloth against the back once the piece leans over by more than
+## this (the sine of the angle, fore or aft), and lays it fully `HANG_FULL` further.
+const HANG_FROM: float = 0.1
+const HANG_FULL: float = 0.25
 ## A figure lies only once its piece's bone leans further than this from upright (the cosine of the
 ## angle): falling, it still stands at first, and its hem lies flat only as it comes down.
 const LYING_UPRIGHT: float = 0.7
@@ -55,7 +59,9 @@ var _rings: Array[PackedVector3Array] = []
 var _flat: int = -1
 ## The `seat` key's blend shape index, or −1.
 var _seat: int = -1
-## The weights last written: the stretching keys', then the `flat` and `seat` keys'.
+## The `hang` key's blend shape index, or −1.
+var _drape: int = -1
+## The weights last written: the stretching keys', then the `flat`, `seat` and `hang` keys'.
 var _weights: PackedFloat32Array = PackedFloat32Array()
 ## Reused every fit: the leg points (x, y, z in the piece's frame, and the room each needs), each
 ## key's wanted weight, and how squarely each key faces the point being pushed.
@@ -88,6 +94,8 @@ func _init(mesh: MeshInstance3D, skeleton: Skeleton3D, bone: int, hang: Transfor
 		_flat = mesh.find_blend_shape_by_name(&"flat")
 	if shape.seats:
 		_seat = mesh.find_blend_shape_by_name(&"seat")
+	if shape.hangs:
+		_drape = mesh.find_blend_shape_by_name(&"hang")
 	for k: int in shape.keys.size():
 		var key_name := StringName(shape.keys[k])
 		var index: int = mesh.find_blend_shape_by_name(key_name)
@@ -96,7 +104,7 @@ func _init(mesh: MeshInstance3D, skeleton: Skeleton3D, bone: int, hang: Transfor
 			_indices.append(index)
 			_ways.append(Vector2(way.x, way.z))
 			_rings.append(shape.rings[k])
-	_weights.resize(_indices.size() + 2)
+	_weights.resize(_indices.size() + 3)
 	_wanted.resize(_indices.size())
 	_facing.resize(_indices.size())
 	_squares.resize(_indices.size())
@@ -109,13 +117,13 @@ func mesh() -> MeshInstance3D:
 
 
 func is_fitting() -> bool:
-	return not _indices.is_empty() or _flat >= 0 or _seat >= 0
+	return not _indices.is_empty() or _flat >= 0 or _seat >= 0 or _drape >= 0
 
 
 ## Sets every key from the legs as now posed; `delta` is the time since the last fit. While `lying`,
 ## the `flat` key (where there is one) lays the hem flat, and the legs still push it out; while
 ## `seated`, the `seat` key (where there is one) lays the front over the lap and the stretching keys
-## let go. Returns whether any weight moved.
+## let go. The `hang` key follows how far the piece leans over. Returns whether any weight moved.
 func fit(delta: float, lying: bool = false, seated: bool = false) -> bool:
 	var moved: bool = false
 	lying = lying and _skeleton.get_bone_global_pose(_bone).basis.y.normalized().y < LYING_UPRIGHT
@@ -126,6 +134,10 @@ func fit(delta: float, lying: bool = false, seated: bool = false) -> bool:
 		var seated_now: bool = seated and not lying
 		moved = _write(_seat, flat_slot + 1, move_toward(_weights[flat_slot + 1], 1.0 if seated_now else 0.0,
 				FLATTEN * delta)) or moved
+	if _drape >= 0:
+		var down: Vector3 = (_skeleton.get_bone_global_pose(_bone) * _hang).basis.inverse() * Vector3.DOWN
+		var lean: float = clampf((absf(down.normalized().z) - HANG_FROM) / HANG_FULL, 0.0, 1.0)
+		moved = _write(_drape, flat_slot + 2, move_toward(_weights[flat_slot + 2], lean, FLATTEN * delta)) or moved
 	if _indices.is_empty():
 		return moved
 	_wanted.fill(0.0)

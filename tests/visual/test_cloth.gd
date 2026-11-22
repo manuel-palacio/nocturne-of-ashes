@@ -74,6 +74,7 @@ func _check_table(piece_name: String) -> void:
 		assert_gte(mesh.find_blend_shape_by_name(StringName(key)), 0, "%s: the mesh has %s" % [piece_name, key])
 	assert_eq(mesh.find_blend_shape_by_name(&"flat") >= 0, shape.flattens, "%s: a flat key iff it lays flat" % piece_name)
 	assert_eq(mesh.find_blend_shape_by_name(&"seat") >= 0, shape.seats, "%s: a seat key iff it seats" % piece_name)
+	assert_eq(mesh.find_blend_shape_by_name(&"hang") >= 0, shape.hangs, "%s: a hang key iff it hangs" % piece_name)
 	for k: int in mini(shape.rings.size(), shape.keys.size()):
 		var rings: PackedVector3Array = shape.rings[k]
 		var key: String = shape.keys[k]
@@ -136,6 +137,35 @@ func test_the_fit_pushes_the_long_skirt_out_round_a_striding_leg_and_lets_it_go(
 	assert_gt(skirt.get_blend_shape_value(fore), forward - 0.2, "it lets go slowly")
 	fit.fit(1.0)
 	assert_almost_eq(skirt.get_blend_shape_value(fore), 0.0, 0.01, "settled")
+
+
+## Malakor's mantle, hung from his chest, lies against his back as he leans over (as in his crouching
+## `attack`) and stands off it again as he straightens.
+func test_the_mantle_hangs_against_a_bent_back() -> void:
+	var visual := UnitVisual.new()
+	visual.dress = load("res://resources/dress/malakor.tres")
+	add_child_autofree(visual)
+	visual.process_mode = Node.PROCESS_MODE_DISABLED
+	var mantles: Array[ClothFit] = visual.cloth_fits().filter(func(each: ClothFit) -> bool:
+		return each.mesh().find_blend_shape_by_name(&"hang") >= 0)
+	assert_eq(mantles.size(), 1, "his mantle hangs")
+	if mantles.is_empty():
+		return
+	var fit: ClothFit = mantles[0]
+	var mantle: MeshInstance3D = fit.mesh()
+	var hang: int = mantle.find_blend_shape_by_name(&"hang")
+	var skeleton: Skeleton3D = visual.find_children("*", "Skeleton3D", true, false)[0]
+	var spine: int = skeleton.find_bone(&"DEF-spine.001")
+	skeleton.reset_bone_poses()
+	fit.fit(1.0)
+	assert_almost_eq(mantle.get_blend_shape_value(hang), 0.0, 0.01, "upright, it stands off the back")
+	skeleton.set_bone_pose_rotation(spine, skeleton.get_bone_pose_rotation(spine) * Quaternion(Vector3.RIGHT,
+			deg_to_rad(40.0)))
+	fit.fit(1.0)
+	assert_gt(mantle.get_blend_shape_value(hang), 0.9, "leaning over by 40 degrees, it lies on the back")
+	skeleton.reset_bone_poses()
+	fit.fit(1.0)
+	assert_almost_eq(mantle.get_blend_shape_value(hang), 0.0, 0.01, "straight again, it stands off")
 
 
 ## The weight of the key `index` after fitting the pose on show, from a skirt let go.

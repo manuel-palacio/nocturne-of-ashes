@@ -13,3 +13,6 @@ extends Resource
 @export var flattens: bool = false
 ## Whether the piece has a `seat` key, which lays its front over a seated figure's lap.
 @export var seats: bool = false
+## Whether the piece has a `hang` key, which lays it against its wearer's back when the wearer leans
+## over or lies down.
+@export var hangs: bool = false
