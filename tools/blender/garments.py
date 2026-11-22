@@ -64,12 +64,13 @@ WRIST = BONES["DEF-hand.R"][0] - BONES["DEF-forearm.R"][0]  # the forearm's leng
 # The torso's sections, bottom to top, as (height, half-width, front, back, middle front to back):
 # just outside the body the model no longer has, closing over the neck joint at the top (it is about
 # 0.066 m wide and 0.062 m deep round z = 0.016, up to the head).
-CHEST_RINGS = [(1.15, 0.152, 0.138, 0.12, 0.0), (1.26, 0.16, 0.148, 0.126, 0.005),
+# The chest's bottom ring flares a little, so it reads as a hem over the abdomen, not as a step.
+CHEST_RINGS = [(1.15, 0.158, 0.144, 0.13, 0.0), (1.26, 0.16, 0.148, 0.126, 0.005),
                (1.35, 0.18, 0.142, 0.155, 0.012), (1.43, 0.226, 0.142, 0.168, 0.025),
                (1.505, 0.232, 0.12, 0.155, 0.032), (1.545, 0.14, 0.085, 0.115, 0.03)]
 NECK = (1.565, 0.082, 0.07, 0.074, 0.016)  # the neck opening, round the neck joint
 NECK_IN = (1.53, 0.06, 0.05, 0.055, 0.016)  # turned in, inside the neck joint
-ABDOMEN_RINGS = [(1.06, 0.15, 0.125, 0.125, 0.004), (1.16, 0.142, 0.127, 0.112, -0.004),
+ABDOMEN_RINGS = [(1.06, 0.15, 0.125, 0.125, 0.004), (1.16, 0.134, 0.12, 0.102, -0.004),
                  (1.27, 0.128, 0.104, 0.098, 0.004), (1.33, 0.12, 0.094, 0.1, 0.01)]
 TUCKED = (0.97, 0.155, 0.128, 0.13, 0.008)  # the abdomen's bottom, tucked into a skirt
 HIPS_HEM = [(0.99, 0.162, 0.135, 0.135, 0.01), (0.9, 0.19, 0.15, 0.158, 0.01)]  # a tunic to the hips
