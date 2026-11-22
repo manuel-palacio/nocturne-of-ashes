@@ -60,7 +60,8 @@ BELT_PIECES = 1        # the pelvis's upper rim (the abdomen's lower rim went wi
 # lowest vertices belong to the chest's piece) and some follow these.
 CLOTHED = {"DEF-spine.001", "DEF-spine.002", "DEF-spine.003", "DEF-shoulder.L", "DEF-shoulder.R",
            "DEF-upper_arm.L", "DEF-upper_arm.R"}
-# The chest, five pieces of the abdomen, six of the upper arms and the joint between chest and abdomen.
+# Twelve pieces: three on each upper arm, and six of the chest and the abdomen, the joint between them
+# among them.
 # The waist joint stays (the hips move it too): it fills the waist from inside, under the garments.
 CLOTHED_PIECES = 12
 CLOTHED_TRIANGLES = 1342
