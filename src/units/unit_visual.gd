@@ -74,6 +74,8 @@ const SELECTED_COLOUR: Color = Color(0.95, 0.74, 0.22)
 const DROP_ABOVE: float = 0.32
 ## Clips in which the legs barely move, so cloth settled in one stays settled.
 const STILL_CLIPS: Array[StringName] = [&"idle", &"talk", &"sit", &"sit_talk", &"death"]
+## Clips in which the figure sits, its skirt over its lap.
+const SEATED_CLIPS: Array[StringName] = [&"sit", &"sit_talk"]
 ## Seconds of standing after which every cloth key has let go fully (see `ClothFit.SETTLE`).
 const SETTLED_AFTER: float = 1.0
 ## Regions of the palette, which is this many squares wide.
@@ -207,10 +209,10 @@ func show_feed_mark(on: bool) -> void:
 
 ## Fits the cloth to the pose on show at once and lets it settle there fully, as if the figure had
 ## stood in it a while: for a figure that does not process, such as a portrait's. A figure `lying` on the
-## floor (in `death`) has its hem laid flat, as in the game.
-func settle_cloth(lying: bool = false) -> void:
+## floor (in `death`) has its hem laid flat, and a `seated` one its skirt over its lap, as in the game.
+func settle_cloth(lying: bool = false, seated: bool = false) -> void:
 	for fit: ClothFit in _fits:
-		fit.fit(SETTLED_AFTER, lying)
+		fit.fit(SETTLED_AFTER, lying, seated)
 
 
 ## The fits of its cloth pieces that stretch, so a test can call them: headless no figure is on screen,
@@ -351,7 +353,8 @@ static func _shared_own_colours(body: StandardMaterial3D) -> StandardMaterial3D:
 ## Fits the cloth to the pose just set, every second pose, and only while the figure is on screen. A
 ## figure settled in a still clip (one that barely moves the legs, or a fall held on its last frame)
 ## with its cloth settled is not fitted again until its clip changes. A fallen figure's skirt lies
-## flat: hung rigidly from the hips, it would stand up off the floor round the legs.
+## flat: hung rigidly from the hips, it would stand up off the floor round the legs. A seated one's
+## lies over its lap.
 func _fit_cloth() -> void:
 	if _fits.is_empty():
 		return
@@ -364,9 +367,10 @@ func _fit_cloth() -> void:
 		_fit_time = 0.0
 		return
 	var lying: bool = _clip == &"death" and not _rising
+	var seated: bool = SEATED_CLIPS.has(_clip)
 	var moved: bool = false
 	for fit: ClothFit in _fits:
-		moved = fit.fit(_fit_time, lying) or moved
+		moved = fit.fit(_fit_time, lying, seated) or moved
 	_fit_time = 0.0
 	_cloth_settled = not moved
 	_settled_clip = _clip

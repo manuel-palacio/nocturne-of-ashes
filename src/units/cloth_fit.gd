@@ -1,10 +1,11 @@
 class_name ClothFit
 extends RefCounted
 ## Keeps the legs inside a cloth piece hung rigidly from one bone. The piece's shape keys (`fore`, `aft`,
-## `left`, `right`, made by `tools/blender/gear.py`) stretch its hem that way, more the lower it hangs.
-## Each time the skeleton is posed, `fit()` sets each key just far enough that every leg point at a
-## height the piece covers lies inside it, so a striding leg pushes the skirt out and a running
-## figure's mantle swings back. A key lets go slowly, so the cloth settles rather than snaps.
+## `left`, `right`, made by `tools/blender/gear.py`) stand it out that way as over a knee, to at most
+## 1.4 times its hem's reach, and lift the hem where they push. Each time the skeleton is posed, `fit()`
+## sets each key just far enough that every leg point at a height the piece covers lies inside it, so a
+## striding leg pushes the skirt out where it strides and a running figure's mantle swings back; a leg
+## further out than the keys can go shows below the lifted hem. A key lets go slowly, so the cloth settles rather than snaps.
 ## It reads the skeleton and writes only the piece's own key weights.
 
 ## Each key's way, in the piece's frame (the model's frame at rest: -z is forward, -x the left).
@@ -13,10 +14,16 @@ const DIRECTIONS: Dictionary = {
 }
 ## Down each leg, the points that must stay inside, as a share of the way from the hip to the knee
 ## (0 to 1) and from the knee to the ankle (1 to 2), and the leg's half-thickness there, in metres.
-const POINTS: Array[Vector2] = [Vector2(0.5, 0.085), Vector2(1.0, 0.075), Vector2(1.5, 0.065), Vector2(2.0, 0.055)]
+const POINTS: Array[Vector2] = [
+	Vector2(0.5, 0.085), Vector2(0.75, 0.08), Vector2(1.0, 0.075), Vector2(1.25, 0.07), Vector2(1.5, 0.065),
+	Vector2(1.75, 0.06), Vector2(2.0, 0.055),
+]
 const LEGS: Array[Array] = [
 	[&"DEF-thigh.L", &"DEF-shin.L", &"DEF-foot.L"], [&"DEF-thigh.R", &"DEF-shin.R", &"DEF-foot.R"],
 ]
+## A figure lies only once its piece's bone leans further than this from upright (the cosine of the
+## angle): falling, it still stands at first, and its hem lies flat only as it comes down.
+const LYING_UPRIGHT: float = 0.7
 ## How fast a key lets go, in full weights per second.
 const SETTLE: float = 2.5
 ## How fast the hem lays flat once the figure lies down, and rises again, in full weights per second.
@@ -25,6 +32,9 @@ const FLATTEN: float = 1.5
 ## is beside the piece, not inside it, as beside a mantle open at the front; it pushes nothing.
 const SQUARELY: float = 0.3
 
+## The pieces are lathes of 16 sides: between two of their columns the cloth lies this much nearer the
+## middle than the ellipse through their reaches (1 / cos(180° / 16)), so a point needs that much more.
+const CHORD: float = 1.02
 ## A key's weight is written only when it moves by more than this: each write marks the mesh dirty.
 const STEP: float = 0.002
 
@@ -43,13 +53,16 @@ var _ways: PackedVector2Array = PackedVector2Array()
 var _rings: Array[PackedVector3Array] = []
 ## The `flat` key's blend shape index, or −1.
 var _flat: int = -1
-## The weights last written, the stretching keys' then the `flat` key's.
+## The `seat` key's blend shape index, or −1.
+var _seat: int = -1
+## The weights last written: the stretching keys', then the `flat` and `seat` keys'.
 var _weights: PackedFloat32Array = PackedFloat32Array()
 ## Reused every fit: the leg points (x, y, z in the piece's frame, and the room each needs), each
 ## key's wanted weight, and how squarely each key faces the point being pushed.
 var _points: PackedVector4Array = PackedVector4Array()
 var _wanted: PackedFloat32Array = PackedFloat32Array()
 var _facing: PackedFloat32Array = PackedFloat32Array()
+var _squares: PackedFloat32Array = PackedFloat32Array()
 
 
 ## `hang` is where the mesh lies relative to `bone`'s pose; `clearance` is how far it keeps from the
@@ -73,6 +86,8 @@ func _init(mesh: MeshInstance3D, skeleton: Skeleton3D, bone: int, hang: Transfor
 			_legs.append(leg_bone)
 	if shape.flattens:
 		_flat = mesh.find_blend_shape_by_name(&"flat")
+	if shape.seats:
+		_seat = mesh.find_blend_shape_by_name(&"seat")
 	for k: int in shape.keys.size():
 		var key_name := StringName(shape.keys[k])
 		var index: int = mesh.find_blend_shape_by_name(key_name)
@@ -81,9 +96,10 @@ func _init(mesh: MeshInstance3D, skeleton: Skeleton3D, bone: int, hang: Transfor
 			_indices.append(index)
 			_ways.append(Vector2(way.x, way.z))
 			_rings.append(shape.rings[k])
-	_weights.resize(_indices.size() + 1)
+	_weights.resize(_indices.size() + 2)
 	_wanted.resize(_indices.size())
 	_facing.resize(_indices.size())
+	_squares.resize(_indices.size())
 	_points.resize(LEGS.size() * POINTS.size())
 
 
@@ -93,21 +109,27 @@ func mesh() -> MeshInstance3D:
 
 
 func is_fitting() -> bool:
-	return not _indices.is_empty() or _flat >= 0
+	return not _indices.is_empty() or _flat >= 0 or _seat >= 0
 
 
 ## Sets every key from the legs as now posed; `delta` is the time since the last fit. While `lying`,
-## the `flat` key (where there is one) lays the hem flat and the others let go. Returns whether any
-## weight moved.
-func fit(delta: float, lying: bool = false) -> bool:
+## the `flat` key (where there is one) lays the hem flat, and the legs still push it out; while
+## `seated`, the `seat` key (where there is one) lays the front over the lap and the stretching keys
+## let go. Returns whether any weight moved.
+func fit(delta: float, lying: bool = false, seated: bool = false) -> bool:
 	var moved: bool = false
+	lying = lying and _skeleton.get_bone_global_pose(_bone).basis.y.normalized().y < LYING_UPRIGHT
+	var flat_slot: int = _indices.size()
 	if _flat >= 0:
-		var last: int = _weights.size() - 1
-		moved = _write(_flat, last, move_toward(_weights[last], 1.0 if lying else 0.0, FLATTEN * delta))
+		moved = _write(_flat, flat_slot, move_toward(_weights[flat_slot], 1.0 if lying else 0.0, FLATTEN * delta))
+	if _seat >= 0:
+		var seated_now: bool = seated and not lying
+		moved = _write(_seat, flat_slot + 1, move_toward(_weights[flat_slot + 1], 1.0 if seated_now else 0.0,
+				FLATTEN * delta)) or moved
 	if _indices.is_empty():
 		return moved
 	_wanted.fill(0.0)
-	if not lying:
+	if not (seated and _seat >= 0):
 		_place_points()
 		for point: Vector4 in _points:
 			_push(point)
@@ -160,6 +182,7 @@ func _push(point: Vector4) -> void:
 		if point.y < rings[0].x or point.y > rings[rings.size() - 1].x:
 			return
 		_facing[k] = 0.0
+		_squares[k] = 0.0
 		var square: float = maxf(toward.dot(_ways[k]), 0.0)
 		if square <= 0.0:
 			continue
@@ -167,16 +190,30 @@ func _push(point: Vector4) -> void:
 		if ring.z <= 0.005:
 			continue
 		_facing[k] = square / ring.z  # divided out below, so a key's weight is its share of its reach
+		_squares[k] = square * square * square
 		inverse_square += pow(square / maxf(ring.y, 0.01), 2.0)
 		shared += square * square * square
 	if shared < SQUARELY or inverse_square <= 0.0:
 		return
-	var need: float = distance + point.w - 1.0 / sqrt(inverse_square)
+	var need: float = (distance + point.w) * CHORD - 1.0 / sqrt(inverse_square)
 	if need <= 0.0:
 		return
+	# What a key facing the point squarely cannot give beyond its full weight, the others facing it
+	# give instead, so the cloth goes out as far as its keys together can take it.
+	var lost: float = 0.0
+	var others: float = 0.0
+	for k: int in _indices.size():
+		var weight: float = need * _facing[k] / shared
+		if weight > 1.0:
+			lost += need * _squares[k] / shared * (1.0 - 1.0 / weight)
+		elif _facing[k] > 0.0:
+			others += _squares[k]
 	for k: int in _indices.size():
 		if _facing[k] > 0.0:
-			_wanted[k] = maxf(_wanted[k], need * _facing[k] / shared)
+			var weight: float = need * _facing[k] / shared
+			if weight < 1.0 and others > 0.0:
+				weight += lost * _facing[k] / others
+			_wanted[k] = maxf(_wanted[k], weight)
 
 
 static func _ring_at(rings: PackedVector3Array, height: float) -> Vector3:

@@ -7,7 +7,7 @@ extends SceneTree
 ##
 ## The first form draws each dress (every one in `resources/dress/`, sorted, unless names are given)
 ## as the game builds it (a `UnitVisual`), held in `clip` at `time` seconds (or at that share of the
-## clip's length), its cloth settled there as the game settles it (laid flat in `death`), in an even,
+## clip's length), its cloth settled there as the game settles it (laid flat in `death`, over the lap seated), in an even,
 ## neutral light on a mid-grey ground, each in its own square side by side, `per_row` to a row:
 ## `frame=head` is the head and shoulders, centred on the head bone; `frame=body` the whole figure,
 ## centred on its hips. Several views or clips, comma-separated, give a square for each, views
@@ -130,7 +130,7 @@ func _render(dress: Dress, options: Dictionary) -> Image:
 	player.seek(player.get_animation(clip).length * float(time.trim_suffix("%")) / 100.0 if time.ends_with("%")
 			else float(time), true)
 	player.advance(0.0)
-	figure.settle_cloth(clip == &"death")
+	figure.settle_cloth(clip == &"death", clip in UnitVisual.SEATED_CLIPS)
 	var skeleton := figure.model().find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
 	await RenderingServer.frame_post_draw
 	var target: Vector3 = _bone(skeleton, &"DEF-hips")

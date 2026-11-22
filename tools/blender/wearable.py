@@ -19,7 +19,7 @@ import bpy
 
 BLENDER = (5, 3)  # the version the output is pinned to
 
-FLAT_DEPTH, FLAT_WIDTH = 0.35, 0.15
+FLAT_DEPTH, FLAT_WIDTH = 0.6, 0.15
 KEY_DIRECTIONS = {"fore": (0, 0, -1), "aft": (0, 0, 1), "left": (-1, 0, 0), "right": (1, 0, 0)}
 
 
@@ -147,15 +147,27 @@ class Piece:
             self.face(rings[0], mul(axis, -1), colour)
             self.face(rings[1], axis, colour)
 
-    def lathe(self, rings, sides, colour=None, closed=True, cap=False, keys=None, flat=None) -> None:
+    def lathe(self, rings, sides, colour=None, closed=True, cap=False, keys=None, flat=None, seat=None) -> None:
         """Rings, top to bottom, of `(y, rx, rz, cz, half_arc)`: an ellipse of half-widths `rx`, `rz`
         about `(0, y, cz)`. Angle 0 is the back (+z), 90 degrees the right (+x). A closed lathe goes
         all round; an open one spans `half_arc` degrees either side of the back. `cap` closes the
-        top with a point. `keys` maps a shape key's name to `(reach, top, hem)`: at full weight the
-        vertices facing the key's way move that way by up to `reach`, from nothing at height `top`
-        to all of it at `hem` and below, rising fastest near the top. `flat`, as `(top, hem)`, adds a `flat` key that, as deep,
-        squeezes the hem front to back to `FLAT_DEPTH` of its depth and widens it by `FLAT_WIDTH`."""
-        for name in list(keys or {}) + (["flat"] if flat else []):
+        top with a point.
+
+        `keys` maps a shape key's name to `(spread, lift, top, knee)`. At full weight the side
+        facing the key's way stands out like cloth over a striding knee: from where it hangs at
+        height `top` it runs out, steeply at first, to reach, at height `knee`, `1 + spread` times the hem's own reach
+        that way, and hangs straight down from there to the hem. So no key takes the cloth further
+        than `1 + spread` times the hem's reach, the bulge is where the knee and shin are, and the
+        far side stays where it is. Below `knee` the side facing the way also rises, by up to
+        `lift` at the hem where it faces the way squarely: the hem rides up over a leg it cannot
+        hold, so a foot shows below it rather than through it.
+
+        `flat`, as `(top, hem)`, adds a `flat` key that, as deep, squeezes the hem front to back to
+        `FLAT_DEPTH` of its depth and widens it by `FLAT_WIDTH`: the hem laid flat round a figure
+        lying down. `seat`, as `(top, thighs, drop)`, adds a `seat` key that lays the front over a
+        seated figure's lap: the cloth runs forward from `top` for the length `thighs`, falling
+        `drop`, then hangs from the knees; the front's sides go all the way, and the sides part of it."""
+        for name in list(keys or {}) + (["flat"] if flat else []) + (["seat"] if seat else []):
             self.keys.setdefault(name, [(0.0, 0.0, 0.0)] * len(self.verts))
         count = sides if closed else sides + 1
         grid = []
@@ -168,15 +180,30 @@ class Piece:
                     a = math.radians(-half_arc + 2 * half_arc * i / sides)
                 index = self.vertex((rx * math.sin(a), y, cz + rz * math.cos(a)))
                 radial = (math.sin(a), 0.0, math.cos(a))
-                for name, (reach, top, hem) in (keys or {}).items():
+                local = (rx * math.sin(a), 0.0, rz * math.cos(a))
+                for name, (spread, lift, top, knee) in (keys or {}).items():
                     toward = KEY_DIRECTIONS[name]
-                    # Rising fast below the top, as cloth gives most round a knee lifted high.
-                    depth = min(max((top - y) / (top - hem), 0.0), 1.0) ** 0.6
-                    self.keys[name][index] = mul(toward, reach * depth * max(dot(radial, toward), 0.0))
+                    reach, hem_reach = (rx, rings[-1][1]) if toward[0] else (rz, rings[-1][2])
+                    # Out from the top to the knee, steepest at the top as over a thigh raised high,
+                    # then straight down.
+                    share = min(max((top - y) / (top - knee), 0.0), 1.0)
+                    stood = reach + ((1 + spread) * hem_reach - reach) * share ** 0.5
+                    out = mul(toward, max(dot(local, toward), 0.0) * max(stood / reach - 1.0, 0.0))
+                    facing = max(dot(radial, toward), 0.0)
+                    rises = min(max((knee - y) / (knee - rings[-1][0]), 0.0), 1.0) if lift else 0.0
+                    self.keys[name][index] = add(out, (0.0, lift * rises * facing * facing, 0.0))
                 if flat:
                     depth = min(max((flat[0] - y) / (flat[0] - flat[1]), 0.0), 1.0)
                     self.keys["flat"][index] = (rx * math.sin(a) * FLAT_WIDTH * depth, 0.0,
                                                 -rz * math.cos(a) * (1 - FLAT_DEPTH) * depth)
+                if seat:
+                    top, thighs, drop = seat
+                    down = max(top - y, 0.0)
+                    forward = min(down, thighs)
+                    # Up from where it hangs to the lap, then down from the knees.
+                    rise = down - (drop * forward / thighs) - max(down - thighs, 0.0)
+                    front = min(1.6 * max(-math.cos(a), 0.0), 1.0) if closed else 0.0
+                    self.keys["seat"][index] = (0.0, rise * front, -forward * front)
                 ring.append(index)
             grid.append(ring)
         for upper, lower, (y, rx, rz, cz, _) in zip(grid, grid[1:], rings):

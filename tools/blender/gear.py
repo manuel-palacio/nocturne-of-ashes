@@ -33,10 +33,12 @@ with the same kind of material as the body, so it adds no shader to compile. For
 cloth, and the mail coif, are made two-sided in their geometry (a second, inward-facing copy of
 each face) rather than by their material.
 
-Cloth pieces are rigid, but have shape keys (`fore`, `aft`, `left`, `right`) that stretch the hem
-that way, more the further below the top: the game sets them from the legs each frame, so a
-striding leg stays inside the skirt and a running figure's mantle swings back. Skirts also have a
-`flat` key that lays the hem flat round the legs, front and back, for a figure lying on the floor.
+Cloth pieces are rigid, but have shape keys (`fore`, `aft`, `left`, `right`) that stand the cloth
+out that way as over a knee, to at most 1.4 times the hem's reach, and lift the hem over a leg it
+cannot hold: the game sets them from the legs each frame, so a striding leg stays inside the skirt
+and a running figure's mantle swings back. Skirts also have a `flat` key that lays the hem flat
+round the legs for a figure lying on the floor, and a `seat` key that lays the front over a seated
+figure's lap.
 
 The output is byte-identical from one run to the next: the mesh is built in a fixed order, and the
 exporter's generator string (which names the Blender version) is replaced by this tool's name.
@@ -97,6 +99,11 @@ CLOTH_UV = (0.5 / len(REGION_NAMES), 0.5)  # the middle of a character palette's
 # Cloth whose faces point at the true squares of the wearer's palette, as the garments' do
 # (`garments.py`), so it can be two colours and is drawn with the body's own material.
 OWN_SQUARES = {"skirt_long"}
+# How far a stretching key takes cloth at most: this share of its hem's reach further out that way.
+# The mantle hangs from the shoulders, so a crouch already swings it back: it gives less.
+SPREAD, MANTLE_SPREAD = 0.4, 0.25
+# How far a skirt's hem rides up, at most, where a leg pushes it out squarely: over a knee it cannot hold.
+LONG_LIFT, SHORT_LIFT = 0.45, 0.1
 
 # ---- the pieces --------------------------------------------------------------------------------
 
@@ -216,9 +223,10 @@ SKIRT_TOP = [(1.03, 0.175, 0.135, 0.0, 0), (0.92, 0.205, 0.165, 0.0, 0)]
 
 def skirt_long() -> Piece:
     p = Piece("skirt_long", "DEF-hips", True)
-    rings = SKIRT_TOP + [(0.75, 0.25, 0.21, 0.0, 0), (0.5, 0.3, 0.26, 0.0, 0), (0.3, 0.33, 0.29, 0.0, 0),
-                         (0.1, 0.36, 0.32, 0.0, 0)]
-    p.lathe(rings, 16, SKIRT, keys={name: (0.5, 0.95, 0.1) for name in KEY_DIRECTIONS}, flat=(0.95, 0.1))
+    rings = SKIRT_TOP + [(0.75, 0.245, 0.205, 0.0, 0), (0.5, 0.28, 0.24, 0.0, 0), (0.3, 0.305, 0.265, 0.0, 0),
+                         (0.1, 0.33, 0.29, 0.0, 0)]
+    p.lathe(rings, 16, SKIRT, keys={name: (SPREAD, LONG_LIFT, 0.95, 0.65) for name in KEY_DIRECTIONS}, flat=(0.95, 0.1),
+            seat=(0.95, 0.42, -0.05))
     # Alvar's scapular hangs on down the front and back: those faces take the hose square, which
     # the other long skirts' palettes colour as the skirt.
     for i, face in enumerate(p.faces):
@@ -232,7 +240,8 @@ def skirt_long() -> Piece:
 def skirt_short() -> Piece:
     p = Piece("skirt_short", "DEF-hips", True)
     rings = SKIRT_TOP + [(0.75, 0.245, 0.205, 0.0, 0), (0.5, 0.285, 0.245, 0.0, 0)]
-    p.lathe(rings, 16, keys={name: (0.35, 0.95, 0.5) for name in KEY_DIRECTIONS}, flat=(0.95, 0.5))
+    p.lathe(rings, 16, keys={name: (SPREAD, SHORT_LIFT, 0.95, 0.65) for name in KEY_DIRECTIONS}, flat=(0.95, 0.5),
+            seat=(0.95, 0.42, -0.05))
     p.two_sided()
     return p
 
@@ -266,7 +275,7 @@ def mantle() -> Piece:
     arc = 100
     rings = [(1.5, 0.19, 0.14, 0.02, arc), (1.44, 0.27, 0.19, 0.02, arc), (1.25, 0.34, 0.24, 0.03, arc),
              (0.95, 0.4, 0.29, 0.03, arc), (0.65, 0.42, 0.33, 0.03, arc), (0.38, 0.44, 0.36, 0.03, arc)]
-    p.lathe(rings, 14, closed=False, keys={"aft": (0.45, 1.25, 0.38)})
+    p.lathe(rings, 14, closed=False, keys={"aft": (MANTLE_SPREAD, 0.0, 1.25, 0.38)})
     p.two_sided()
     return p
 
@@ -310,7 +319,8 @@ def write_shape(piece: Piece) -> None:
         "[resource]", 'script = ExtResource("1_shape")',
         "keys = PackedStringArray(%s)" % ", ".join(f'"{n}"' for n in names),
         "rings = Array[PackedVector3Array]([%s])" % ", ".join(tables),
-        "flattens = %s" % ("true" if "flat" in piece.keys else "false"), ""])
+        "flattens = %s" % ("true" if "flat" in piece.keys else "false"),
+        "seats = %s" % ("true" if "seat" in piece.keys else "false"), ""])
     (OUT / f"{piece.name}_cloth.tres").write_text(text)
     print(f"wrote {piece.name}_cloth.tres")
 

@@ -11,3 +11,5 @@ extends Resource
 @export var rings: Array[PackedVector3Array] = []
 ## Whether the piece has a `flat` key, which lays its hem flat.
 @export var flattens: bool = false
+## Whether the piece has a `seat` key, which lays its front over a seated figure's lap.
+@export var seats: bool = false

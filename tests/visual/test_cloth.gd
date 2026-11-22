@@ -6,12 +6,14 @@ extends GutTest
 ## their cloth themselves; these tests call the fit directly.
 
 const GEAR: String = "res://resources/gear/"
-## Each stretching piece: its keys, and whether it lays flat when its wearer lies down.
+## Each stretching piece: its keys, whether it lays flat when its wearer lies down, and whether it
+## stands out like cloth over a knee, no further than its hem goes (the apron, a board on a strap,
+## swings out from its top instead, furthest at the hem).
 const TABLES: Dictionary = {
-	"apron": [["fore"], false],
-	"mantle": [["aft"], false],
-	"skirt_long": [["fore", "aft", "left", "right"], true],
-	"skirt_short": [["fore", "aft", "left", "right"], true],
+	"apron": [["fore"], false, false],
+	"mantle": [["aft"], false, true],
+	"skirt_long": [["fore", "aft", "left", "right"], true, true],
+	"skirt_short": [["fore", "aft", "left", "right"], true, true],
 }
 
 
@@ -51,7 +53,10 @@ func test_the_short_skirt_table_fits_its_piece() -> void:
 
 
 ## The table of `piece_name` names the piece's own shape keys, one ring list per key, each running
-## upward from the hem with a reach at rest and a stretch that is largest at the hem.
+## upward from the hem with a reach at rest and a stretch. Cloth that stands out over a knee goes no
+## further out at any ring than at its hem, and its hem by less than 0.6 of its reach at rest (the
+## reach measured from the bone, which sits a little behind the skirt's middle: from the middle, the
+## cap is 1.4, which the leg test measures); a swinging piece stretches less higher up.
 func _check_table(piece_name: String) -> void:
 	var piece: GearPiece = _piece(piece_name)
 	assert_true(piece.cloth, piece_name)
@@ -68,6 +73,7 @@ func _check_table(piece_name: String) -> void:
 		assert_true(ClothFit.DIRECTIONS.has(StringName(key)), "%s: %s is a way the fit knows" % [piece_name, key])
 		assert_gte(mesh.find_blend_shape_by_name(StringName(key)), 0, "%s: the mesh has %s" % [piece_name, key])
 	assert_eq(mesh.find_blend_shape_by_name(&"flat") >= 0, shape.flattens, "%s: a flat key iff it lays flat" % piece_name)
+	assert_eq(mesh.find_blend_shape_by_name(&"seat") >= 0, shape.seats, "%s: a seat key iff it seats" % piece_name)
 	for k: int in mini(shape.rings.size(), shape.keys.size()):
 		var rings: PackedVector3Array = shape.rings[k]
 		var key: String = shape.keys[k]
@@ -76,9 +82,15 @@ func _check_table(piece_name: String) -> void:
 		for i: int in rings.size():
 			assert_gt(rings[i].y, 0.0, "%s %s ring %d: a reach at rest" % [piece_name, key, i])
 			assert_gte(rings[i].z, 0.0, "%s %s ring %d: no stretch inward" % [piece_name, key, i])
+			if expected[2]:
+				assert_lte(rings[i].y + rings[i].z, rings[0].y + rings[0].z + 0.001,
+						"%s %s ring %d: no further out than the hem" % [piece_name, key, i])
 			if i > 0:
 				assert_gt(rings[i].x, rings[i - 1].x, "%s %s ring %d: upward" % [piece_name, key, i])
-				assert_lte(rings[i].z, rings[i - 1].z, "%s %s ring %d: stretched less than the one below" % [piece_name, key, i])
+				if not expected[2]:
+					assert_lte(rings[i].z, rings[i - 1].z, "%s %s ring %d: stretched less than the one below" % [piece_name, key, i])
+		if expected[2]:
+			assert_lt(rings[0].z, 0.6 * rings[0].y, "%s %s: the hem goes out by less than 0.6 of its reach" % [piece_name, key])
 
 
 func test_the_fit_pushes_the_long_skirt_out_round_a_striding_leg_and_lets_it_go() -> void:
