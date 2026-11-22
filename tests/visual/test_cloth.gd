@@ -72,6 +72,8 @@ func _check_table(piece_name: String) -> void:
 	for key: String in shape.keys:
 		assert_true(ClothFit.DIRECTIONS.has(StringName(key)), "%s: %s is a way the fit knows" % [piece_name, key])
 		assert_gte(mesh.find_blend_shape_by_name(StringName(key)), 0, "%s: the mesh has %s" % [piece_name, key])
+		assert_eq(mesh.find_blend_shape_by_name(StringName(key + "_up")) >= 0, shape.lifts,
+				"%s: a %s_up key iff it lifts" % [piece_name, key])
 	assert_eq(mesh.find_blend_shape_by_name(&"flat") >= 0, shape.flattens, "%s: a flat key iff it lays flat" % piece_name)
 	assert_eq(mesh.find_blend_shape_by_name(&"seat") >= 0, shape.seats, "%s: a seat key iff it seats" % piece_name)
 	assert_eq(mesh.find_blend_shape_by_name(&"hang") >= 0, shape.hangs, "%s: a hang key iff it hangs" % piece_name)
@@ -222,7 +224,6 @@ func test_no_leg_comes_through_a_skirt_in_the_bent_clips() -> void:
 		var rest: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 		var triangles: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
 		var middle: Vector2 = _middle(rest)
-		var spread_out: PackedVector3Array = _spread_out(mesh, rest)
 		var widest: float = 0.0
 		var through: Array[String] = []
 		var beyond: Dictionary = {}
@@ -237,6 +238,7 @@ func test_no_leg_comes_through_a_skirt_in_the_bent_clips() -> void:
 				player.seek(time, true)
 				fit.fit(UnitVisual.SETTLED_AFTER, lying, seated)
 				var fitted: PackedVector3Array = _fitted(mesh, rest)
+				var spread_out: PackedVector3Array = _spread_out(mesh, rest, fitted)
 				if lying:
 					widest = maxf(widest, _spread(rest, fitted, middle) / FLAT_WIDENING)
 				elif not seated:  # seated, the front lies forward over the lap
@@ -318,15 +320,18 @@ static func _spread(rest: PackedVector3Array, fitted: PackedVector3Array, middle
 	return widest
 
 
-## The skirt with every key that stretches it at full weight: as far as it can reach every way.
-static func _spread_out(mesh: MeshInstance3D, rest: PackedVector3Array) -> PackedVector3Array:
-	var spread_out: PackedVector3Array = rest.duplicate()
+## The `fitted` skirt with every key that stretches or lifts it turned up to full weight, its `flat`
+## and `seat` keys as they are: as far as it can reach every way, as it lies or sits now.
+static func _spread_out(mesh: MeshInstance3D, rest: PackedVector3Array, fitted: PackedVector3Array) -> PackedVector3Array:
+	var spread_out: PackedVector3Array = fitted.duplicate()
 	var shapes: Array = mesh.mesh.surface_get_blend_shape_arrays(0)
 	for k: int in shapes.size():
-		if ClothFit.DIRECTIONS.has((mesh.mesh as ArrayMesh).get_blend_shape_name(k)):
+		var key_name: String = (mesh.mesh as ArrayMesh).get_blend_shape_name(k)
+		if ClothFit.DIRECTIONS.has(StringName(key_name.trim_suffix("_up"))):
 			var shaped: PackedVector3Array = (shapes[k] as Array)[Mesh.ARRAY_VERTEX]
+			var rest_of: float = 1.0 - mesh.get_blend_shape_value(k)
 			for i: int in spread_out.size():
-				spread_out[i] += shaped[i] - rest[i]
+				spread_out[i] += (shaped[i] - rest[i]) * rest_of
 	return spread_out
 
 

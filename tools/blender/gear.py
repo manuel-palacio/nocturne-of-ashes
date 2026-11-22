@@ -34,9 +34,9 @@ cloth, and the mail coif, are made two-sided in their geometry (a second, inward
 each face) rather than by their material.
 
 Cloth pieces are rigid, but have shape keys (`fore`, `aft`, `left`, `right`) that stand the cloth
-out that way as over a knee, to at most 1.4 times the hem's reach, and lift the hem over a leg it
-cannot hold: the game sets them from the legs each frame, so a striding leg stays inside the skirt
-and a running figure's mantle swings back. Skirts and the apron also have a `flat` key that lays
+out that way as over a knee, to at most 1.4 times the hem's reach, and skirts `<way>_up` keys that
+lift the hem over a leg it cannot hold: the game sets them from the legs each frame, so a striding
+leg stays inside the skirt and a running figure's mantle swings back. Skirts and the apron also have a `flat` key that lays
 the hem flat round the legs for a figure lying on the floor, and skirts a `seat` key that lays the
 front over a seated figure's lap. The mantle has a `hang` key that lays it against the back when
 its wearer leans over or lies down.
@@ -103,7 +103,7 @@ OWN_SQUARES = {"skirt_long"}
 # How far a stretching key takes cloth at most: this share of its hem's reach further out that way.
 # The mantle hangs from the shoulders, so a crouch already swings it back: it gives less.
 SPREAD, MANTLE_SPREAD = 0.4, 0.25
-# How far a skirt's hem rides up, at most, where a leg pushes it out squarely: over a knee it cannot hold.
+# How far a skirt's hem rides up, at most, where a leg it cannot hold pushes it out squarely.
 LONG_LIFT, SHORT_LIFT = 0.45, 0.1
 
 # The mantle laid against the back: how far behind the middle the back is, and what share of its
@@ -337,6 +337,7 @@ def write_shape(piece: Piece) -> None:
         "keys = PackedStringArray(%s)" % ", ".join(f'"{n}"' for n in names),
         "rings = Array[PackedVector3Array]([%s])" % ", ".join(tables),
         "flattens = %s" % ("true" if "flat" in piece.keys else "false"),
+        "lifts = %s" % ("true" if any(n.endswith("_up") for n in piece.keys) else "false"),
         "seats = %s" % ("true" if "seat" in piece.keys else "false"),
         "hangs = %s" % ("true" if "hang" in piece.keys else "false"), ""])
     (OUT / f"{piece.name}_cloth.tres").write_text(text)

@@ -9,6 +9,9 @@ extends Resource
 ## For each of `keys`, per ring of the piece from the lowest up: (height, how far the piece reaches
 ## that key's way at rest, how much further the key takes it at full weight).
 @export var rings: Array[PackedVector3Array] = []
+## Whether each of `keys` has a `<key>_up` key, which lifts the hem that way over a leg the stretched
+## cloth still cannot hold.
+@export var lifts: bool = false
 ## Whether the piece has a `flat` key, which lays its hem flat.
 @export var flattens: bool = false
 ## Whether the piece has a `seat` key, which lays its front over a seated figure's lap.

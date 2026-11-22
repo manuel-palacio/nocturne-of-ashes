@@ -155,19 +155,22 @@ class Piece:
 
         `keys` maps a shape key's name to `(spread, lift, top, knee)`. At full weight the side
         facing the key's way stands out like cloth over a striding knee: from where it hangs at
-        height `top` it runs out, steeply at first, to reach, at height `knee`, `1 + spread` times the hem's own reach
-        that way, and hangs straight down from there to the hem. So no key takes the cloth further
-        than `1 + spread` times the hem's reach, the bulge is where the knee and shin are, and the
-        far side stays where it is. Below `knee` the side facing the way also rises, by up to
-        `lift` at the hem where it faces the way squarely: the hem rides up over a leg it cannot
-        hold, so a foot shows below it rather than through it.
+        height `top` it runs out, steeply at first, to reach, at height `knee`, `1 + spread` times
+        the hem's own reach that way, and hangs straight down from there to the hem. So no key takes
+        the cloth further than `1 + spread` times the hem's reach, the bulge is where the knee and
+        shin are, and the far side stays where it is. With a `lift`, a second key, `<name>_up`,
+        raises the side facing the way below `knee`, by up to `lift` at the hem where it faces the
+        way squarely: the hem rides up over a leg the cloth cannot hold, so a foot shows below it
+        rather than through it.
 
-        `flat`, as `(top, hem)`, adds a `flat` key that, as deep, squeezes the hem front to back to
-        `FLAT_DEPTH` of its depth and widens it by `FLAT_WIDTH`: the hem laid flat round a figure
-        lying down. `seat`, as `(top, thighs, drop)`, adds a `seat` key that lays the front over a
+        `flat`, as `(top, hem)`, adds a `flat` key that, as deep, brings the front in to
+        `FLAT_DEPTH` of its reach and widens the hem by `FLAT_WIDTH`, leaving the back where it is:
+        the hem laid flat round a figure lying on its back, the front fallen onto the legs and the
+        back on the floor under them. `seat`, as `(top, thighs, drop)`, adds a `seat` key that lays the front over a
         seated figure's lap: the cloth runs forward from `top` for the length `thighs`, falling
         `drop`, then hangs from the knees; the front's sides go all the way, and the sides part of it."""
-        for name in list(keys or {}) + (["flat"] if flat else []) + (["seat"] if seat else []):
+        ups = [f"{name}_up" for name, (_, lift, _, _) in (keys or {}).items() if lift]
+        for name in list(keys or {}) + ups + (["flat"] if flat else []) + (["seat"] if seat else []):
             self.keys.setdefault(name, [(0.0, 0.0, 0.0)] * len(self.verts))
         count = sides if closed else sides + 1
         grid = []
@@ -191,11 +194,13 @@ class Piece:
                     out = mul(toward, max(dot(local, toward), 0.0) * max(stood / reach - 1.0, 0.0))
                     facing = max(dot(radial, toward), 0.0)
                     rises = min(max((knee - y) / (knee - rings[-1][0]), 0.0), 1.0) if lift else 0.0
-                    self.keys[name][index] = add(out, (0.0, lift * rises * facing * facing, 0.0))
+                    self.keys[name][index] = out
+                    if lift:
+                        self.keys[f"{name}_up"][index] = (0.0, lift * rises * facing * facing, 0.0)
                 if flat:
                     depth = min(max((flat[0] - y) / (flat[0] - flat[1]), 0.0), 1.0)
                     self.keys["flat"][index] = (rx * math.sin(a) * FLAT_WIDTH * depth, 0.0,
-                                                -rz * math.cos(a) * (1 - FLAT_DEPTH) * depth)
+                                                -rz * min(math.cos(a), 0.0) * (1 - FLAT_DEPTH) * depth)
                 if seat:
                     top, thighs, drop = seat
                     down = max(top - y, 0.0)

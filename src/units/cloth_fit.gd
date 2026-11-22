@@ -2,7 +2,7 @@ class_name ClothFit
 extends RefCounted
 ## Keeps the legs inside a cloth piece hung rigidly from one bone. The piece's shape keys (`fore`, `aft`,
 ## `left`, `right`, made by `tools/blender/gear.py`) stand it out that way as over a knee, to at most
-## 1.4 times its hem's reach, and lift the hem where they push. Each time the skeleton is posed, `fit()`
+## 1.4 times its hem's reach; a skirt's `<way>_up` keys lift its hem that way once a leg needs more. Each time the skeleton is posed, `fit()`
 ## sets each key just far enough that every leg point at a height the piece covers lies inside it, so a
 ## striding leg pushes the skirt out where it strides and a running figure's mantle swings back; a leg
 ## further out than the keys can go shows below the lifted hem. A key lets go slowly, so the cloth settles rather than snaps.
@@ -39,6 +39,9 @@ const SQUARELY: float = 0.3
 ## The pieces are lathes of 16 sides: between two of their columns the cloth lies this much nearer the
 ## middle than the ellipse through their reaches (1 / cos(180° / 16)), so a point needs that much more.
 const CHORD: float = 1.02
+## A key's `_up` key lifts the hem fully once a leg needs this much more than the key's full weight
+## (a wanted weight of 1 + this).
+const LIFT_BEYOND: float = 0.25
 ## A key's weight is written only when it moves by more than this: each write marks the mesh dirty.
 const STEP: float = 0.002
 
@@ -53,6 +56,8 @@ var _legs: PackedInt32Array = PackedInt32Array()
 ## Per stretching key: its blend shape index, its way flat on XZ (x, z), and its rings, from the
 ## lowest up, as (height, reach of the piece that way at rest, how much further the key takes it).
 var _indices: PackedInt32Array = PackedInt32Array()
+## Per stretching key: its `_up` key's blend shape index, or −1.
+var _ups: PackedInt32Array = PackedInt32Array()
 var _ways: PackedVector2Array = PackedVector2Array()
 var _rings: Array[PackedVector3Array] = []
 ## The `flat` key's blend shape index, or −1.
@@ -61,7 +66,8 @@ var _flat: int = -1
 var _seat: int = -1
 ## The `hang` key's blend shape index, or −1.
 var _drape: int = -1
-## The weights last written: the stretching keys', then the `flat`, `seat` and `hang` keys'.
+## The weights last written: the stretching keys', their `_up` keys', then the `flat`, `seat` and
+## `hang` keys'.
 var _weights: PackedFloat32Array = PackedFloat32Array()
 ## Reused every fit: the leg points (x, y, z in the piece's frame, and the room each needs), each
 ## key's wanted weight, and how squarely each key faces the point being pushed.
@@ -102,9 +108,10 @@ func _init(mesh: MeshInstance3D, skeleton: Skeleton3D, bone: int, hang: Transfor
 		if index >= 0 and DIRECTIONS.has(key_name):
 			var way: Vector3 = DIRECTIONS[key_name]
 			_indices.append(index)
+			_ups.append(mesh.find_blend_shape_by_name(StringName(key_name + "_up")) if shape.lifts else -1)
 			_ways.append(Vector2(way.x, way.z))
 			_rings.append(shape.rings[k])
-	_weights.resize(_indices.size() + 3)
+	_weights.resize(_indices.size() * 2 + 3)
 	_wanted.resize(_indices.size())
 	_facing.resize(_indices.size())
 	_squares.resize(_indices.size())
@@ -127,7 +134,7 @@ func is_fitting() -> bool:
 func fit(delta: float, lying: bool = false, seated: bool = false) -> bool:
 	var moved: bool = false
 	lying = lying and _skeleton.get_bone_global_pose(_bone).basis.y.normalized().y < LYING_UPRIGHT
-	var flat_slot: int = _indices.size()
+	var flat_slot: int = _indices.size() * 2
 	if _flat >= 0:
 		moved = _write(_flat, flat_slot, move_toward(_weights[flat_slot], 1.0 if lying else 0.0, FLATTEN * delta))
 	if _seat >= 0:
@@ -149,6 +156,10 @@ func fit(delta: float, lying: bool = false, seated: bool = false) -> bool:
 		var target: float = clampf(_wanted[k], 0.0, 1.0)
 		var weight: float = maxf(target, move_toward(_weights[k], target, SETTLE * delta))
 		moved = _write(_indices[k], k, weight) or moved
+		if _ups[k] >= 0:
+			var up: int = _indices.size() + k
+			var lift: float = clampf((_wanted[k] - 1.0) / LIFT_BEYOND, 0.0, 1.0)
+			moved = _write(_ups[k], up, maxf(lift, move_toward(_weights[up], lift, SETTLE * delta))) or moved
 	return moved
 
 
