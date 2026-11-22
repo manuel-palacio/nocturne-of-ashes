@@ -180,24 +180,33 @@ const CHEST_BONE: StringName = &"DEF-spine.003"
 const ABDOMEN_BONE: StringName = &"DEF-spine.001"
 const UPPER_ARM_BONES: Array[StringName] = [&"DEF-upper_arm.L", &"DEF-upper_arm.R"]
 const GARMENT_TRIANGLES: int = 600
-## The bone segments, as pairs of bones from head to head, that the body a chest or an abdomen piece
-## stands in for followed: the chest round the upper spine, the neck and the collarbones, the
-## abdomen round the lower spine.
-const COVERED: Dictionary = {
-	CHEST_BONE: [[&"DEF-spine.002", &"DEF-spine.003"], [&"DEF-spine.003", &"DEF-neck"],
-			[&"DEF-shoulder.L", &"DEF-upper_arm.L"], [&"DEF-shoulder.R", &"DEF-upper_arm.R"]],
-	ABDOMEN_BONE: [[&"DEF-hips", &"DEF-spine.001"], [&"DEF-spine.001", &"DEF-spine.002"],
-			[&"DEF-spine.002", &"DEF-spine.003"]],
+## The seams between a garment's pieces, and between a garment and the body it meets. Each names the
+## outer piece, the inner one, the axis the two overlap along (in the outer piece's frame), and which of
+## the inner one's vertices at rest are its rim at the overlap: in a band of height (`y`) or of
+## distance from the middle (`x`, either side), in metres, in the skeleton's frame. In every pose each
+## rim vertex must stay inside the outer piece: within its length along the axis and inside its
+## section there. A piece is found by its bone; `skirt` is the stretching piece on the hips, `pelvis`
+## and `elbow.*` the body's own vertices that the hips or the upper arm move most.
+const SEAMS: Dictionary = {
+	"chest over abdomen": ["chest", "abdomen", Vector3.UP, "y", 1.22, 1.31],
+	"skirt over abdomen": ["skirt", "abdomen", Vector3.UP, "y", 0.94, 0.99],
+	"abdomen over pelvis": ["abdomen", "pelvis", Vector3.UP, "y", 1.0, 1.08],
+	"chest over left sleeve": ["chest", "sleeve.L", Vector3.UP, "x", 0.0, 0.15],
+	"chest over right sleeve": ["chest", "sleeve.R", Vector3.UP, "x", 0.0, 0.15],
+	"left sleeve over elbow": ["sleeve.L", "elbow.L", Vector3.RIGHT, "x", 0.0, 1.0],
+	"right sleeve over elbow": ["sleeve.R", "elbow.R", Vector3.RIGHT, "x", 0.0, 1.0],
 }
-## How much further from the segments it covers than at rest a vertex may get in any pose: more, and
-## the piece floats off the body.
-const FLOAT_LIMIT: float = 0.08
-## Bones whose pieces meet: in every pose their bounds must overlap.
-const NEIGHBOURS: Array[Array] = [
-	[CHEST_BONE, ABDOMEN_BONE], [CHEST_BONE, &"DEF-upper_arm.L"], [CHEST_BONE, &"DEF-upper_arm.R"],
-	[ABDOMEN_BONE, &"DEF-hips"], [&"DEF-upper_arm.L", &"DEF-forearm.L"], [&"DEF-upper_arm.R", &"DEF-forearm.R"],
-	[CHEST_BONE, &"DEF-neck"],
-]
+## The seams each dress has. Left out, as they cannot apply: `skirt over abdomen` for the captive and
+## the smiths (no skirt: their tunic and shirt reach over the pelvis instead, `abdomen over pelvis`),
+## and `abdomen over pelvis` for those with a skirt (the skirt covers the pelvis). A cuff (Alvar's,
+## Malakor's) hangs from the forearm bone, as the forearm does, so their seam cannot open; the elbow
+## seam is the one that can.
+const ALL_SEAMS: Array[String] = ["chest over abdomen", "chest over left sleeve", "chest over right sleeve",
+		"left sleeve over elbow", "right sleeve over elbow"]
+const SKIRTED: Array[String] = ["alvar", "zahra", "malakor", "crusader", "sergeant"]
+const UNSKIRTED: Array[String] = ["captive", "gonzalo", "smith"]
+## Outer vertices this far either side of a rim vertex along the axis make the section it must be in.
+const SLAB: float = 0.09
 const BENT_CLIPS: Array[StringName] = [&"attack", &"cast", &"feed", &"sit", &"death", &"run"]
 const SAMPLES: int = 5
 ## At most this many materials on one figure: the body's (its head and garments too), cloth regions,
@@ -235,41 +244,41 @@ func test_every_piece_with_shape_keys_has_its_table() -> void:
 			assert_not_null(piece.shape, "%s has shape keys and a table" % file)
 
 
-func test_nothing_floats_or_tears_in_the_bent_clips() -> void:
+func test_no_seam_opens_in_the_bent_clips() -> void:
 	var dresses: Dictionary = _dresses()
+	assert_eq(SKIRTED.size() + UNSKIRTED.size(), dresses.size(), "every dress is skirted or not")
+	var checked: int = 0
 	for dress_name: String in dresses:
+		var seams: Array[String] = ALL_SEAMS.duplicate()
+		seams.append("skirt over abdomen" if dress_name in SKIRTED else "abdomen over pelvis")
 		var figure: UnitVisual = _figure(dresses[dress_name])
 		figure.process_mode = Node.PROCESS_MODE_DISABLED
 		var skeleton: Skeleton3D = _skeleton(figure)
-		var pieces: Array[Dictionary] = _worn_pieces(figure)
+		var parts: Dictionary = _parts(figure)
 		var player := figure.model().find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer
-		var rest: Dictionary = {}
-		for piece: Dictionary in pieces:
-			if COVERED.has(piece.bone) and piece.rigid:
-				rest[piece] = _distances(piece, skeleton, true)
-		var worst: float = 0.0
-		var worst_at: String = ""
-		var tears: Array[String] = []
-		for clip_name: StringName in BENT_CLIPS:
-			var length: float = player.get_animation(clip_name).length
-			for sample: int in SAMPLES:
-				var time: float = length * sample / float(SAMPLES - 1)
-				player.play(clip_name)
-				player.seek(time, true)
-				for piece: Dictionary in rest:
-					var now: PackedFloat32Array = _distances(piece, skeleton, false)
-					var was: PackedFloat32Array = rest[piece]
-					for i: int in now.size():
-						if now[i] - was[i] > worst:
-							worst = now[i] - was[i]
-							worst_at = "%s in %s at %.2f s" % [piece.name, clip_name, time]
-				var boxes: Dictionary = _boxes(pieces, skeleton)
-				for pair: Array in NEIGHBOURS:
-					if boxes.has(pair[0]) and boxes.has(pair[1]) and not (boxes[pair[0]] as AABB).intersects(boxes[pair[1]]):
-						tears.append("%s %s %.2f: %s and %s apart" % [dress_name, clip_name, time, pair[0], pair[1]])
-		gut.p("%s: the chest and abdomen get at most %.3f m further from what they cover (%s)" % [dress_name, worst, worst_at])
-		assert_lte(worst, FLOAT_LIMIT, "%s: nothing floats" % dress_name)
-		assert_eq(tears, [] as Array[String], "%s: nothing tears" % dress_name)
+		for seam: String in seams:
+			var spec: Array = SEAMS[seam]
+			var outer: Dictionary = parts.get(spec[0], {})
+			var inner: Dictionary = parts.get(spec[1], {})
+			assert_false(outer.is_empty() or inner.is_empty(), "%s: %s has both its pieces" % [dress_name, seam])
+			if outer.is_empty() or inner.is_empty():
+				continue
+			var rim: PackedInt32Array = _rim(inner, skeleton, spec)
+			assert_gt(rim.size(), 6, "%s: %s has a rim" % [dress_name, seam])
+			var open: Array[String] = []
+			for clip_name: StringName in BENT_CLIPS:
+				var length: float = player.get_animation(clip_name).length
+				for sample: int in SAMPLES:
+					var time: float = length * sample / float(SAMPLES - 1)
+					player.play(clip_name)
+					player.seek(time, true)
+					var out: Vector2 = _outside(outer, inner, rim, skeleton, spec[2])
+					if out.x > 0:
+						open.append("%s at %.2f s: %d of %d rim vertices out, by up to %.3f m" % [clip_name, time, out.x, rim.size(), out.y])
+			assert_eq(open, [] as Array[String], "%s: %s stays closed" % [dress_name, seam])
+			gut.p("%s %s: %s" % [dress_name, seam, "closed" if open.is_empty() else "; ".join(open)])
+			checked += 1
+	assert_eq(checked, 8 * ALL_SEAMS.size() + SKIRTED.size() + UNSKIRTED.size(), "seams checked")
 
 
 func test_every_material_of_a_figure_is_the_bodys_kind() -> void:
@@ -313,54 +322,126 @@ func test_every_figure_in_the_game_wears_a_dress_with_a_head() -> void:
 	assert_gte(figures, 10, "every unit and every person in the rooms")
 
 
-## The figure's worn pieces, each with its bone, its mesh's vertices and its place on the bone, and
-## whether it is rigid (no shape keys).
-func _worn_pieces(figure: UnitVisual) -> Array[Dictionary]:
-	var found: Array[Dictionary] = []
+## The figure's pieces and body parts that meet at seams, by the names `SEAMS` uses. Each is its
+## vertices, how each is placed (a piece by one bone, the body by its skin weights) and, for a piece,
+## its vertices' bounds along each axis.
+func _parts(figure: UnitVisual) -> Dictionary:
+	var skeleton: Skeleton3D = _skeleton(figure)
+	var found: Dictionary = {}
 	for node: Node in _attachments(figure):
 		var attachment := node as BoneAttachment3D
-		for mesh: MeshInstance3D in attachment.find_children("*", "MeshInstance3D", true, false):
-			var arrays: Array = mesh.mesh.surface_get_arrays(0)
-			found.append({
-				"name": attachment.name, "bone": StringName(attachment.bone_name),
-				"index": _skeleton(figure).find_bone(attachment.bone_name),
-				"vertices": arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array,
-				"hang": attachment.global_transform.affine_inverse() * mesh.global_transform,
-				"rigid": (mesh.mesh as ArrayMesh).get_blend_shape_count() == 0,
-			})
+		var mesh := attachment.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+		var rigid: bool = (mesh.mesh as ArrayMesh).get_blend_shape_count() == 0
+		var bone := StringName(attachment.bone_name)
+		var kind: String = ""
+		if bone == CHEST_BONE and rigid:
+			kind = "chest"
+		elif bone == ABDOMEN_BONE:
+			kind = "abdomen"
+		elif bone in UPPER_ARM_BONES:
+			kind = "sleeve." + String(bone).get_extension()
+		elif bone == &"DEF-hips" and String(attachment.name).begins_with("skirt"):
+			kind = "skirt"
+		if kind.is_empty():
+			continue
+		found[kind] = {"vertices": mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array,
+			"bone": skeleton.find_bone(bone), "hang": attachment.global_transform.affine_inverse() * mesh.global_transform}
+	var body := figure.model().find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+	var arrays: Array = body.mesh.surface_get_arrays(0)
+	var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
+	var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
+	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var binds: Array[int] = []
+	for i: int in body.skin.get_bind_count():
+		var bone: int = body.skin.get_bind_bone(i)
+		binds.append(bone if bone >= 0 else skeleton.find_bone(body.skin.get_bind_name(i)))
+	var lead_of := {&"pelvis": &"DEF-hips", &"elbow.L": &"DEF-upper_arm.L", &"elbow.R": &"DEF-upper_arm.R"}
+	for kind: StringName in lead_of:
+		var lead: int = skeleton.find_bone(lead_of[kind])
+		var picked := PackedVector3Array()
+		var skin: Array[PackedVector4Array] = []
+		for v: int in vertices.size():
+			var strongest: int = 0
+			for k: int in 4:
+				if weights[v * 4 + k] > weights[v * 4 + strongest]:
+					strongest = k
+			if binds[bones[v * 4 + strongest]] != lead:
+				continue
+			picked.append(vertices[v])
+			var influences := PackedVector4Array()
+			for k: int in 4:
+				influences.append(Vector4(bones[v * 4 + k], weights[v * 4 + k], 0.0, 0.0))
+			skin.append(influences)
+		found[String(kind)] = {"vertices": picked, "skin": skin, "binds": binds, "body": body.skin}
+	for kind: String in found:
+		if found[kind].has("hang"):
+			var box := AABB((found[kind].vertices as PackedVector3Array)[0], Vector3.ZERO)
+			for vertex: Vector3 in found[kind].vertices as PackedVector3Array:
+				box = box.expand(vertex)
+			found[kind]["box"] = box
 	return found
 
 
-## Each vertex's distance from the bone segments the piece covers, at rest or as posed now, in the
-## skeleton's frame.
-func _distances(piece: Dictionary, skeleton: Skeleton3D, at_rest: bool) -> PackedFloat32Array:
-	var segments: Array[Vector3] = []
-	for pair: Array in COVERED[piece.bone]:
-		for bone_name: StringName in pair:
-			var bone: int = skeleton.find_bone(bone_name)
-			segments.append((skeleton.get_bone_global_rest(bone) if at_rest else skeleton.get_bone_global_pose(bone)).origin)
-	var place: Transform3D = (skeleton.get_bone_global_rest(piece.index) if at_rest
-			else skeleton.get_bone_global_pose(piece.index)) * (piece.hang as Transform3D)
-	var out := PackedFloat32Array()
-	for vertex: Vector3 in piece.vertices as PackedVector3Array:
-		var point: Vector3 = place * vertex
-		var nearest: float = INF
-		for s: int in range(0, segments.size(), 2):
-			var closest: Vector3 = Geometry3D.get_closest_point_to_segment(point, segments[s], segments[s + 1])
-			nearest = minf(nearest, point.distance_to(closest))
-		out.append(nearest)
+## Where vertex `i` of `part` is, posed now or at rest, in the skeleton's frame.
+func _place(part: Dictionary, i: int, skeleton: Skeleton3D, at_rest: bool) -> Vector3:
+	var vertex: Vector3 = (part.vertices as PackedVector3Array)[i]
+	if part.has("hang"):
+		var bone_place: Transform3D = skeleton.get_bone_global_rest(part.bone) if at_rest else skeleton.get_bone_global_pose(part.bone)
+		return bone_place * (part.hang as Transform3D) * vertex
+	var out := Vector3.ZERO
+	for influence: Vector4 in (part.skin as Array)[i] as PackedVector4Array:
+		if influence.y <= 0.0:
+			continue
+		var bone: int = (part.binds as Array)[int(influence.x)]
+		var bone_place: Transform3D = skeleton.get_bone_global_rest(bone) if at_rest else skeleton.get_bone_global_pose(bone)
+		out += (bone_place * (part.body as Skin).get_bind_pose(int(influence.x)) * vertex) * influence.y
 	return out
 
 
-## The posed bounds of all the pieces on each bone, in the skeleton's frame, by bone name.
-func _boxes(pieces: Array[Dictionary], skeleton: Skeleton3D) -> Dictionary:
-	var boxes: Dictionary = {}
-	for piece: Dictionary in pieces:
-		var place: Transform3D = skeleton.get_bone_global_pose(piece.index) * (piece.hang as Transform3D)
-		for vertex: Vector3 in piece.vertices as PackedVector3Array:
-			var point: Vector3 = place * vertex
-			boxes[piece.bone] = (boxes[piece.bone] as AABB).expand(point) if boxes.has(piece.bone) else AABB(point, Vector3.ZERO)
-	return boxes
+## The inner part's vertices that are its rim at the seam `spec`, chosen at rest.
+func _rim(inner: Dictionary, skeleton: Skeleton3D, spec: Array) -> PackedInt32Array:
+	var rim := PackedInt32Array()
+	for i: int in (inner.vertices as PackedVector3Array).size():
+		var at: Vector3 = _place(inner, i, skeleton, true)
+		var measure: float = at.y if spec[3] == "y" else absf(at.x)
+		if measure >= spec[4] and measure <= spec[5]:
+			rim.append(i)
+	return rim
+
+
+## How many of the rim's vertices lie outside the outer piece as posed now (beyond its length along
+## `axis`, or outside the section its own vertices make there), and by how far at most.
+func _outside(outer: Dictionary, inner: Dictionary, rim: PackedInt32Array, skeleton: Skeleton3D, axis: Vector3) -> Vector2:
+	var to_outer: Transform3D = (skeleton.get_bone_global_pose(outer.bone) * (outer.hang as Transform3D)).affine_inverse()
+	var box: AABB = outer.box
+	var low: float = box.position.dot(axis) if axis == Vector3.UP else box.position.x
+	var high: float = box.end.dot(axis) if axis == Vector3.UP else box.end.x
+	var count: int = 0
+	var furthest: float = 0.0
+	for i: int in rim:
+		var point: Vector3 = to_outer * _place(inner, i, skeleton, false)
+		var along: float = point.dot(axis)
+		if along <= low or along >= high:
+			count += 1
+			furthest = maxf(furthest, maxf(low - along, along - high))
+			continue
+		var section := PackedVector2Array()
+		for vertex: Vector3 in outer.vertices as PackedVector3Array:
+			if absf(vertex.dot(axis) - along) <= SLAB:
+				section.append(_across(vertex, axis))
+		var hull: PackedVector2Array = Geometry2D.convex_hull(section)
+		var flat: Vector2 = _across(point, axis)
+		if hull.size() < 3 or not Geometry2D.is_point_in_polygon(flat, hull):
+			count += 1
+			var nearest: float = INF
+			for k: int in range(1, hull.size()):
+				nearest = minf(nearest, flat.distance_to(Geometry2D.get_closest_point_to_segment(flat, hull[k - 1], hull[k])))
+			furthest = maxf(furthest, nearest if hull.size() >= 3 else INF)
+	return Vector2(count, furthest)
+
+
+static func _across(point: Vector3, axis: Vector3) -> Vector2:
+	return Vector2(point.x, point.z) if axis == Vector3.UP else Vector2(point.y, point.z)
 
 
 ## What makes a material compile to its own shader.
