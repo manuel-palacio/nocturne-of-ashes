@@ -1,11 +1,17 @@
-[gd_resource type="Resource" script_class="Dress" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="Dress" load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://src/units/dress.gd" id="1_dress"]
 [ext_resource type="Texture2D" uid="uid://dfuu4k15p74hw" path="res://assets/characters/human/palette-captive.png" id="2_palette"]
+[ext_resource type="Script" path="res://src/units/gear_piece.gd" id="3_piece"]
 [ext_resource type="Resource" path="res://resources/gear/head_captive.tres" id="head"]
+[ext_resource type="Resource" path="res://resources/gear/shirt_chest.tres" id="gear_shirt_chest"]
+[ext_resource type="Resource" path="res://resources/gear/shirt_abdomen.tres" id="gear_shirt_abdomen"]
+[ext_resource type="Resource" path="res://resources/gear/shirt_sleeve_l.tres" id="gear_shirt_sleeve_l"]
+[ext_resource type="Resource" path="res://resources/gear/shirt_sleeve_r.tres" id="gear_shirt_sleeve_r"]
 
 [resource]
 script = ExtResource("1_dress")
 palette = ExtResource("2_palette")
 head = ExtResource("head")
+gear = Array[ExtResource("3_piece")]([ExtResource("gear_shirt_chest"), ExtResource("gear_shirt_abdomen"), ExtResource("gear_shirt_sleeve_l"), ExtResource("gear_shirt_sleeve_r")])
 height = 1.8

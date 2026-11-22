@@ -1,9 +1,13 @@
-[gd_resource type="Resource" script_class="Dress" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="Dress" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://src/units/dress.gd" id="1_dress"]
 [ext_resource type="Texture2D" uid="uid://cvqmp0hoq2nfl" path="res://assets/characters/human/palette-gonzalo.png" id="2_palette"]
 [ext_resource type="Script" path="res://src/units/gear_piece.gd" id="3_piece"]
 [ext_resource type="Resource" path="res://resources/gear/head_gonzalo.tres" id="head"]
+[ext_resource type="Resource" path="res://resources/gear/tunic_chest.tres" id="gear_tunic_chest"]
+[ext_resource type="Resource" path="res://resources/gear/tunic_abdomen.tres" id="gear_tunic_abdomen"]
+[ext_resource type="Resource" path="res://resources/gear/rolled_sleeve_l.tres" id="gear_rolled_sleeve_l"]
+[ext_resource type="Resource" path="res://resources/gear/rolled_sleeve_r.tres" id="gear_rolled_sleeve_r"]
 [ext_resource type="Resource" path="res://resources/gear/apron.tres" id="gear_apron"]
 [ext_resource type="Resource" path="res://resources/gear/hammer.tres" id="gear_hammer"]
 
@@ -11,5 +15,5 @@
 script = ExtResource("1_dress")
 palette = ExtResource("2_palette")
 head = ExtResource("head")
-gear = Array[ExtResource("3_piece")]([ExtResource("gear_apron"), ExtResource("gear_hammer")])
+gear = Array[ExtResource("3_piece")]([ExtResource("gear_tunic_chest"), ExtResource("gear_tunic_abdomen"), ExtResource("gear_rolled_sleeve_l"), ExtResource("gear_rolled_sleeve_r"), ExtResource("gear_apron"), ExtResource("gear_hammer")])
 height = 1.9

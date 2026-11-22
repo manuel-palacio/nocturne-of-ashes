@@ -6,14 +6,21 @@ const HAVEN := preload("res://dialogue/haven.dialogue")
 
 ## What each character wears, by the pieces' file names.
 const WORN: Dictionary = {
-	"alvar": ["skirt_long.glb", "mantle.glb", "sword.glb", "shield.glb"],
-	"zahra": ["skirt_long.glb", "veil.glb", "staff.glb"],
-	"gonzalo": ["apron.glb", "hammer.glb"],
-	"crusader": ["skirt_short.glb", "helmet.glb", "sword.glb", "shield.glb"],
-	"sergeant": ["skirt_short.glb", "helmet.glb", "mail_coif.glb", "sword.glb", "shield_large.glb"],
-	"malakor": ["skirt_long.glb", "mantle.glb", "sword.glb"],
-	"smith": ["apron.glb", "hammer.glb"],
-	"captive": [],
+	"alvar": ["habit_chest.glb", "habit_abdomen.glb", "habit_sleeve_l.glb", "habit_sleeve_r.glb", "habit_cuff_l.glb",
+			"habit_cuff_r.glb", "skirt_long.glb", "sword.glb", "shield.glb"],
+	"zahra": ["robe_chest.glb", "robe_abdomen.glb", "robe_sleeve_l.glb", "robe_sleeve_r.glb", "skirt_long.glb",
+			"veil.glb", "staff.glb"],
+	"gonzalo": ["tunic_chest.glb", "tunic_abdomen.glb", "rolled_sleeve_l.glb", "rolled_sleeve_r.glb", "apron.glb",
+			"hammer.glb"],
+	"crusader": ["surcoat_chest.glb", "surcoat_abdomen.glb", "mail_sleeve_l.glb", "mail_sleeve_r.glb",
+			"skirt_short.glb", "helmet.glb", "sword.glb", "shield.glb"],
+	"sergeant": ["surcoat_chest.glb", "surcoat_abdomen.glb", "mail_sleeve_l.glb", "mail_sleeve_r.glb",
+			"skirt_short.glb", "helmet.glb", "mail_coif.glb", "sword.glb", "shield_large.glb"],
+	"malakor": ["dark_chest.glb", "robe_abdomen.glb", "robe_sleeve_l.glb", "robe_sleeve_r.glb", "dark_cuff_l.glb",
+			"dark_cuff_r.glb", "skirt_long.glb", "mantle.glb", "sword.glb"],
+	"smith": ["tunic_chest.glb", "tunic_abdomen.glb", "tunic_sleeve_l.glb", "tunic_sleeve_r.glb", "apron.glb",
+			"hammer.glb"],
+	"captive": ["shirt_chest.glb", "shirt_abdomen.glb", "shirt_sleeve_l.glb", "shirt_sleeve_r.glb"],
 }
 
 var main: Main

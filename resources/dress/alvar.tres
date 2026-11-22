@@ -1,11 +1,16 @@
-[gd_resource type="Resource" script_class="Dress" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="Dress" load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://src/units/dress.gd" id="1_dress"]
 [ext_resource type="Texture2D" uid="uid://dwbiijfgo4tt" path="res://assets/characters/human/palette-alvar.png" id="2_palette"]
 [ext_resource type="Script" path="res://src/units/gear_piece.gd" id="3_piece"]
 [ext_resource type="Resource" path="res://resources/gear/head_alvar.tres" id="head"]
+[ext_resource type="Resource" path="res://resources/gear/habit_chest.tres" id="gear_habit_chest"]
+[ext_resource type="Resource" path="res://resources/gear/habit_abdomen.tres" id="gear_habit_abdomen"]
+[ext_resource type="Resource" path="res://resources/gear/habit_sleeve_l.tres" id="gear_habit_sleeve_l"]
+[ext_resource type="Resource" path="res://resources/gear/habit_sleeve_r.tres" id="gear_habit_sleeve_r"]
+[ext_resource type="Resource" path="res://resources/gear/habit_cuff_l.tres" id="gear_habit_cuff_l"]
+[ext_resource type="Resource" path="res://resources/gear/habit_cuff_r.tres" id="gear_habit_cuff_r"]
 [ext_resource type="Resource" path="res://resources/gear/skirt_long.tres" id="gear_skirt_long"]
-[ext_resource type="Resource" path="res://resources/gear/mantle.tres" id="gear_mantle"]
 [ext_resource type="Resource" path="res://resources/gear/sword.tres" id="gear_sword"]
 [ext_resource type="Resource" path="res://resources/gear/shield.tres" id="gear_shield"]
 
@@ -13,5 +18,5 @@
 script = ExtResource("1_dress")
 palette = ExtResource("2_palette")
 head = ExtResource("head")
-gear = Array[ExtResource("3_piece")]([ExtResource("gear_skirt_long"), ExtResource("gear_mantle"), ExtResource("gear_sword"), ExtResource("gear_shield")])
+gear = Array[ExtResource("3_piece")]([ExtResource("gear_habit_chest"), ExtResource("gear_habit_abdomen"), ExtResource("gear_habit_sleeve_l"), ExtResource("gear_habit_sleeve_r"), ExtResource("gear_habit_cuff_l"), ExtResource("gear_habit_cuff_r"), ExtResource("gear_skirt_long"), ExtResource("gear_sword"), ExtResource("gear_shield")])
 height = 1.8
