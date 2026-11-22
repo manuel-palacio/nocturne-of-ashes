@@ -86,7 +86,9 @@ class Head:
     hairline: tuple = (1.778, 1.705, 1.6)  # its height in front, at the sides and behind
     hair_thick: float = 0.006
     long_hair: bool = False             # sheets to the shoulders
+    hair_end: float = 1.48              # the height long hair hangs down to
     beard: str = "none"                 # none, stubble, full
+    stubble: tuple = (0.012, 98)        # how far below the nose's base stubble starts, and how far round it goes
     moustache: bool = False
     lines: bool = False                 # an older face's lines from nose to mouth
 
@@ -108,14 +110,14 @@ HEADS = {
                     crown_y=1.842, face=0.112, back=0.106, brow=0.007, nose=(0.027, 0.013, 1.652),
                     mouth=(0.019, 0.0035, 1.616), brows=(0.006, 0.006), hairline=(1.785, 1.71, 1.6),
                     hair_thick=0.007, long_hair=True),
-    # Inigo the smith: square, short dark hair, stubble.
+    # Inigo the smith: square, short dark hair, stubble low on the jaw and chin.
     "smith": Head(width=0.084, jaw=0.077, cheek=0.003, chin=0.106, square=3.2, brow=0.007,
                   nose=(0.024, 0.017, 1.655), brows=(0.008, -0.001), hairline=(1.776, 1.705, 1.6),
-                  hair_thick=0.007, beard="stubble"),
-    # The captive: narrow, matted hair, unshaven.
-    "captive": Head(width=0.07, jaw=0.058, cheek=0.006, hollow=0.004, chin=0.1, face=0.11, back=0.104,
+                  hair_thick=0.007, beard="stubble", stubble=(0.024, 76)),
+    # The captive: narrow and gaunt, hollow cheeks, matted hair to the nape, a ragged full beard.
+    "captive": Head(width=0.069, jaw=0.054, cheek=0.009, hollow=0.009, chin=0.1, face=0.11, back=0.104,
                     nose=(0.023, 0.013, 1.655), hair="matted", hair_thick=0.014,
-                    hairline=(1.765, 1.69, 1.585), beard="stubble"),
+                    hairline=(1.765, 1.69, 1.585), long_hair=True, hair_end=1.53, beard="full"),
     # The crusader: a plain soldier's face, his hair cropped for the helmet.
     "crusader": Head(width=0.08, jaw=0.068, hair="cropped", hair_thick=0.003, hairline=(1.776, 1.705, 1.6)),
     # The sergeant: an older soldier, heavy brows, a moustache, lines; cropped for helmet and coif.
@@ -204,7 +206,7 @@ def skull_colour(h: Head, degrees: float, y: float, band: int) -> int:
         return HAIR
     if h.beard == "full" and y < h.nose[2] - 0.004 and a <= 104:
         return BEARD
-    if h.beard == "stubble" and band >= 1 and y < h.nose[2] - 0.012 and a <= 98:
+    if h.beard == "stubble" and band >= 1 and y < h.nose[2] - h.stubble[0] and a <= h.stubble[1]:
         return STUBBLE
     if band <= 1:
         return SHADE  # under the jaw
@@ -434,7 +436,7 @@ def long_hair(h: Head) -> Piece:
     sheet.lathe([(h.hairline[1] + 0.03, h.width + t + 0.004, h.back + t + 0.004, CZ + 0.002, arc),
                  (1.66, h.width + 0.014, h.back + 0.012, CZ + 0.004, arc),
                  (1.57, h.width + 0.024, h.back + 0.006, CZ + 0.014, arc - 4),
-                 (1.48, h.width + 0.036, h.back + 0.0, CZ + 0.026, arc - 8)], 14, HAIR, closed=False)
+                 (h.hair_end, h.width + 0.036, h.back + 0.0, CZ + 0.026, arc - 8)], 14, HAIR, closed=False)
     sheet.two_sided()
     return sheet
 

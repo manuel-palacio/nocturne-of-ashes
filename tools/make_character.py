@@ -89,9 +89,9 @@ PALETTES = {
     # His hose is the skirt's colour, like Zahra's.
     "malakor": ["#e8ddd2", "#141214", "#363b44", "#30353e", "#2c3038", "#2c3038", "#16171b", "#c8102e",
                 "#efe8de", "#481818", "#141214", "#9c7e80", "#141214", "#5e4a58", "#c8bab2", "#d2c6bc"],
-    # Inigo the smith: brown, a soot-dark apron, bare forearms; short dark hair, stubble.
+    # Inigo the smith: brown, a soot-dark apron, bare forearms; short dark hair, light stubble.
     "smith": ["#c69270", "#2e2018", "#6e4a2a", "#c69270", "#2a2624", "#4e3824", "#2c2018", "#1a1614",
-              "#ded2bc", "#2e2014", "#22180e", "#985c4c", "#2e2018", "#9e6e50", "#9a6a4e", "#a87e62"],
+              "#ded2bc", "#2e2014", "#22180e", "#985c4c", "#2e2018", "#9e6e50", "#9a6a4e", "#b2876a"],
     # The captive: a torn, dirty undershirt, bare forearms, lower legs and feet; matted hair, a beard.
     "captive": ["#c9a084", "#3a2e24", "#b4ae9e", "#c9a084", "#968e7c", "#c29a7e", "#ad866a", "#6e624e",
                 "#d6cab6", "#3a2c1e", "#2c2218", "#946454", "#3a2e24", "#9a7462", "#9c7860", "#a08470"],

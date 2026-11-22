@@ -10,13 +10,20 @@ const DRESSES: String = "res://resources/dress/"
 const CHARACTER_TOOL: String = "res://tools/make_character.py"
 const HEAD_BONE: StringName = &"DEF-head"
 const HEAD_TRIANGLES: int = 900
-## How far a head may reach from the head bone's rest head, in metres: sideways (either way, x or z),
-## up, and down (Malakor's hair reaches further down).
-const HEAD_SIDEWAYS: float = 0.16
-const HEAD_UP: float = 0.3
-const HEAD_DOWN: float = 0.1
-const LONG_HAIR_DOWN: float = 0.3
-const LONG_HAIRED: Array[String] = ["malakor"]
+## Where each head lies, as the head tool puts it: its bounds from the head bone's rest head, in metres
+## (the lowest and highest corners), measured from `tools/blender/heads.py`'s output. A head moved or
+## grown by more than `HEAD_PLACE` (half a centimetre) fails.
+const HEAD_BOUNDS: Dictionary = {
+	"alvar": [Vector3(-0.096, -0.038, -0.138), Vector3(0.096, 0.265, 0.116)],
+	"captive": [Vector3(-0.105, -0.039, -0.140), Vector3(0.105, 0.272, 0.130)],
+	"crusader": [Vector3(-0.094, -0.038, -0.138), Vector3(0.094, 0.266, 0.111)],
+	"gonzalo": [Vector3(-0.104, -0.038, -0.149), Vector3(0.104, 0.265, 0.117)],
+	"malakor": [Vector3(-0.110, -0.089, -0.139), Vector3(0.110, 0.279, 0.132)],
+	"sergeant": [Vector3(-0.095, -0.038, -0.140), Vector3(0.095, 0.266, 0.111)],
+	"smith": [Vector3(-0.102, -0.038, -0.138), Vector3(0.102, 0.269, 0.115)],
+	"zahra": [Vector3(-0.088, -0.038, -0.129), Vector3(0.088, 0.266, 0.107)],
+}
+const HEAD_PLACE: float = 0.005
 ## The model, its head and its gear together.
 const FIGURE_TRIANGLES: int = 15000
 
@@ -94,12 +101,11 @@ func test_each_head_is_small_and_lies_round_the_head_bone() -> void:
 		var triangles: int = mesh.mesh.get_faces().size() / 3
 		assert_lt(triangles, HEAD_TRIANGLES, "%s: %d triangles" % [dress_name, triangles])
 		var box: AABB = mesh.transform * mesh.get_aabb()
-		var down: float = LONG_HAIR_DOWN if dress_name in LONG_HAIRED else HEAD_DOWN
+		var pinned: Array = HEAD_BOUNDS[dress_name]
 		var reach: String = "%s reaches %s to %s" % [dress_name, box.position, box.end]
-		assert_lte(maxf(absf(box.position.x), absf(box.end.x)), HEAD_SIDEWAYS, reach)
-		assert_lte(maxf(absf(box.position.z), absf(box.end.z)), HEAD_SIDEWAYS, reach)
-		assert_lte(box.end.y, HEAD_UP, reach)
-		assert_gte(box.position.y, -down, reach)
+		for axis: int in 3:
+			assert_almost_eq(box.position[axis], (pinned[0] as Vector3)[axis], HEAD_PLACE, reach)
+			assert_almost_eq(box.end[axis], (pinned[1] as Vector3)[axis], HEAD_PLACE, reach)
 
 
 func test_a_dressed_figure_stands_at_its_height_with_its_head() -> void:
