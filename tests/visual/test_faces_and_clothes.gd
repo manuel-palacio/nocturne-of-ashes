@@ -148,17 +148,24 @@ func test_the_head_follows_the_head_bone_while_feeding() -> void:
 	var bone: int = skeleton.find_bone(HEAD_BONE)
 	var head := _attachments(figure)[0] as BoneAttachment3D
 	var mesh := head.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
-	var centres: Array[Vector3] = []
-	var reaches: Array[float] = []
-	for sample: int in 2:
-		await wait_seconds(0.6)
+	var neck: int = skeleton.find_bone(&"DEF-neck")
+	# The head mesh's centre in the head bone's frame and in the neck's, at moments through the clip.
+	var in_head: Array[Vector3] = []
+	var in_neck: Array[Vector3] = []
+	for sample: int in 5:
+		await wait_seconds(0.25)
 		assert_eq(figure.clip(), &"feed")
 		var centre: Vector3 = mesh.global_transform * mesh.get_aabb().get_center()
-		var bone_origin: Vector3 = (skeleton.global_transform * skeleton.get_bone_global_pose(bone)).origin
-		centres.append(centre)
-		reaches.append(centre.distance_to(bone_origin))
-	assert_almost_eq(reaches[0], reaches[1], 0.002, "the head keeps its distance to the head bone")
-	assert_gt(centres[0].distance_to(centres[1]), 0.005, "the head moves with the bowing figure")
+		in_head.append((skeleton.global_transform * skeleton.get_bone_global_pose(bone)).affine_inverse() * centre)
+		in_neck.append((skeleton.global_transform * skeleton.get_bone_global_pose(neck)).affine_inverse() * centre)
+	var on_head: float = 0.0
+	var on_neck: float = 0.0
+	for i: int in range(1, in_head.size()):
+		on_head = maxf(on_head, in_head[0].distance_to(in_head[i]))
+		on_neck = maxf(on_neck, in_neck[0].distance_to(in_neck[i]))
+	gut.p("the head's centre moves %.4f m on the head bone, %.4f m on the neck" % [on_head, on_neck])
+	assert_lt(on_head, 0.002, "the head stays put on the head bone")
+	assert_gt(on_neck, 0.005, "while the head bone turns on the neck, and the head with it")
 
 
 func test_a_dressed_figure_stays_under_its_triangle_budget() -> void:
