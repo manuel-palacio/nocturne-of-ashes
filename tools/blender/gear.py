@@ -18,7 +18,8 @@ characters scale the whole model, gear and all.
 | shield, shield_large | DEF-hand.L | own |
 | helmet, mail_coif | DEF-head | own |
 | veil | DEF-head | the wearer's palette (`trim`) |
-| skirt_long, skirt_short, apron | DEF-hips | the wearer's palette (`skirt`) |
+| skirt_long | DEF-hips | the wearer's palette, its own squares (`skirt`; `hose` front and back) |
+| skirt_short, apron | DEF-hips | the wearer's palette (`skirt`) |
 | mantle | DEF-spine.003 | the wearer's palette (`tunic`) |
 
 `resources/gear/<piece>.tres` holds that table for the game.
@@ -54,7 +55,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(1, str(Path(__file__).resolve().parents[1]))
-from make_character import REGION_NAMES  # noqa: E402
+from make_character import HOSE, REGION_NAMES, SKIRT  # noqa: E402
 from wearable import KEY_DIRECTIONS, Piece, add, cross, dot, export, mul, require_blender, sub, unit  # noqa: E402
 
 OUT = Path(__file__).resolve().parents[2] / "assets/gear"
@@ -63,10 +64,15 @@ MAX_TRIANGLES = 600
 # Rest-pose bone heads of the human model, in its frame (read from human.glb's skeleton).
 BONES = {
     "DEF-hips": (0.0, 0.917, 0.05),
+    "DEF-spine.001": (0.0, 1.0505, 0.0156),
     "DEF-spine.003": (0.0, 1.315, 0.005),
     "DEF-head": (0.0, 1.569, -0.005),
     "DEF-hand.R": (0.739, 1.441, 0.065),
     "DEF-hand.L": (-0.739, 1.441, 0.065),
+    "DEF-upper_arm.R": (0.1919, 1.4408, 0.0654),
+    "DEF-upper_arm.L": (-0.1919, 1.4408, 0.0654),
+    "DEF-forearm.R": (0.4663, 1.4408, 0.0701),
+    "DEF-forearm.L": (-0.4663, 1.4408, 0.0701),
 }
 # The middle of the right fist, from the wrist (the hand's bone head) at rest: the fingers curl
 # down, under the hand, and the grip runs front to back (along z), the index finger in front.
@@ -88,6 +94,9 @@ STAFF_AXIS = (-0.8, 0.16, -0.57)
 GEAR_PALETTE = ["#b8c0c6", "#6e757c", "#8e959b", "#8a5e36", "#a8804e", "#5a3c26", "#000000", "#000000"]
 STEEL, DARK_STEEL, MAIL, WOOD, PALE_WOOD, LEATHER = range(6)
 CLOTH_UV = (0.5 / len(REGION_NAMES), 0.5)  # the middle of a character palette's first square
+# Cloth whose faces point at the true squares of the wearer's palette, as the garments' do
+# (`garments.py`), so it can be two colours and is drawn with the body's own material.
+OWN_SQUARES = {"skirt_long"}
 
 # ---- the pieces --------------------------------------------------------------------------------
 
@@ -209,7 +218,13 @@ def skirt_long() -> Piece:
     p = Piece("skirt_long", "DEF-hips", True)
     rings = SKIRT_TOP + [(0.75, 0.25, 0.21, 0.0, 0), (0.5, 0.3, 0.26, 0.0, 0), (0.3, 0.33, 0.29, 0.0, 0),
                          (0.1, 0.36, 0.32, 0.0, 0)]
-    p.lathe(rings, 16, keys={name: (0.5, 0.95, 0.1) for name in KEY_DIRECTIONS}, flat=(0.95, 0.1))
+    p.lathe(rings, 16, SKIRT, keys={name: (0.5, 0.95, 0.1) for name in KEY_DIRECTIONS}, flat=(0.95, 0.1))
+    # Alvar's scapular hangs on down the front and back: those faces take the hose square, which
+    # the other long skirts' palettes colour as the skirt.
+    for i, face in enumerate(p.faces):
+        x, _, z = (sum(p.verts[v][k] for v in face) / len(face) for k in range(3))
+        if abs(x) < 0.4 * abs(z):
+            p.colours[i] = HOSE
     p.two_sided()
     return p
 
@@ -232,7 +247,7 @@ def apron() -> Piece:
         row = []
         for i in range(columns + 1):
             x = width * (i / columns - 0.5)
-            index = p.vertex((x, y, z + 0.06 * (2 * x / width) ** 2))
+            index = p.vertex((x, y, z + 0.03 * (2 * x / width) ** 2))
             depth = min(max((0.95 - y) / (0.95 - 0.5), 0.0), 1.0)
             p.keys["fore"][index] = (0.0, 0.0, -0.4 * depth)
             row.append(index)
@@ -263,9 +278,12 @@ PIECES = [sword, hammer, staff, lambda: shield("shield", 0.85, 0.5), lambda: shi
 # ---- writing them ------------------------------------------------------------------------------
 
 def build(piece: Piece) -> None:
-    export(piece, BONES[piece.bone], OUT / f"{piece.name}.glb",
-           lambda colour: CLOTH_UV if piece.cloth else ((colour + 0.5) / len(GEAR_PALETTE), 0.5),
-           piece.cloth, "tools/blender/gear.py")
+    def uv_of(colour):
+        if piece.name in OWN_SQUARES:
+            return ((colour + 0.5) / len(REGION_NAMES), 0.5)
+        return CLOTH_UV if piece.cloth else ((colour + 0.5) / len(GEAR_PALETTE), 0.5)
+
+    export(piece, BONES[piece.bone], OUT / f"{piece.name}.glb", uv_of, piece.cloth, "tools/blender/gear.py")
 
 
 def write_shape(piece: Piece) -> None:

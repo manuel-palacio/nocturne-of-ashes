@@ -19,10 +19,11 @@ extends Node3D
 ## processing.
 ##
 ## The dress's head and gear hang from the model's bones, each piece under its own `BoneAttachment3D`,
-## the head first. The head is drawn with the body's own material, as its faces point at the
-## palette's own squares. Cloth is coloured from the dress's palette and stretched round the legs by a
-## `ClothFit`; everything else shares one material that shows the gear palette. Every one of these
-## materials is the body's with another texture or offset, so the gear adds no shader to compile.
+## the head first. The head and the garments are drawn with the body's own material, as their faces
+## point at the palette's own squares. Other cloth is coloured from the dress's palette; cloth with
+## shape keys is stretched round the legs by a `ClothFit`; everything else shares one material that
+## shows the gear palette. Every one of these materials is the body's with another texture or offset,
+## so the gear adds no shader to compile; rigid garments cost nothing per frame.
 ##
 ## A unit's marks are drawn here, unshaded so the room's light never changes them: a gold ring on
 ## the floor while it is the selected member, and a pale drop over its head while it can be fed on.
@@ -261,8 +262,8 @@ func _hang_gear() -> void:
 		_hang(piece, false)
 
 
-## Hangs `piece` from its bone: a head drawn with the body's material, cloth with its region's, anything
-## else with the shared one of its own colours.
+## Hangs `piece` from its bone: a head or a piece of the palette's own squares drawn with the body's
+## material, other cloth with its region's, anything else with the shared one of its own colours.
 func _hang(piece: GearPiece, head: bool) -> void:
 	var bone: int = _skeleton.find_bone(piece.bone)
 	if bone < 0 or piece.scene == null:
@@ -277,7 +278,7 @@ func _hang(piece: GearPiece, head: bool) -> void:
 	attachment.add_child(worn)
 	worn.transform = _hang_at_rest(bone)
 	var material: StandardMaterial3D = _material
-	if not head:
+	if not head and not piece.own_squares:
 		material = _cloth_material(piece.region) if piece.cloth else _shared_own_colours(_material)
 	for mesh: MeshInstance3D in worn.find_children("*", "MeshInstance3D", true, false):
 		mesh.material_override = material

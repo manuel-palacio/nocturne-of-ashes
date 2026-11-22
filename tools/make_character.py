@@ -26,6 +26,10 @@ The mannequin's own head is taken off: every segment triangle the head bone move
 the neck joint piece stays, so nothing of the model is above `NECK_TOP`. Each character wears a
 head of its own instead (`tools/blender/heads.py`), which closes over the neck joint.
 
+The body every garment covers is taken off too: the chest, the abdomen and the upper arms, every
+piece that only `CLOTHED` bones move. Each dress wears garments there instead (`tools/blender/gear.py`),
+which are the figure's surface: the neck joint, the pelvis, the elbows and the forearms stay.
+
 The model keeps only the clips in CLIPS, renamed; `stagger` is made here from `Hit_Head` and `feed`
 from `PickUp_Table` (the library has no feeding clip: the figure bows its head and leans in, as over
 someone's neck, swaying a little, its feet still). Clips
@@ -49,35 +53,47 @@ REGION_NAMES = ["skin", "hair", "tunic", "sleeves", "skirt", "hose", "boots", "t
 NECK_TOP = 1.666       # the top of the neck joint piece: nothing of the model is above it
 HEAD_BONE = "DEF-head"  # the bone whose segment triangles are taken off
 SEGMENTS, JOINTS = "M_Main", "M_Joints"  # the library's materials for the two kinds of piece
-BELT = (0.99, 1.12)    # segment pieces wholly inside this band (the rims round the waist joint) are belt
-BELT_PIECES = 2        # the abdomen's lower rim and the pelvis's upper rim
+BELT = (0.99, 1.12)    # segment pieces wholly inside this band (the rim above the hips) are belt
+BELT_PIECES = 1        # the pelvis's upper rim (the abdomen's lower rim went with the abdomen)
+# The bones whose body every garment covers (`tools/blender/gear.py`): the chest and the abdomen, the
+# collarbones and the upper arms. A piece goes when all its vertices follow these (or the neck, whose
+# lowest vertices belong to the chest's piece) and some follow these.
+CLOTHED = {"DEF-spine.001", "DEF-spine.002", "DEF-spine.003", "DEF-shoulder.L", "DEF-shoulder.R",
+           "DEF-upper_arm.L", "DEF-upper_arm.R"}
+# The chest, five pieces of the abdomen, six of the upper arms and the joint between chest and abdomen.
+# The waist joint stays (the hips move it too): it fills the waist from inside, under the garments.
+CLOTHED_PIECES = 12
+CLOTHED_TRIANGLES = 1342
 
 PALETTES = {
     # skin, hair, tunic, sleeves, skirt, hose, boots, trim,
     # eye_white, iris, brow, lips, beard, socket, shade, stubble
-    # Brother Alvar: the white habit and mantle of a knight-friar, a red belt; brown hair, no beard.
-    "alvar": ["#d8aa88", "#4a3324", "#ece8de", "#e2ddd0", "#dcd6c8", "#2a2a30", "#5e3d22", "#b0201e",
+    # Brother Alvar: the white habit of a knight-friar, its scapular a shade darker (the hose square,
+    # which the long skirt hides), a rope belt; brown hair, no beard.
+    "alvar": ["#d8aa88", "#4a3324", "#ece8de", "#e2ddd0", "#dcd6c8", "#cfc7b4", "#5e3d22", "#a48c5c",
               "#e6dccb", "#3c2a1c", "#3a281a", "#a8685a", "#4a3324", "#b48464", "#a87a5a", "#c49c7e"],
-    # Zahra: a deep teal robe, ochre sleeves, dark hair; dark, strong brows.
-    "zahra": ["#b78462", "#1a1412", "#17625e", "#c8902a", "#145651", "#124a46", "#4a3020", "#e0d2b0",
+    # Zahra: a deep teal robe with fitted sleeves, a pale sash, dark hair; dark, strong brows. Her hose
+    # is the skirt's colour, as the long skirt's front and back panels take the hose square.
+    "zahra": ["#b78462", "#1a1412", "#17625e", "#1d6b66", "#145651", "#145651", "#4a3020", "#e0d2b0",
               "#e2d6c2", "#2a1a10", "#120e0c", "#8a4a40", "#1a1412", "#8e5e42", "#8a5c40", "#a8785a"],
     # Gonzalo: grey wool, a brown leather apron, bare forearms, iron-grey hair, a grey beard.
     "gonzalo": ["#cf9e7a", "#8e8e8c", "#7a7c7c", "#cf9e7a", "#7a4a26", "#5c5e5e", "#3a2a1e", "#3c2616",
                 "#e0d6c6", "#3a3a40", "#5a5856", "#a0645a", "#b2b0aa", "#a87a5c", "#a27656", "#b8927a"],
-    # Crusaders: mail-grey sleeves and hose under a dark red surcoat.
-    "crusader": ["#d6a684", "#4e3826", "#7c1616", "#9aa0a4", "#761414", "#8c9296", "#2e2620", "#d8d0bc",
+    # Crusaders: dark mail sleeves and grey hose under a dark red surcoat, a leather belt.
+    "crusader": ["#d6a684", "#4e3826", "#7c1616", "#6c7378", "#761414", "#8c9296", "#2e2620", "#3c2c1e",
                  "#e4dac8", "#4a3424", "#3a2a1c", "#a46658", "#4e3826", "#b08262", "#a87c5e", "#b89478"],
     # Sergeants: the same, with a bronze surcoat and a darker trim; an older man, a greying moustache.
-    "sergeant": ["#d2a07c", "#3a2a1e", "#9a7230", "#9aa0a4", "#8e6a2c", "#8c9296", "#2e2620", "#2a1e14",
+    "sergeant": ["#d2a07c", "#3a2a1e", "#9a7230", "#6c7378", "#8e6a2c", "#8c9296", "#2e2620", "#2a1e14",
                  "#ddd2c0", "#3e3020", "#2e241a", "#9a5e50", "#7a7068", "#a67858", "#9e7254", "#b08c72"],
-    # Malakor: the darkest figure, a cold charcoal, with a crimson belt; pale, the eyes dark-ringed.
-    "malakor": ["#e8ddd2", "#141214", "#363b44", "#30353e", "#2c3038", "#333842", "#16171b", "#c8102e",
+    # Malakor: the darkest figure, a cold charcoal, with a crimson sash; pale, the eyes dark-ringed.
+    # His hose is the skirt's colour, like Zahra's.
+    "malakor": ["#e8ddd2", "#141214", "#363b44", "#30353e", "#2c3038", "#2c3038", "#16171b", "#c8102e",
                 "#efe8de", "#481818", "#141214", "#9c7e80", "#141214", "#5e4a58", "#c8bab2", "#d2c6bc"],
     # Inigo the smith: brown, a soot-dark apron, bare forearms; short dark hair, stubble.
     "smith": ["#c69270", "#2e2018", "#6e4a2a", "#c69270", "#2a2624", "#4e3824", "#2c2018", "#1a1614",
               "#ded2bc", "#2e2014", "#22180e", "#985c4c", "#2e2018", "#9e6e50", "#9a6a4e", "#a87e62"],
-    # The captive: a torn, dirty undershirt, bare lower legs and feet; matted hair, unshaven.
-    "captive": ["#c9a084", "#3a2e24", "#b4ae9e", "#aaa494", "#968e7c", "#c29a7e", "#ad866a", "#6e624e",
+    # The captive: a torn, dirty undershirt, bare forearms, lower legs and feet; matted hair, a beard.
+    "captive": ["#c9a084", "#3a2e24", "#b4ae9e", "#c9a084", "#968e7c", "#c29a7e", "#ad866a", "#6e624e",
                 "#d6cab6", "#3a2c1e", "#2c2218", "#946454", "#3a2e24", "#9a7462", "#9c7860", "#a08470"],
 }
 
@@ -223,6 +239,21 @@ def main(source: str) -> None:
     off = ~joint_piece[triangles[:, 0]] & head[triangles].any(axis=1)
     assert off.any(), f"no segment triangle follows {HEAD_BONE}"
     triangles = triangles[~off]
+    # The body under the garments comes off: every piece, segment or joint, that only the clothed
+    # bones (and the neck) move. Each garment is the body's surface there.
+    clothed = np.array([bones[b] in CLOTHED for b in lead])
+    neck_or_clothed = clothed | np.array([bones[b] == "DEF-neck" for b in lead])
+    hidden = np.zeros(len(position), dtype=bool)
+    hidden_pieces = 0
+    for kind in (~joint_piece[triangles[:, 0]], joint_piece[triangles[:, 0]]):
+        for piece in pieces(triangles[kind], len(position)):
+            if neck_or_clothed[piece].all() and clothed[piece].any():
+                hidden[piece] = True
+                hidden_pieces += 1
+    gone = hidden[triangles].all(axis=1)
+    assert hidden_pieces == CLOTHED_PIECES, f"expected {CLOTHED_PIECES} clothed pieces, found {hidden_pieces}"
+    assert gone.sum() == CLOTHED_TRIANGLES, f"expected {CLOTHED_TRIANGLES} clothed triangles, found {gone.sum()}"
+    triangles = triangles[~gone]
     used = np.zeros(len(position), dtype=bool)
     used[triangles.reshape(-1)] = True
     highest = position[used, 1].max()

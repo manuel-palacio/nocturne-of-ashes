@@ -10,4 +10,5 @@ scene = ExtResource("2_scene")
 bone = &"DEF-hips"
 cloth = true
 region = 4
+own_squares = true
 shape = ExtResource("3_shape")
