@@ -206,12 +206,16 @@ def sleeve(name: str, side: int, colour, rings, dome=0.074, turn_in=0.045, jag=N
     return p
 
 
-def cuff(name: str, side: int, colour, rings, inner=0.05) -> Piece:
+def cuff(name: str, side: int, colour, rings, inner=0.05, closed=None) -> Piece:
     """A sleeve over the forearm: `rings` of `(t, ry, rz, dy)` from the elbow, open at the wrist and
-    two-sided there, so its inside shows."""
+    two-sided there, so its inside shows. With `closed`, its end turns in round the wrist to that
+    radius instead, so whatever the wrist meets (a shield on the back of the hand) does not show
+    through the opening."""
     p = Piece(name, FOREARM[side], False)
     sections = [arm_section(side, FOREARM[side], -0.03, inner, inner)]
     sections += [arm_section(side, FOREARM[side], t, ry, rz, dy) for t, ry, rz, dy in rings]
+    if closed:
+        sections.append(arm_section(side, FOREARM[side], rings[-1][0] - 0.01, closed, closed))
     part = Piece(name, FOREARM[side], False)
     loft(part, sections, ARM_SIDES, lambda _b, _d: colour, 2.0)
     two_sided_part(p, part)
@@ -247,7 +251,8 @@ def habit() -> list[Piece]:
         pieces.append(sleeve(f"habit_sleeve_{suffix}", side, TUNIC,
                              [(0.0, 0.08, 0.08), (0.15, 0.085, 0.085), (0.3, 0.09, 0.09)], turn_in=0.05))
         pieces.append(cuff(f"habit_cuff_{suffix}", side, TUNIC,
-                           [(0.0, 0.09, 0.09, 0.0), (0.12, 0.105, 0.105, -0.01), (0.22, 0.125, 0.12, -0.03)]))
+                           [(0.0, 0.09, 0.09, 0.0), (0.12, 0.1, 0.1, -0.01), (0.2, 0.115, 0.11, -0.025)],
+                           closed=0.04))
     return pieces
 
 
