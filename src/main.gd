@@ -379,7 +379,8 @@ func _spawn_party(entry_name: StringName) -> StringName:
 	return StringName(String(entry.name).trim_prefix(Room.ENTRY_PREFIX))
 
 
-## Shows the title, offering Continue when there is a usable save, and holds the world until a choice.
+## Shows the title, offering Continue when there is a usable save, and a line when saves will not
+## keep, and holds the world until a choice.
 ## Called once, at boot.
 func _open_title() -> void:
 	_title.continue_chosen.connect(reload_checkpoint)
@@ -387,6 +388,7 @@ func _open_title() -> void:
 	_world_hold.set_held(&"title", true)
 	input.enabled = false
 	_title.open(store.has_save())
+	_title.show_storage_warning(not store.keeps_saves())
 	# Behind the title, the rooms' shaders are compiled while the player reads it, a little a frame.
 	_title.show_preparing(true)
 	_warmup.ended.connect(_title.show_preparing.bind(false), CONNECT_ONE_SHOT)

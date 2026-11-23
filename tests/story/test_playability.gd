@@ -331,6 +331,34 @@ func test_a_door_in_the_fury_in_the_empty_fragua_names_the_fury() -> void:
 	assert_eq(main.hud.notice(), "Not while the Fury has you.")
 
 
+# --- 6. Saves that will not keep ---
+
+func _title_with(store_path: String) -> TitleScreen:
+	main = GAME.instantiate()
+	main.store = SaveStore.new()
+	main.store.path = store_path
+	main.store.clear()
+	main.opening_enabled = false
+	add_child_autofree(main)
+	await wait_physics_frames(3)
+	return main.find_child("TitleScreen") as TitleScreen
+
+
+func test_a_store_that_cannot_write_shows_the_title_line() -> void:
+	var title: TitleScreen = await _title_with("user://no_such_place/deeper/save.json")
+	assert_false(main.store.keeps_saves())
+	assert_true(title.is_storage_warning_shown())
+	assert_eq((title.find_child("StorageLabel") as Label).text,
+			"This browser is not keeping saves: progress lasts until the page is closed.")
+
+
+func test_a_working_store_shows_no_title_line() -> void:
+	var title: TitleScreen = await _title_with("user://test_playability_%d.json" % randi())
+	assert_true(main.store.keeps_saves())
+	assert_false(title.is_storage_warning_shown())
+	assert_false(FileAccess.file_exists(main.store.path + SaveStore.PROBE_SUFFIX), "the probe is gone")
+
+
 # --- 8. Íñigo does not repeat his speech ---
 
 func test_inigo_says_it_all_once_then_reminds_in_two_lines() -> void:

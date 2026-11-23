@@ -1,10 +1,12 @@
 class_name SaveStore
 extends RefCounted
 ## Keeps one `GameState` in one JSON file. A file that exists but cannot be used is reported with a
-## warning and treated as no save.
+## warning and treated as no save. `keeps_saves()` tells whether saves will last.
 
 ## Appended to `path` for the file a save is written to before it replaces the old one.
 const TEMP_SUFFIX: String = ".tmp"
+## Appended to `path` for the small file `keeps_saves()` writes, reads back and removes.
+const PROBE_SUFFIX: String = ".probe"
 
 var path: String = "user://save.json"
 
@@ -24,6 +26,27 @@ func save(state: GameState) -> bool:
 	if FileAccess.file_exists(temp):
 		DirAccess.remove_absolute(temp)
 	return false
+
+
+## Whether saves will last: a small value written beside the save reads back the same, and the engine
+## says its `user://` is persistent. In a browser `user://` lives in IndexedDB; the engine reports it
+## not persistent when that could not be opened (site data blocked, some private windows). A browser
+## that opens IndexedDB and wipes it when the window closes (most private windows) cannot be told
+## apart from here. The probe file is removed afterwards.
+func keeps_saves() -> bool:
+	if not OS.is_userfs_persistent():
+		return false
+	var probe: String = path + PROBE_SUFFIX
+	var value: String = "%d" % Time.get_ticks_usec()
+	var file := FileAccess.open(probe, FileAccess.WRITE)
+	if file == null:
+		return false
+	var written: bool = file.store_string(value)
+	file.close()
+	var read: String = FileAccess.get_file_as_string(probe) if written else ""
+	if FileAccess.file_exists(probe):
+		DirAccess.remove_absolute(probe)
+	return written and read == value
 
 
 ## The saved state; null when there is no save, and also, with a warning, when the file is unusable.

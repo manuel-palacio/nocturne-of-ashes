@@ -88,6 +88,9 @@ msgstr "No"
 msgid "Preparing the cellars…"
 msgstr "Preparando las bóvedas…"
 
+msgid "This browser is not keeping saves: progress lasts until the page is closed."
+msgstr "Este navegador no guarda las partidas: el progreso dura hasta que se cierre la página."
+
 # Doors
 msgid "Not while they are upon you"
 msgstr "No mientras los tengas encima"

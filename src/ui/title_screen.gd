@@ -10,7 +10,8 @@ extends Control
 ## pointer, and `Yes, begin anew` stands to its right, away from it. Nothing else moves. Both answers
 ## ignore presses for `ANSWER_DELAY` seconds, so a double click on New game answers nothing. `No`, the
 ## `cancel` action (Escape) or the title closing puts the button back. Controls opens the `ControlsCard`; while
-## it is open the title reads no keys, and Escape closes the card first.
+## it is open the title reads no keys, and Escape closes the card first. When saves will not keep, a
+## line above the preparing one says so (`show_storage_warning()`).
 ##
 ## Texts: the buttons and the question have automatic translation off in the scene and get their text
 ## from `tr()` in code, set again when the language changes. The game's name is not translated.
@@ -35,6 +36,7 @@ var _answer_wait: float = 0.0
 @onready var _controls_button: Button = %ControlsButton
 @onready var _controls_card: ControlsCard = %ControlsCard
 @onready var _preparing: Label = %PreparingLabel
+@onready var _storage: Label = %StorageLabel
 
 
 func _ready() -> void:
@@ -62,6 +64,15 @@ func show_preparing(on: bool) -> void:
 
 func is_preparing_shown() -> bool:
 	return _preparing.visible
+
+
+## Shows or hides the line saying this browser is not keeping saves.
+func show_storage_warning(on: bool) -> void:
+	_storage.visible = on
+
+
+func is_storage_warning_shown() -> bool:
+	return _storage.visible
 
 
 ## Whether it asks if the save may be erased.
@@ -118,6 +129,7 @@ func _show_texts() -> void:
 	_yes_button.text = tr("Yes, begin anew")
 	_no_button.text = tr("No")
 	_preparing.text = tr("Preparing the cellars…")
+	_storage.text = tr("This browser is not keeping saves: progress lasts until the page is closed.")
 
 
 func _on_new_game_pressed() -> void:
