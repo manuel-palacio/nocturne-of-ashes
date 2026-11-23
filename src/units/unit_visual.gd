@@ -14,9 +14,14 @@ extends Node3D
 ##    feet on the ground
 ## 7. otherwise `idle`
 ##
+## While `at_ease` (the world held for a conversation) rules 5 and 6 give way to `idle`: a unit that was
+## walking or striking stands for the talk instead of freezing on the frame it was on, and carries on
+## from what it is doing once released.
+##
 ## Anyone else plays `talk` while `speaking` (`sit_talk` when `resting` is `sit`), else `resting`.
 ## The model's animation runs in the parent's subtree, so it stops whenever the parent stops
-## processing.
+## processing (the pause freezes figures mid-motion), except while `at_ease`, when the figure processes
+## on its own though its unit does not.
 ##
 ## The dress's head and gear hang from the model's bones, each piece under its own `BoneAttachment3D`,
 ## the head first. The head and the garments are drawn with the body's own material, as their faces
@@ -95,6 +100,12 @@ static var _own_colours: StandardMaterial3D
 var resting: StringName = &"idle"
 ## Away from a unit: whether it is speaking in a conversation.
 var speaking: bool = false
+## Under a unit: whether the world is held for a conversation, so the figure stands rather than freezing
+## mid-motion. Set by the `WorldHold`; the unit is only read, as ever.
+var at_ease: bool = false:
+	set(value):
+		at_ease = value
+		process_mode = Node.PROCESS_MODE_ALWAYS if value else Node.PROCESS_MODE_INHERIT
 
 var _unit: Unit
 var _model: Node3D
@@ -409,6 +420,8 @@ func _choose() -> StringName:
 		# A strike or a hit cut short by a higher rule does not show once that rule ends.
 		_one_shot_left = 0.0
 		return higher
+	if at_ease:
+		return &"idle"
 	if _one_shot_left > 0.0:
 		return _one_shot
 	if _moving:

@@ -7,7 +7,9 @@ extends Node
 ## orders.
 ##
 ## The room's air (its torches' flicker and embers: `Room.air()`) stops with the world too, but
-## not for a conversation: the room stays alive while people talk.
+## not for a conversation: the room stays alive while people talk. Held for a conversation alone, the
+## units' figures stand at ease (`UnitVisual.at_ease`) rather than freezing mid-stride; for anything
+## else, such as the pause, they freeze as they are.
 
 ## The reason that holds the units but leaves the air moving.
 const TALK: StringName = &"talk"
@@ -22,6 +24,7 @@ var _reasons: Dictionary = {}  # StringName -> true
 func setup(units: Node, encounter: Encounter) -> void:
 	_units = units
 	_encounter = encounter
+	_units.child_entered_tree.connect(_put_at_ease)
 
 
 ## The room's air from now on (null for none), held as the world is now.
@@ -54,3 +57,12 @@ func _apply() -> void:
 	_encounter.paused = held
 	if is_instance_valid(_air):
 		_air.process_mode = Node.PROCESS_MODE_DISABLED if is_air_held() else Node.PROCESS_MODE_INHERIT
+	for unit: Node in _units.get_children():
+		_put_at_ease(unit)
+
+
+## Sets the figure of `unit` at ease while the world is held for a conversation alone.
+func _put_at_ease(unit: Node) -> void:
+	var visual := unit.get_node_or_null(^"Visual") as UnitVisual
+	if visual != null:
+		visual.at_ease = is_held() and not is_air_held()

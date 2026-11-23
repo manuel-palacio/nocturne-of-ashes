@@ -371,3 +371,39 @@ func test_a_companion_joining_with_a_noisy_visual_does_not_end_the_conversation(
 	assert_eq(main.party.size(), 2)
 	assert_true(main.is_talking())
 	assert_string_contains(_box().find_child("TextLabel").text, "Look after him.")
+
+## What a unit is doing, as far as its figure could change it: where it is, its order and its velocity.
+func _unit_state(unit: Unit) -> Array:
+	return [unit.global_position, unit.current_order(), unit.velocity]
+
+func _visual(unit: Unit) -> UnitVisual:
+	return unit.get_node("Visual") as UnitVisual
+
+func _walking() -> bool:
+	return _visual(main.player).clip() in [&"walk", &"run"]
+
+## A conversation that starts as Álvar walks up does not hold him mid-stride: his figure stands (`idle`)
+## within 0.3 s, and the unit itself is left as it was; once it ends he walks on.
+func test_a_unit_walking_when_a_conversation_starts_stands_and_is_left_unchanged() -> void:
+	main.player.order_move(main.player.global_position + Vector3(-4, 0, 0))
+	await wait_until(_walking, 2.0)
+	var moving: StringName = _visual(main.player).clip()
+	assert_true(moving in [&"walk", &"run"], "walking first (%s)" % moving)
+	main.talk(TALK, "start")
+	var before: Array = _unit_state(main.player)
+	await wait_seconds(0.3)
+	assert_eq(_visual(main.player).clip(), &"idle", "standing in the conversation")
+	assert_eq(_unit_state(main.player), before, "the unit is as it was")
+	main.dialogue.stop()
+	await wait_until(func() -> bool: return _visual(main.player).clip() == moving, 1.0)
+	assert_eq(_visual(main.player).clip(), moving, "it walks on once the conversation ends")
+
+## The pause freezes figures mid-motion, as a tactical pause should look.
+func test_on_pause_a_walking_figure_keeps_its_clip() -> void:
+	main.player.order_move(main.player.global_position + Vector3(-4, 0, 0))
+	await wait_until(_walking, 2.0)
+	var moving: StringName = _visual(main.player).clip()
+	main.set_paused(true)
+	await wait_seconds(0.3)
+	assert_eq(_visual(main.player).clip(), moving, "frozen as it was")
+	main.set_paused(false)
