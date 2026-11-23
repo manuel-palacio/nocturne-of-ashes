@@ -18,12 +18,17 @@ signal toggled(open: bool)
 const HEADING: String = "Here the descent rests"
 ## Formatted with the Alma carried.
 const BODY: String = "The last lock of Toledo's vaults is still shut, and what waits behind it is not yet written. Your game is saved: when the story goes on, it goes on from here, with the Alma you carry (%d of 10)."
+## In place of `BODY` when the game is not saved (the browser keeps no saves, or the write failed).
+## Formatted with the Alma carried.
+const BODY_UNSAVED: String = "The last lock of Toledo's vaults is still shut, and what waits behind it is not yet written. This browser is not keeping saves: your progress, and the Alma you carry (%d of 10), last until the page is closed."
 const HINT: String = "Enter or click to stay in the vault"
 ## Seconds after it opens before a key or a click closes it.
 const ANSWER_DELAY: float = 2.5
 
 ## The Alma shown in the body.
 var _alma: int = 0
+## Whether the body says the game is saved.
+var _saved: bool = true
 ## Seconds until a key or a click closes it.
 var _answer_wait: float = 0.0
 
@@ -52,9 +57,11 @@ func _process(delta: float) -> void:
 		close()
 
 
-## Shows the card with `alma`, the Alma carried, in its body.
-func open(alma: int) -> void:
+## Shows the card with `alma`, the Alma carried, in its body, which says the game is saved when `saved`
+## is true and, when false, that this browser is not keeping saves.
+func open(alma: int, saved: bool = true) -> void:
 	_alma = alma
+	_saved = saved
 	_show_texts()
 	if visible:
 		return
@@ -112,5 +119,5 @@ func _show_hint(shown: bool) -> void:
 
 func _show_texts() -> void:
 	_heading.text = tr(HEADING)
-	_body.text = tr(BODY) % _alma
+	_body.text = tr(BODY if _saved else BODY_UNSAVED) % _alma
 	_hint.text = tr(HINT)

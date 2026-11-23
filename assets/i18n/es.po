@@ -193,5 +193,8 @@ msgstr "Aquí se detiene el descenso"
 msgid "The last lock of Toledo's vaults is still shut, and what waits behind it is not yet written. Your game is saved: when the story goes on, it goes on from here, with the Alma you carry (%d of 10)."
 msgstr "El último cerrojo bajo Toledo sigue echado, y lo que aguarda tras él aún no está escrito. Tu partida está guardada: cuando la historia continúe, lo hará desde aquí, con el Alma que llevas (%d de 10)."
 
+msgid "The last lock of Toledo's vaults is still shut, and what waits behind it is not yet written. This browser is not keeping saves: your progress, and the Alma you carry (%d of 10), last until the page is closed."
+msgstr "El último cerrojo bajo Toledo sigue echado, y lo que aguarda tras él aún no está escrito. Este navegador no guarda las partidas: tu progreso, y el Alma que llevas (%d de 10), duran hasta que se cierre la página."
+
 msgid "Enter or click to stay in the vault"
 msgstr "Intro o clic para quedarte en la cripta"

@@ -185,10 +185,10 @@ func is_controls_open() -> bool:
 
 
 ## Opens the closing card, with `alma`, the Alma carried, in its text, in place of the cleared line it
-## would show through.
-func show_closing(alma: int) -> void:
+## would show through. It says the game is saved only when `saved` is true.
+func show_closing(alma: int, saved: bool = true) -> void:
 	hide_cleared()
-	_closing_card.open(alma)
+	_closing_card.open(alma, saved)
 
 
 ## Whether the closing card is open and would close on a key or a click now.

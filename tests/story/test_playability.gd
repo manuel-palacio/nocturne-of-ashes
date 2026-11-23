@@ -522,6 +522,46 @@ func test_a_store_that_cannot_write_shows_the_title_line() -> void:
 			"This browser is not keeping saves: progress lasts until the page is closed.")
 
 
+## The story at the cleared vault's door, its saves going to `store_path`.
+func _boot_with_store(store_path: String) -> void:
+	main = GAME.instantiate()
+	main.store = SaveStore.new()
+	main.store.path = store_path
+	main.store.clear()
+	main.state = PageBoot.haven_finished()
+	main.show_title = false
+	main.opening_enabled = false
+	add_child_autofree(main)
+	await wait_physics_frames(3)
+
+
+func test_with_saves_not_kept_the_closing_card_claims_no_save_and_says_why() -> void:
+	await _boot_with_store("user://no_such_place/deeper/save.json")
+	assert_false(main.store.keeps_saves())
+	await _clear_the_vault()
+	assert_true(main.is_closing_open())
+	var text: String = (main.hud.find_child("ClosingCard") as ClosingCard).text()
+	assert_false(text.contains("saved"), "no claim of a save: %s" % text)
+	assert_string_contains(text, "This browser is not keeping saves")
+	assert_string_contains(text, "(%d of 10)" % main.state.conscience)
+	Language.apply("es")
+	await wait_physics_frames(2)
+	text = (main.hud.find_child("ClosingCard") as ClosingCard).text()
+	assert_string_contains(text, "Este navegador no guarda las partidas")
+	assert_false(text.contains("guardada"), "nor in Spanish: %s" % text)
+	TranslationServer.set_locale("en")
+	await wait_physics_frames(2)
+
+
+func test_with_a_working_store_the_closing_card_says_the_game_is_saved() -> void:
+	await _boot_with_store("user://test_playability_%d.json" % randi())
+	await _clear_the_vault()
+	assert_true(main.is_closing_open())
+	var text: String = (main.hud.find_child("ClosingCard") as ClosingCard).text()
+	assert_string_contains(text, "Your game is saved: when the story goes on, it goes on from here")
+	assert_false(text.contains("not keeping saves"))
+
+
 func test_a_working_store_shows_no_title_line() -> void:
 	var title: TitleScreen = await _title_with("user://test_playability_%d.json" % randi())
 	assert_true(main.store.keeps_saves())

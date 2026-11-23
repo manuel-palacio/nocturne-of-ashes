@@ -89,6 +89,8 @@ var _paused: bool = false
 var _last_checkpoint: Dictionary = {}
 ## Whether the closing card is due, waiting for the pause, a conversation or the controls card to end.
 var _closing_due: bool = false
+## Whether the last checkpoint could not be written, so the closing card does not say the game is saved.
+var _last_write_failed: bool = false
 ## True while the closing card is closed by a room change rather than by the player.
 var _closing_put_away: bool = false
 ## Held so the page's `visibilitychange` callback stays alive; on the web only.
@@ -215,7 +217,8 @@ func checkpoint() -> void:
 		return
 	_party.record(state)
 	_last_checkpoint = state.to_dict()
-	if not store.save(state):
+	_last_write_failed = not store.save(state)
+	if _last_write_failed:
 		push_warning("Could not write the save file %s" % store.path)
 		return
 	checkpoint_saved.emit()
@@ -501,13 +504,14 @@ func _on_room_cleared() -> void:
 
 
 ## Opens the closing card once nothing else holds the screen: not on the title, in a conversation, over
-## the controls card, in the pause or after Álvar's fall.
+## the controls card, in the pause or after Álvar's fall. It says the game is saved only when the cleared
+## vault's checkpoint was written and the store keeps saves.
 func _open_closing_when_free() -> void:
 	if (is_title_open() or is_talking() or hud.is_controls_open() or _paused or player == null
 			or not player.is_alive()):
 		return
 	_closing_due = false
-	hud.show_closing(state.conscience)
+	hud.show_closing(state.conscience, store != null and not _last_write_failed and store.keeps_saves())
 
 
 ## Closes the closing card without counting it as seen, as a room change does; nothing is due after.
