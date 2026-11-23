@@ -47,7 +47,7 @@ func _clear_the_vault() -> void:
 
 ## Waits until the closing card would close on a key or a click (`ClosingCard.ANSWER_DELAY` after it opens).
 func _card_answers() -> void:
-	await wait_until(func() -> bool: return main.hud.is_closing_answerable(), 2.0)
+	await wait_until(func() -> bool: return main.hud.is_closing_answerable(), 4.0)
 
 
 func _door(node_name: String) -> Door:
@@ -131,7 +131,7 @@ func test_a_click_closes_the_closing_card_and_gives_no_order() -> void:
 
 
 ## A key mashed in the fight's last moment, or a click meant for the last enemy, does not close the card
-## unseen: for 0.6 s after it opens neither closes it, and nothing is marked seen.
+## unseen: for 2.5 s after it opens neither closes it, and nothing is marked seen.
 func test_a_key_or_click_in_the_cards_first_moments_does_not_close_it() -> void:
 	await _boot(PageBoot.haven_finished())
 	var opened_at: Array[int] = []
@@ -143,33 +143,103 @@ func test_a_key_or_click_in_the_cards_first_moments_does_not_close_it() -> void:
 	for enemy: Unit in main.enemies:
 		enemy.take_hit(999)
 	await wait_until(func() -> bool: return main.is_closing_open(), 2.0)
+	assert_eq(opened_at.size(), 1, "the card opened")
+	if opened_at.is_empty():
+		return
 	_click(Vector2(30, 680))
 	await wait_physics_frames(2)
 	Input.action_release(&"confirm")
 	await wait_physics_frames(2)
 	assert_true(main.is_closing_open(), "not closed in its opening frame")
-	await wait_seconds(maxf(0.0, 0.3 - (Time.get_ticks_msec() - opened_at[0]) / 1000.0))
+	for at: float in [0.3, 2.0]:
+		await wait_seconds(maxf(0.0, at - (Time.get_ticks_msec() - opened_at[0]) / 1000.0))
+		await _tap(&"confirm")
+		_click(Vector2(30, 680))
+		await wait_physics_frames(2)
+		assert_true(main.is_closing_open(), "not closed at %.1f s" % at)
+		assert_false(main.state.has_flag(Main.REST_SHOWN_FLAG), "not seen at %.1f s" % at)
+	await wait_seconds(maxf(0.0, 2.6 - (Time.get_ticks_msec() - opened_at[0]) / 1000.0))
 	await _tap(&"confirm")
-	_click(Vector2(30, 680))
-	await wait_physics_frames(2)
-	assert_true(main.is_closing_open(), "not closed at 0.3 s")
-	assert_false(main.state.has_flag(Main.REST_SHOWN_FLAG), "not seen yet")
-	await wait_seconds(maxf(0.0, 0.7 - (Time.get_ticks_msec() - opened_at[0]) / 1000.0))
-	await _tap(&"confirm")
-	assert_false(main.is_closing_open(), "Enter closes it at 0.7 s")
+	assert_false(main.is_closing_open(), "Enter closes it at 2.6 s")
 	assert_true(main.state.has_flag(Main.REST_SHOWN_FLAG))
 
 
-func test_a_click_at_seven_tenths_of_a_second_closes_the_card() -> void:
+## A player still clicking enemies as the last one falls, or still pressing Enter, sees the card for its
+## whole delay: clicks every 0.35 s and Enter every 0.2 s from its opening frame leave it open, and not
+## seen, until 2.5 s; the hint saying how to close it shows only once it answers.
+func test_clicks_and_enter_kept_up_from_the_opening_frame_leave_the_card_open_until_its_delay_ends() -> void:
+	await _boot(PageBoot.haven_finished())
+	var card := main.hud.find_child("ClosingCard") as ClosingCard
+	var opened_at: Array[int] = []
+	main.hud.closing_toggled.connect(func(open: bool) -> void:
+		if open:
+			opened_at.append(Time.get_ticks_msec()))
+	for enemy: Unit in main.enemies:
+		enemy.take_hit(999)
+	await wait_until(func() -> bool: return main.is_closing_open(), 2.0)
+	assert_eq(opened_at.size(), 1, "the card opened")
+	if opened_at.is_empty():
+		return
+	var next_click: float = 0.0
+	var next_enter: float = 0.0
+	var clicks: int = 0
+	var presses: int = 0
+	var elapsed: float = 0.0
+	while elapsed < 2.4:
+		elapsed = (Time.get_ticks_msec() - opened_at[0]) / 1000.0
+		if Input.is_action_pressed(&"confirm"):
+			Input.action_release(&"confirm")
+		if elapsed >= next_click:
+			_click(Vector2(30, 680))
+			clicks += 1
+			next_click += 0.35
+		if elapsed >= next_enter:
+			Input.action_press(&"confirm")
+			presses += 1
+			next_enter += 0.2
+		await wait_process_frames(1)
+		if not main.is_closing_open() or main.state.has_flag(Main.REST_SHOWN_FLAG):
+			break
+		if card.is_hint_shown():
+			break
+	Input.action_release(&"confirm")
+	gut.p("clicks %d, Enter presses %d, last at %.2f s" % [clicks, presses, elapsed])
+	assert_true(main.is_closing_open(), "still open at %.2f s" % elapsed)
+	assert_false(main.state.has_flag(Main.REST_SHOWN_FLAG), "not seen at %.2f s" % elapsed)
+	assert_false(card.is_hint_shown(), "the hint is hidden while it does not answer (%.2f s)" % elapsed)
+	assert_gt(clicks, 5)
+	assert_gt(presses, 10)
+	await _card_answers()
+	assert_gt((Time.get_ticks_msec() - opened_at[0]) / 1000.0, 2.45, "it answers after 2.5 s")
+	assert_true(card.is_hint_shown(), "the hint shows once it answers")
+	assert_string_contains(card.text(), "Enter or click to stay in the vault")
+
+
+func test_a_click_after_the_delay_closes_the_card_and_the_rest_notice_stays() -> void:
 	await _boot(PageBoot.haven_finished())
 	await _clear_the_vault()
 	assert_true(main.is_closing_open())
 	assert_false(main.hud.is_closing_answerable())
-	await wait_seconds(0.7)
+	await wait_seconds(2.6)
 	_click(Vector2(30, 680))
 	await wait_physics_frames(2)
 	assert_false(main.is_closing_open())
 	assert_true(main.state.has_flag(Main.REST_SHOWN_FLAG))
+	assert_eq(main.hud.notice(), Main.REST_NOTICE, "a line stays on screen after the card")
+	assert_true((main.hud.find_child("NoticeLabel") as Label).visible)
+
+
+func test_escape_closes_the_card_after_its_delay_but_not_before() -> void:
+	await _boot(PageBoot.haven_finished())
+	await _clear_the_vault()
+	assert_true(main.is_closing_open())
+	await _tap(&"cancel")
+	assert_true(main.is_closing_open(), "not during the delay")
+	await _card_answers()
+	await _tap(&"cancel")
+	assert_false(main.is_closing_open(), "Escape closes it")
+	assert_true(main.state.has_flag(Main.REST_SHOWN_FLAG))
+	assert_eq(main.hud.notice(), Main.REST_NOTICE)
 
 
 func test_a_reload_while_the_card_is_open_shows_it_again() -> void:

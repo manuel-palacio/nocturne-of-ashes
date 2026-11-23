@@ -521,7 +521,8 @@ func _put_closing_away() -> void:
 
 
 ## The closing card holds the world and the input as the controls card does. Dismissed by the player,
-## it is seen: the flag is set and saved, so it does not show again.
+## it is seen: the flag is set and saved, so it does not show again, and the line shown on coming back
+## to the quiet vault is shown at once, so a line stays on screen after the card.
 func _on_closing_toggled(open: bool) -> void:
 	_world_hold.set_held(&"closing", open)
 	if open:
@@ -531,6 +532,7 @@ func _on_closing_toggled(open: bool) -> void:
 	if not _closing_put_away:
 		state.set_flag(REST_SHOWN_FLAG)
 		checkpoint()
+		hud.show_notice(REST_NOTICE)
 
 
 func _on_member_revived(_unit: Unit) -> void:
