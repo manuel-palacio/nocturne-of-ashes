@@ -13,7 +13,6 @@ var main: Main
 
 func after_each() -> void:
 	Story.finish(main)
-	TranslationServer.set_locale("en")
 
 
 func _boot(state: GameState) -> void:
@@ -183,6 +182,8 @@ func test_the_card_reads_in_spanish() -> void:
 	var card := main.hud.find_child("ClosingCard") as ClosingCard
 	assert_string_contains(card.text(), "Aquí se detiene el descenso")
 	assert_string_contains(card.text(), "(%d de 10)" % main.state.conscience)
+	TranslationServer.set_locale("en")
+	await wait_physics_frames(2)
 
 
 func test_the_skirmish_has_no_closing_card() -> void:
