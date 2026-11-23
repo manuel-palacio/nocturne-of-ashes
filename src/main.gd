@@ -306,8 +306,9 @@ func enemies_alive() -> int:
 	return _encounter.enemies_alive()
 
 
-## Off the web, the window losing focus hides the game. On the web the page's visibility says so
-## instead: the engine reports a lost focus there for any blur of the window, even with the page in view.
+## Off the web, the window losing focus hides the game. On the web the engine sends no application
+## focus-out (only the window's, when its canvas loses focus) and nothing when the page is hidden, so
+## the page's visibility is followed instead.
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and not OS.has_feature("web"):
 		page_hidden()
