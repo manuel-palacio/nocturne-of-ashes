@@ -4,7 +4,7 @@ extends Node
 ## feeds or uses one Gift, unless the unit is carrying out the player's order or its own feed; if it
 ## did, the think ends. Then the first rule that applies wins: obey a taunt; leave an order the brain
 ## did not give alone; keep up its own feed; switch to a much nearer hostile; engage the nearest
-## hostile within `aggro_radius`; walk after `leader`. Every order the brain gives carries
+## hostile within `aggro_radius`, or at any distance once `alerted`; walk after `leader`. Every order the brain gives carries
 ## `Unit.Issuer.BRAIN`, which is how it tells its own orders from the player's; a follow walk is its
 ## own order, so taunts, switching and engaging interrupt it. Between thinks, a hit from a living hostile on an idle
 ## or following unit is answered with an attack at once. A hostile taken as a meal is left alone: never
@@ -48,6 +48,10 @@ const _FOLLOW_RETARGET: float = 1.0
 		enabled = value
 		if not enabled and _unit != null and _is_following():
 			_unit.stop()
+
+## Once set, the brain engages the nearest hostile at any distance, not only within `aggro_radius`:
+## its side has been roused, as when the room's fight has begun (`Encounter`).
+var alerted: bool = false
 
 ## Whom the unit follows. A new leader starts with no memory of walking: what the last one did says
 ## nothing about it.
@@ -132,7 +136,7 @@ func _think() -> void:
 		_reconsider()
 		return
 	var nearest: Unit = _nearest_hostile()
-	if nearest != null and _flat_to(nearest) <= aggro_radius:
+	if nearest != null and (alerted or _flat_to(nearest) <= aggro_radius):
 		_attack(nearest)
 		return
 	_follow()

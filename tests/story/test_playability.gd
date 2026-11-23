@@ -219,6 +219,34 @@ func test_malakor_sends_nobody_anywhere_once_the_vault_is_cleared() -> void:
 	assert_false(" ".join(after).contains("stair is open"))
 
 
+# --- 2. The second group comes ---
+
+func _second_group() -> Array[Unit]:
+	return main.enemies.slice(3) as Array[Unit]
+
+
+func test_when_the_first_enemy_falls_the_rest_come_for_the_party() -> void:
+	await _boot(PageBoot.haven_finished())
+	main.enemies[0].take_hit(999)
+	var reached := func() -> bool:
+		return _second_group().all(func(enemy: Unit) -> bool:
+			return not enemy.is_alive() or enemy.attack_target() != null and main.party.any(
+					func(member: Unit) -> bool: return Arena.flat(member.global_position, enemy.global_position) < 3.0))
+	await wait_until(reached, 15.0)
+	assert_true(reached.call(), "the second group reached the party within 15 s")
+
+
+func test_ten_seconds_after_the_first_blow_every_enemy_is_alerted() -> void:
+	await _boot(PageBoot.haven_finished())
+	main.enemies[0].take_hit(1)
+	await wait_seconds(9.0)
+	assert_false(_second_group().any(func(enemy: Unit) -> bool: return enemy.attack_target() != null),
+			"not before")
+	await wait_seconds(2.0)
+	assert_true(_second_group().all(func(enemy: Unit) -> bool: return enemy.attack_target() != null),
+			"all of them, after")
+
+
 # --- 8. Íñigo does not repeat his speech ---
 
 func test_inigo_says_it_all_once_then_reminds_in_two_lines() -> void:

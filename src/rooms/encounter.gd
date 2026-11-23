@@ -3,14 +3,18 @@ extends Node
 ## The fight in a room: spawns the room's crusaders, a sergeant at each of its sergeant markers, unless
 ## the room was cleared before; tells whether a fight is on; signals the room cleared once, when its last
 ## enemy falls, and records that in the game state; raises the party's fallen at once then, and otherwise
-## after `calm_time` without a fight; and marks the enemies the selected member can feed on. Nothing
-## advances while Álvar is down or while `paused`.
+## after `calm_time` without a fight; and marks the enemies the selected member can feed on. A room is
+## one fight: when its first enemy falls, or `ALERT_TIME` seconds after the first blow lands on anyone,
+## whichever comes first, every living enemy is alerted (`CombatBrain.alerted`) and comes for the party
+## from wherever it stands. Nothing advances while Álvar is down or while `paused`.
 
 ## The room's last enemy fell. Not emitted for a room entered already cleared.
 signal cleared
 
 const CRUSADER: PackedScene = preload("res://scenes/units/crusader.tscn")
 const SERGEANT: PackedScene = preload("res://scenes/units/crusader_sergeant.tscn")
+## Seconds after the first blow of a room's fight before all its enemies are alerted.
+const ALERT_TIME: float = 10.0
 
 ## Seconds without a fight before fallen companions rise.
 @export var calm_time: float = 3.0
@@ -27,6 +31,10 @@ var _cleared_flag: StringName
 var _cleared: bool = false
 ## Seconds since a fight was last on or a party member last fell.
 var _calm_for: float = 0.0
+## Whether the room's enemies have all been alerted.
+var _alerted: bool = false
+## Seconds since the first blow landed on an enemy or a party member; negative before it.
+var _since_first_blow: float = -1.0
 
 
 ## Follows `party`'s falls and selection. Called once, before anything else connects to `party`, so the
@@ -44,23 +52,34 @@ func begin(room: Room, state: GameState, parent: Node) -> void:
 	_state = state
 	enemies.clear()
 	_calm_for = 0.0
+	_alerted = false
+	_since_first_blow = -1.0
 	_cleared_flag = StringName("%s_cleared" % room.room_id)
 	var markers: Array[Marker3D] = room.enemy_markers()
 	var was_cleared: bool = state.has_flag(_cleared_flag)
 	_cleared = was_cleared or markers.is_empty()
 	if was_cleared:
 		return
+	for member: Unit in _party.members:
+		if not member.was_hit.is_connected(_on_blow):
+			member.was_hit.connect(_on_blow)
 	for marker: Marker3D in markers:
 		var scene: PackedScene = SERGEANT if room.sergeant_spawns.has(StringName(marker.name)) else CRUSADER
 		var enemy: Unit = scene.instantiate()
 		parent.add_child(enemy)
 		enemy.global_transform = marker.global_transform
+		enemy.was_hit.connect(_on_blow)
 		enemies.append(enemy)
 
 
 ## True from the fall of the room's last enemy, or from entering a cleared room, until the next fight.
 func is_cleared() -> bool:
 	return _cleared
+
+
+## Whether every enemy of the room has been alerted, as `Encounter` describes.
+func is_alerted() -> bool:
+	return _alerted
 
 
 ## True while any living enemy is attacking someone.
@@ -100,6 +119,11 @@ func _physics_process(delta: float) -> void:
 func _advance(delta: float) -> void:
 	if not _leader_alive():
 		return
+	if not _cleared and not _alerted:
+		if _since_first_blow >= 0.0:
+			_since_first_blow += delta
+		if enemies_alive() < enemies.size() or _since_first_blow >= ALERT_TIME:
+			_alert()
 	if not _cleared and enemies_alive() == 0:
 		_cleared = true
 		_state.set_flag(_cleared_flag)
@@ -111,6 +135,21 @@ func _advance(delta: float) -> void:
 	_calm_for += delta
 	if _calm_for >= calm_time:
 		_party.revive_fallen()
+
+
+## Every living enemy comes for the party: its brain, when it has one, engages at any distance.
+func _alert() -> void:
+	_alerted = true
+	for enemy: Unit in enemies:
+		var brain := enemy.get_node_or_null(^"Brain") as CombatBrain
+		if enemy.is_alive() and brain != null:
+			brain.alerted = true
+
+
+## The first blow of the fight, on an enemy or a party member, starts the count to `ALERT_TIME`.
+func _on_blow(_amount: int, _source: Unit) -> void:
+	if _since_first_blow < 0.0:
+		_since_first_blow = 0.0
 
 
 func _leader_alive() -> bool:
