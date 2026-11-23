@@ -191,6 +191,11 @@ func show_closing(alma: int) -> void:
 	_closing_card.open(alma)
 
 
+## Whether the closing card is open and would close on a key or a click now.
+func is_closing_answerable() -> bool:
+	return _closing_card.accepts_answer()
+
+
 func hide_closing() -> void:
 	_closing_card.close()
 

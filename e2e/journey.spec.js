@@ -126,9 +126,8 @@ test('the story from New game to the last lock, and Continue after a reload', as
   expect(s.cleared).toBe(true);
   expect(s.enemies).toBe(0);
 
-  // The closing card says the story rests here; Enter closes it.
-  await until(page, () => { window.nocturneProbe(); return window.nocturneState.closing; });
-  await page.waitForTimeout(500);
+  // The closing card says the story rests here; Enter closes it once it takes an answer.
+  await until(page, () => { window.nocturneProbe(); return window.nocturneState.closing_ready; });
   await page.screenshot({ path: `build/e2e/journey-cleared-${test.info().project.name}.png` });
   await page.keyboard.press('Enter');
   await until(page, () => { window.nocturneProbe(); return !window.nocturneState.closing; });

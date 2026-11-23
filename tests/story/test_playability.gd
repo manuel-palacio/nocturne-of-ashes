@@ -45,6 +45,11 @@ func _clear_the_vault() -> void:
 	await wait_physics_frames(3)
 
 
+## Waits until the closing card would close on a key or a click (`ClosingCard.ANSWER_DELAY` after it opens).
+func _card_answers() -> void:
+	await wait_until(func() -> bool: return main.hud.is_closing_answerable(), 2.0)
+
+
 func _door(node_name: String) -> Door:
 	return main.room.find_child(node_name) as Door
 
@@ -89,6 +94,7 @@ func test_clearing_the_story_vault_opens_the_closing_card_which_holds_the_world(
 	assert_eq(card.focus_mode, Control.FOCUS_NONE)
 	assert_string_contains(card.text(), "Here the descent rests")
 	assert_string_contains(card.text(), "(%d of 10)" % main.state.conscience)
+	await _card_answers()
 	await _tap(&"pause")
 	assert_false(main.is_closing_open(), "Space closes it, it does not pause behind it")
 	assert_false(main.is_paused())
@@ -101,6 +107,7 @@ func test_enter_closes_the_closing_card_and_it_is_not_shown_again_after_a_reload
 	await _boot(PageBoot.haven_finished())
 	await _clear_the_vault()
 	assert_true(main.is_closing_open())
+	await _card_answers()
 	await _tap(&"confirm")
 	assert_false(main.is_closing_open(), "Enter closes it")
 	assert_true(main.store.load_state().has_flag(Main.REST_SHOWN_FLAG), "dismissed, and saved so")
@@ -115,11 +122,54 @@ func test_a_click_closes_the_closing_card_and_gives_no_order() -> void:
 	await _boot(PageBoot.haven_finished())
 	await _clear_the_vault()
 	assert_true(main.is_closing_open())
+	await _card_answers()
 	# Where the test runner's own window does not cover the game, as the controls card's test clicks.
 	_click(Vector2(30, 680))
 	await wait_physics_frames(3)
 	assert_false(main.is_closing_open())
 	assert_eq(main.player.current_order(), Unit.Order.NONE, "the click went to the card")
+
+
+## A key mashed in the fight's last moment, or a click meant for the last enemy, does not close the card
+## unseen: for 0.6 s after it opens neither closes it, and nothing is marked seen.
+func test_a_key_or_click_in_the_cards_first_moments_does_not_close_it() -> void:
+	await _boot(PageBoot.haven_finished())
+	var opened_at: Array[int] = []
+	main.hud.closing_toggled.connect(func(open: bool) -> void:
+		if open:
+			opened_at.append(Time.get_ticks_msec()))
+	# Enter held down as the last enemy falls: pressed in the frame the card opens.
+	Input.action_press(&"confirm")
+	for enemy: Unit in main.enemies:
+		enemy.take_hit(999)
+	await wait_until(func() -> bool: return main.is_closing_open(), 2.0)
+	_click(Vector2(30, 680))
+	await wait_physics_frames(2)
+	Input.action_release(&"confirm")
+	await wait_physics_frames(2)
+	assert_true(main.is_closing_open(), "not closed in its opening frame")
+	await wait_seconds(maxf(0.0, 0.3 - (Time.get_ticks_msec() - opened_at[0]) / 1000.0))
+	await _tap(&"confirm")
+	_click(Vector2(30, 680))
+	await wait_physics_frames(2)
+	assert_true(main.is_closing_open(), "not closed at 0.3 s")
+	assert_false(main.state.has_flag(Main.REST_SHOWN_FLAG), "not seen yet")
+	await wait_seconds(maxf(0.0, 0.7 - (Time.get_ticks_msec() - opened_at[0]) / 1000.0))
+	await _tap(&"confirm")
+	assert_false(main.is_closing_open(), "Enter closes it at 0.7 s")
+	assert_true(main.state.has_flag(Main.REST_SHOWN_FLAG))
+
+
+func test_a_click_at_seven_tenths_of_a_second_closes_the_card() -> void:
+	await _boot(PageBoot.haven_finished())
+	await _clear_the_vault()
+	assert_true(main.is_closing_open())
+	assert_false(main.hud.is_closing_answerable())
+	await wait_seconds(0.7)
+	_click(Vector2(30, 680))
+	await wait_physics_frames(2)
+	assert_false(main.is_closing_open())
+	assert_true(main.state.has_flag(Main.REST_SHOWN_FLAG))
 
 
 func test_a_reload_while_the_card_is_open_shows_it_again() -> void:
@@ -170,6 +220,7 @@ func test_the_card_opens_with_a_companion_selected_and_in_the_fury() -> void:
 	assert_true(main.player.is_in_fury())
 	await _clear_the_vault()
 	assert_true(main.is_closing_open())
+	await _card_answers()
 	await _tap(&"confirm")
 	assert_false(main.is_closing_open())
 
@@ -202,6 +253,7 @@ func test_the_last_lock_says_the_story_rests_once_the_vault_is_cleared() -> void
 	await wait_physics_frames(2)
 	assert_eq(main.hud.notice(), "The last lock does not yield. Not yet.")
 	await _clear_the_vault()
+	await _card_answers()
 	await _tap(&"confirm")
 	_door("LastLock").use(main.player)
 	await wait_physics_frames(2)

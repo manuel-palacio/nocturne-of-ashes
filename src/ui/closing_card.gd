@@ -5,6 +5,8 @@ extends Control
 ## `pause` (Space), by a left click anywhere, or by `close()`. While open it takes every mouse button
 ## and the wheel, so nothing reaches the world or the controls behind it. It takes no keyboard focus.
 ## Whoever shows it holds the world while it is open, through `toggled`, as for the `ControlsCard`.
+## For `ANSWER_DELAY` seconds after it opens no key or click closes it (they are still taken), so a key
+## mashed in the fight's last moment or a click meant for the last enemy cannot close it unseen.
 ##
 ## Texts: its labels have automatic translation off in the scene and get their text from `tr()` in
 ## code, set again when the language changes.
@@ -16,9 +18,13 @@ const HEADING: String = "Here the descent rests"
 ## Formatted with the Alma carried.
 const BODY: String = "The last lock of Toledo's vaults is still shut, and what waits behind it is not yet written. Your game is saved: when the story goes on, it goes on from here, with the Alma you carry (%d of 10)."
 const HINT: String = "Enter or click to stay in the vault"
+## Seconds after it opens before a key or a click closes it.
+const ANSWER_DELAY: float = 0.6
 
 ## The Alma shown in the body.
 var _alma: int = 0
+## Seconds until a key or a click closes it.
+var _answer_wait: float = 0.0
 
 @onready var _heading: Label = %Heading
 @onready var _body: Label = %Body
@@ -31,9 +37,14 @@ func _ready() -> void:
 	_show_texts()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if not visible:
+		return
+	if _answer_wait > 0.0:
+		_answer_wait -= delta
+		return
 	# Polled rather than read from events, so presses made with Input.action_press count too.
-	if visible and (Input.is_action_just_pressed(&"confirm") or Input.is_action_just_pressed(&"pause")):
+	if Input.is_action_just_pressed(&"confirm") or Input.is_action_just_pressed(&"pause"):
 		close()
 
 
@@ -43,6 +54,7 @@ func open(alma: int) -> void:
 	_show_texts()
 	if visible:
 		return
+	_answer_wait = ANSWER_DELAY
 	visible = true
 	toggled.emit(true)
 
@@ -58,6 +70,11 @@ func is_open() -> bool:
 	return visible
 
 
+## Whether it is open and a key or a click would now close it.
+func accepts_answer() -> bool:
+	return visible and _answer_wait <= 0.0
+
+
 ## Everything it shows, one text per line, as shown.
 func text() -> String:
 	return "\n".join([_heading.text, _body.text, _hint.text])
@@ -69,13 +86,13 @@ func _notification(what: int) -> void:
 		_show_texts()
 
 
-## Any left press closes it; it stops every mouse button itself.
+## Any left press closes it once `ANSWER_DELAY` is over; it stops every mouse button itself.
 func _gui_input(event: InputEvent) -> void:
 	var button := event as InputEventMouseButton
 	if button == null:
 		return
 	accept_event()
-	if button.pressed and button.button_index == MOUSE_BUTTON_LEFT:
+	if button.pressed and button.button_index == MOUSE_BUTTON_LEFT and _answer_wait <= 0.0:
 		close()
 
 
