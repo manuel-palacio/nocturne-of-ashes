@@ -42,13 +42,17 @@ func test_no_leaving_while_a_fight_is_on() -> void:
 	assert_eq(main.room.room_id, &"vault")
 	assert_eq(main.hud.notice(), "Not while they are upon you")
 
-func test_the_way_back_to_the_haven_arrives_at_the_stair() -> void:
+func test_the_way_back_to_the_haven_arrives_on_the_stairs_side_clear_of_it() -> void:
 	var state := GameState.skirmish()
 	await _boot(state)
 	_door("WestDoor").use(main.player)
 	await wait_physics_frames(3)
 	assert_eq(main.room.room_id, &"haven")
-	assert_lt(Arena.flat(main.player.global_position, _door("StairDoor").global_position), 4.0)
+	# Moved west of the stair so that, on arrival, nobody stands under the party panels.
+	var from_stair: float = Arena.flat(main.player.global_position, _door("StairDoor").global_position)
+	assert_lt(from_stair, 8.0)
+	assert_gt(from_stair, 1.5, "far enough not to use the stair again")
+	assert_gt(main.player.global_position.x, 0.0, "on the stair's side of the forge")
 
 func test_the_last_lock_never_opens() -> void:
 	var state := GameState.skirmish()

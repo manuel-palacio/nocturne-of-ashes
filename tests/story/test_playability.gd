@@ -265,6 +265,42 @@ func test_coming_back_to_a_vault_whose_guard_was_restored_says_so() -> void:
 	assert_eq(main.hud.notice(), "", "nothing on a reload or Continue")
 
 
+# --- 4. Arriving from the vault, nobody stands under the party panels ---
+
+func test_on_arriving_from_the_vault_nobody_to_talk_to_is_under_the_party_panels() -> void:
+	var window_size: Vector2i = get_tree().root.size
+	get_tree().root.size = Vector2i(1280, 720)
+	var state := PageBoot.haven_finished()
+	state.room = &"haven"
+	state.entry = &"from_vault"
+	state.set_flag(&"captive_spared")
+	await _boot(state)
+	main.rig.snap_to_target()
+	await wait_process_frames(2)
+	var panels: Rect2 = (main.hud.find_child("PartyColumn") as Control).get_global_rect()
+	assert_gt(panels.size.y, 200.0, "three panels")
+	var view: Rect2 = Rect2(Vector2.ZERO, Vector2(1280, 720))
+	var camera: Camera3D = main.rig.camera()
+	var shown: Array[String] = []
+	for npc: Npc in main.room.npcs():
+		if not npc.visible:
+			continue
+		shown.append(npc.label)
+		for up: float in [0.1, 0.9, 1.7]:
+			var at: Vector2 = camera.unproject_position(npc.global_position + Vector3.UP * up)
+			# The captive's cell is at the far west wall, out of the view from the stair's side.
+			if npc.label != "The captive":
+				assert_true(view.has_point(at), "%s is on screen, feet to head (%s)" % [npc.label, at])
+			assert_false(panels.grow(12.0).has_point(at),
+					"%s is drawn at %s, under the panels %s" % [npc.label, at, panels])
+	shown.sort()
+	assert_eq(shown, ["Malakor", "The captive", "Íñigo"] as Array[String])
+	var stair: Door = _door("StairDoor")
+	for member: Unit in main.party:
+		assert_gt(Arena.flat(member.global_position, stair.global_position), 1.5, "clear of the stair")
+	get_tree().root.size = window_size
+
+
 # --- 8. Íñigo does not repeat his speech ---
 
 func test_inigo_says_it_all_once_then_reminds_in_two_lines() -> void:

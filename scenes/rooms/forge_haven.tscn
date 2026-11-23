@@ -653,13 +653,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.5)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5)
 
 [node name="Entry_from_vault" type="Marker3D" parent="." unique_id=629866804]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0.3, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.3, -0.8)
 
 [node name="Companion1" type="Marker3D" parent="Entry_from_vault" unique_id=1580494493]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.5)
 
 [node name="Companion2" type="Marker3D" parent="Entry_from_vault" unique_id=1504934942]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, -0.5)
 
 [node name="StairDoor" parent="." unique_id=1300236024 node_paths=PackedStringArray("drawn_with") instance=ExtResource("2_door")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 9.1, 0, 2.5)
