@@ -314,6 +314,12 @@ func _notification(what: int) -> void:
 		page_hidden()
 
 
+func _exit_tree() -> void:
+	if _visibility_callback != null:
+		JavaScriptBridge.get_interface("document").removeEventListener("visibilitychange", _visibility_callback)
+		_visibility_callback = null
+
+
 ## On the web, follows the document's `visibilitychange`: a page becoming hidden is `page_hidden()`.
 func _watch_page_visibility() -> void:
 	if not OS.has_feature("web"):

@@ -2,7 +2,8 @@
 // The story from New game to the last lock and back by Continue: the waking, the smith, Malakor before
 // the party is gathered and the barred stair, the captive, Zahra and Gonzalo joining, Malakor's order
 // and the letter, the stair down, the vault fought to cleared, the closing card that says the story
-// rests there, the last lock, then a reload and Continue, which does not show the card again. `calm=1` keeps it deterministic: the crusaders stand still and fall to the party's blows.
+// rests there, the last lock, then a reload and Continue, which does not show the card again.
+// `calm=1` keeps it deterministic: the crusaders stand still and fall to the party's blows.
 const { test, expect } = require('@playwright/test');
 const { state, open, until, talkThrough } = require('./helpers');
 
