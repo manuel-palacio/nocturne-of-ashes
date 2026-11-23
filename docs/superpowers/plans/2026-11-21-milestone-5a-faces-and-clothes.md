@@ -102,8 +102,8 @@ Eyes, brows and mouth are painted: faces of the mesh whose texture coordinates p
 | Gonzalo | a grey tunic with rolled sleeves (forearms bare), the leather apron |
 | Íñigo | a brown tunic, sleeves to the elbow, the apron |
 | the captive | a torn off-white shirt open at the neck, ragged short sleeves |
-| crusader | a red surcoat over mail sleeves, the coif |
-| sergeant | an ochre surcoat over mail sleeves, the helmet over a coif |
+| crusader | a red surcoat over mail sleeves, the helmet |
+| sergeant | an ochre surcoat over mail sleeves, the helmet over a mail coif |
 
 Bare forearms and hands are skin and are the mannequin's; that is wanted for the smiths. A bare chest is wanted for nobody.
 
@@ -162,6 +162,7 @@ These decisions changed what the tasks above describe. The code follows the amen
 - **Task 5.** On the web only a hidden page pauses the game; a window that merely loses focus does not. Private windows that keep storage until they close are not detected. The engine and the browsers give no signal for either, so the saves line misses those cases.
 - **Task 5.** Once the second group is alerted every enemy has a target, so the vault's west door refuses for the rest of the fight: the mid-fight retreat the task's brief described is gone. A door was never usable while enemies attacked, a fall reloads at the vault's entry, and the fight is winnable; if the fight is made hard later, a retreat rule must be designed with it.
 - **Task 3.** The review's items for the portraits (the face test's thin margin, the key light that burns white cloth, documenting the import step after rendering) were moved to the final fix wave, because Task 4 was editing the same files.
+- **Final fix wave.** The closing card answers no key or click for 2.5 s after it opens (timed by the clock), shows its hint only then, closes on Escape too, and once dismissed leaves the vault's resting line on screen; with saves not kept, or the cleared vault's checkpoint unwritten, it says this browser is not keeping saves instead of claiming a save; in a conversation the units' figures stand rather than freeze mid-stride (the pause still freezes them); the portraits are relit with a lower key so white cloth and Malakor's cheek keep their modelling.
 - **Task 4.** The owner's frames gained `look-closing` (the closing card on screen), and `look-lock` is now taken after the vault is cleared and the card closed, so it shows the last lock with the line that says where the story rests. The click and use helpers moved from the journey spec to `e2e/helpers.js`.
 
 ## Carried forward
@@ -170,15 +171,19 @@ These decisions changed what the tasks above describe. The code follows the amen
 - Six conversations make up about three quarters of a reading play, and Íñigo's first speech is pure rules. Trimming them is the owner's pending decision.
 - A first play lasts 1.3–4 minutes against the design's 20–30: three of the slice's five story beats (the burning quarter, the escort, the last lock's boss) are not built, and the Cave of Hercules is one vault of its three or four encounters.
 - Long skirts are boxy when seated and lumpy mid-fall, a raised knee can pass the skirt's cap, Malakor's mantle spreads into a dark bowl mid-fall and the smith's apron stays a board. Seen from the game camera, Álvar's habit reads as a white bell. In the fight the figures still bunch into one knot.
-- White cloth and Malakor's lit cheek run hot in the portraits (queued for the final fix wave).
-- On the web only a hidden page pauses the game; a window losing focus does not. Private windows that keep storage until closed cannot be detected, and the storage check runs at the title only.
+- On the web only a hidden page pauses the game; a window losing focus does not. Private windows that keep storage until closed cannot be detected. Whether storage keeps saves is checked at the title and on the closing card only; a write that fails in between only warns in the log. That a hidden tab pauses could not be confirmed on an ordinary desktop under automation; the tests fake the page's hidden state.
 - Firefox spends about 10.5 s preparing behind the title: four frames of 2.2–2.6 s each (a shader's two programs linked at once) among shorter ones, the same before and after this plan's heads and garments. New game pressed at once reaches the Fragua at about 13 s of the 15 s limit. Once the preparing is done, nothing compiles on first sight in either room.
 - Conversations are not translated. In Spanish "Sangre" names both the Blood and the Sangre.
-- Test gaps the reviews left: nothing checks that a garment's pieces float free of the body (the old check was dropped), the legs-in-skirts test has no ceiling on points beyond the cap, the cloth fit has no cost test, and the seam test's hull forgives centimetre gaps; the closing card's opening-frame key test is approximate, and the conversation test's tap is sensitive to timing under load.
+- Test gaps the reviews left: the old nothing-floats check for the garments was dropped without a replacement, the legs-in-skirts test has no ceiling on points beyond the cap, the cloth fit has no cost test, and the seam test's hull forgives centimetre gaps. The head-follows test's check on the head bone is true by construction (the head hangs from a bone attachment); only its check against the neck tests anything. The head bounds are pinned per head and are no longer loose.
+- An undressed `UnitVisual` (no `Dress`) is drawn headless and hollow with no message; only a dress missing a head or a garment logs an error.
+- The smith's stubble reads as a flat patch on the jaw in profile.
+- In dark rooms the shadow side of Álvar's white habit reads slate blue, from the cool lift every figure carries; a look matter. It is the same in Chromium and Firefox (the review compared the skirt's pixels and found them identical).
+- The notice and the bookkeeping for a vault left mid-fight ("The vault's guard has closed ranks again.") are nearly unreachable now that the west door refuses for the whole fight; they are kept for when a retreat rule is designed with the fight's difficulty.
+- `main.gd` carries the closing card's logic (when it is due, opening, dismissal, the rest flag), and `ClosingCard` and `ControlsCard` are near copies: a refactor is owed.
 - The floor texture's repeat shows, and the piers' faces on the camera side are near black.
 - The camera cut pops at 60° of turn.
 - The vault's west door is seen edge-on.
-- Away from the return from the vault, the party panels or the dialogue box can still cover a character.
+- Away from the return from the vault, the party panels or the dialogue box can still cover a character, and from the vault's south-west corner the west door can sit under the party panels.
 - Units can stand inside the people they talk to (`Npc`).
 - `unit_visual.gd` (479 lines) is due for a split.
 - `ops/bake-light.sh` has not been run end to end since its last edit.

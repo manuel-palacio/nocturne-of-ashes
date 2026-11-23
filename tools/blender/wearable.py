@@ -1,4 +1,5 @@
-"""What the tools that make pieces worn on the human model share: `gear.py` and `heads.py`.
+"""What the tools that make pieces worn on the human model share: `gear.py`, `heads.py` and
+`garments.py`.
 
 A `Piece` is a mesh in the model's own frame (`assets/characters/human/human.glb`): metres, y up,
 the figure facing -z, in its rest pose. `export` writes it as a `.glb` whose origin is a point of
