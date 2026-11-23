@@ -359,6 +359,39 @@ func test_a_working_store_shows_no_title_line() -> void:
 	assert_false(FileAccess.file_exists(main.store.path + SaveStore.PROBE_SUFFIX), "the probe is gone")
 
 
+# --- 7. A hidden page pauses ---
+
+func test_hiding_the_page_pauses_a_fight() -> void:
+	await _boot(PageBoot.haven_finished())
+	main.notification(Node.NOTIFICATION_APPLICATION_FOCUS_OUT)
+	assert_true(main.is_paused())
+	assert_true((main.hud.find_child("PausedLabel") as Label).visible)
+	main.notification(Node.NOTIFICATION_APPLICATION_FOCUS_IN)
+	await wait_physics_frames(3)
+	assert_true(main.is_paused(), "it does not unpause by itself")
+
+
+func test_hiding_the_page_does_not_pause_a_conversation_or_the_cards() -> void:
+	await _boot(_haven_after_the_order())
+	main.talk(HAVEN, "smith")
+	await wait_physics_frames(2)
+	assert_true(main.is_talking())
+	main.page_hidden()
+	assert_false(main.is_paused(), "not in a conversation")
+	main.dialogue.stop()
+	await wait_physics_frames(2)
+	main.hud.find_child("ControlsButton").pressed.emit()
+	await wait_physics_frames(2)
+	main.page_hidden()
+	assert_false(main.is_paused(), "not over the controls card")
+
+
+func test_hiding_the_page_does_not_pause_the_title() -> void:
+	await _title_with("user://test_playability_%d.json" % randi())
+	main.page_hidden()
+	assert_false(main.is_paused())
+
+
 # --- 8. Íñigo does not repeat his speech ---
 
 func test_inigo_says_it_all_once_then_reminds_in_two_lines() -> void:

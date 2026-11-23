@@ -11,6 +11,10 @@ extends Node3D
 ## Where the story rests for now, the room `STORY_REST_ROOM` once cleared, the HUD's closing card says
 ## so, once, holding the world as the controls card does; it waits for the pause, a conversation and
 ## the controls card to close first.
+##
+## When the page is hidden (on the web: the document's `visibilitychange`; elsewhere: the window losing
+## focus) the world pauses as Space pauses it, unless a conversation, a card, the fall prompt or the
+## title is showing; it is never resumed by itself.
 
 ## Emitted whenever a room is entered (also on a reload and a new game), once its units are in place.
 signal room_started
@@ -87,6 +91,8 @@ var _last_checkpoint: Dictionary = {}
 var _closing_due: bool = false
 ## True while the closing card is closed by a room change rather than by the player.
 var _closing_put_away: bool = false
+## Held so the page's `visibilitychange` callback stays alive; on the web only.
+var _visibility_callback: JavaScriptObject
 ## The rooms left in this play through a door with their fight begun (an enemy hurt or fallen) and
 ## enemies standing, whose enemies are whole again on the way back. Forgotten on a reload or a new game.
 var _left_mid_fight: Dictionary = {}  # StringName -> true
@@ -154,6 +160,7 @@ func _ready() -> void:
 	if state == null:
 		state = GameState.new_game() if boot == Boot.STORY else GameState.skirmish()
 	input.rig = rig
+	_watch_page_visibility()
 	if boot == Boot.STORY and show_title and _title != null:
 		_open_title()
 	else:
@@ -248,6 +255,14 @@ func is_paused() -> bool:
 	return _paused
 
 
+## The page was hidden, or the window lost focus: pauses as Space does, unless a conversation, the
+## controls or closing card, the fall prompt or the title is showing, or there is no room yet.
+func page_hidden() -> void:
+	if room == null or is_title_open() or is_talking() or hud.is_controls_open() or hud.is_closing_open():
+		return
+	set_paused(true)
+
+
 ## Starts a conversation at the cue `title` of `resource`, as `Conversation.talk()` describes.
 func talk(resource: Resource, title: String) -> void:
 	_conversation.talk(resource, title)
@@ -289,6 +304,26 @@ func fight_is_on() -> bool:
 
 func enemies_alive() -> int:
 	return _encounter.enemies_alive()
+
+
+## Off the web, the window losing focus hides the game. On the web the page's visibility says so
+## instead: the engine reports a lost focus there for any blur of the window, even with the page in view.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and not OS.has_feature("web"):
+		page_hidden()
+
+
+## On the web, follows the document's `visibilitychange`: a page becoming hidden is `page_hidden()`.
+func _watch_page_visibility() -> void:
+	if not OS.has_feature("web"):
+		return
+	_visibility_callback = JavaScriptBridge.create_callback(_on_visibility_changed)
+	JavaScriptBridge.get_interface("document").addEventListener("visibilitychange", _visibility_callback)
+
+
+func _on_visibility_changed(_args: Array) -> void:
+	if JavaScriptBridge.eval("document.hidden", true):
+		page_hidden()
 
 
 ## True when the engine's locale is no longer the system's: `--language` (or code) chose it. Godot keeps
