@@ -146,3 +146,40 @@ Bare forearms and hands are skin and are the mannequin's; that is wanted for the
 ### After the last task: put it online
 
 Once the final review's fixes are in and the suites are green, the controller runs `ops/deploy-fly.sh`, checks that https://nocturne-of-ashes.fly.dev/ serves the new build and that a new game shows the dressed, faced figures, and reports the address with the frames.
+
+---
+
+## Amendments made while building
+
+These decisions changed what the tasks above describe. The code follows the amendments.
+
+- **Task 1.** Two terms in the tables of Tasks 1 and 2 were wrong and are corrected here: the crusader wears the helmet, and the sergeant the helmet over a coif, as the game already had them. The game was not changed.
+- **Task 1.** The refactor that moved the gear's shared mesh code into `tools/blender/wearable.py` was accepted as leaving the gear unchanged on the evidence of its diff: it touches no asset, and across the task only the five cloth pieces changed, because their texture coordinates moved with the 16-square palette.
+- **Task 2.** The 15,000-triangle cap for a dressed figure stayed. To fit under it the model lost the body every garment covers (chest, abdomen, upper arms), as Task 1 took off its head: the garments are the figure's surface there. A cap is a browser budget, not a formality.
+- **Task 2.** The long skirts' ballooning in attack, run and sit was fixed in this task, though it came from the old cloth: once the figures were dressed it was the worst thing on them, and every fight showed it.
+- **Task 5 (added).** A fifth task, "Nobody gets stuck, nothing drags", was added from a playability audit the owner asked for (no state was found that blocks progress) and done after Task 2 and before Task 3. Its nine items: a closing card when the story's vault is cleared, saying the story rests there and the game is saved; the second enemy group joins the fight; a notice when a vault left mid-fight has closed ranks again; Malakor clear of the party panels on the return from the vault; a line for each refusal that was silent; a title line when the browser will not keep saves; the world pauses itself when the page is hidden; Íñigo's second visit is a short reminder, not his whole speech; the title's preparing line counts its steps.
+- **Task 5.** Fight difficulty and the length of the conversations were not changed, beyond making the second group join: they are design decisions, put to the owner with a recommendation.
+- **Task 5.** On the web only a hidden page pauses the game; a window that merely loses focus does not. Private windows that keep storage until they close are not detected. The engine and the browsers give no signal for either, so the saves line misses those cases.
+- **Task 5.** Once the second group is alerted every enemy has a target, so the vault's west door refuses for the rest of the fight: the mid-fight retreat the task's brief described is gone. A door was never usable while enemies attacked, a fall reloads at the vault's entry, and the fight is winnable; if the fight is made hard later, a retreat rule must be designed with it.
+- **Task 3.** The review's items for the portraits (the face test's thin margin, the key light that burns white cloth, documenting the import step after rendering) were moved to the final fix wave, because Task 4 was editing the same files.
+- **Task 4.** The owner's frames gained `look-closing` (the closing card on screen), and `look-lock` is now taken after the vault is cleared and the card closed, so it shows the last lock with the line that says where the story rests. The click and use helpers moved from the journey spec to `e2e/helpers.js`.
+
+## Carried forward
+
+- The fight is won in about 11 s by clicking the nearest enemy, with no Rite or feeding needed. Difficulty is the owner's pending decision, and a retreat rule must be designed with it, since the west door refuses once the second group is alerted.
+- Six conversations make up about three quarters of a reading play, and Íñigo's first speech is pure rules. Trimming them is the owner's pending decision.
+- A first play lasts 1.3–4 minutes against the design's 20–30: three of the slice's five story beats (the burning quarter, the escort, the last lock's boss) are not built, and the Cave of Hercules is one vault of its three or four encounters.
+- Long skirts are boxy when seated and lumpy mid-fall, a raised knee can pass the skirt's cap, Malakor's mantle spreads into a dark bowl mid-fall and the smith's apron stays a board. Seen from the game camera, Álvar's habit reads as a white bell. In the fight the figures still bunch into one knot.
+- White cloth and Malakor's lit cheek run hot in the portraits (queued for the final fix wave).
+- On the web only a hidden page pauses the game; a window losing focus does not. Private windows that keep storage until closed cannot be detected, and the storage check runs at the title only.
+- Firefox spends about 10.5 s preparing behind the title: four frames of 2.2–2.6 s each (a shader's two programs linked at once) among shorter ones, the same before and after this plan's heads and garments. New game pressed at once reaches the Fragua at about 13 s of the 15 s limit. Once the preparing is done, nothing compiles on first sight in either room.
+- Conversations are not translated. In Spanish "Sangre" names both the Blood and the Sangre.
+- Test gaps the reviews left: nothing checks that a garment's pieces float free of the body (the old check was dropped), the legs-in-skirts test has no ceiling on points beyond the cap, the cloth fit has no cost test, and the seam test's hull forgives centimetre gaps; the closing card's opening-frame key test is approximate, and the conversation test's tap is sensitive to timing under load.
+- The floor texture's repeat shows, and the piers' faces on the camera side are near black.
+- The camera cut pops at 60° of turn.
+- The vault's west door is seen edge-on.
+- Away from the return from the vault, the party panels or the dialogue box can still cover a character.
+- Units can stand inside the people they talk to (`Npc`).
+- `unit_visual.gd` (479 lines) is due for a split.
+- `ops/bake-light.sh` has not been run end to end since its last edit.
+- The texture path for GPUs without S3TC has never run on real hardware.
