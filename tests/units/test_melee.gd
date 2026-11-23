@@ -22,21 +22,23 @@ func before_each() -> void:
 
 func test_a_hit_in_range_does_the_weapon_damage() -> void:
 	assert_true(alvar.get_node("Melee").try_hit(foe))
-	assert_eq(foe.stats.health, 45)
+	assert_eq(foe.stats.health, foe.stats.max_health - 15)
 
 func test_no_second_hit_inside_the_cooldown() -> void:
 	var melee: MeleeAttack = alvar.get_node("Melee")
 	melee.try_hit(foe)
 	assert_false(melee.try_hit(foe))
-	assert_eq(foe.stats.health, 45)
+	assert_eq(foe.stats.health, foe.stats.max_health - 15)
 
 func test_out_of_range_misses() -> void:
 	foe.global_position = Vector3(0, 0, 3.0)
 	assert_false(alvar.get_node("Melee").try_hit(foe))
-	assert_eq(foe.stats.health, 60)
+	assert_eq(foe.stats.health, foe.stats.max_health)
 
 func test_an_attack_order_closes_the_distance_and_kills() -> void:
 	foe.global_position = Vector3(0, 0, 7.0)
+	# Down to a few blows, so the fight is short: this is about the order, not the numbers.
+	foe.stats.take_damage(foe.stats.max_health - 60)
 	alvar.order_attack(foe)
 	await wait_for_signal(foe.died, 10.0)
 	assert_false(foe.is_alive())

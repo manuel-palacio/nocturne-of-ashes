@@ -21,6 +21,8 @@ func test_a_move_order_shows_until_arrival() -> void:
 	assert_eq(alvar.current_order(), Unit.Order.NONE)
 
 func test_an_attack_order_shows_until_the_target_dies() -> void:
+	# Down to a few blows, so the fight is short: this is about the order, not the numbers.
+	foe.stats.take_damage(foe.stats.max_health - 60)
 	alvar.order_attack(foe)
 	assert_eq(alvar.current_order(), Unit.Order.ATTACK)
 	await wait_for_signal(foe.died, 12.0)

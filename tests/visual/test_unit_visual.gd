@@ -70,14 +70,14 @@ func test_a_stunned_unit_staggers() -> void:
 	assert_eq(_visual(foe).clip(), &"stagger")
 
 func test_feeding_shows_on_both() -> void:
-	foe.take_hit(45)
+	Arena.weaken(foe, 0.25)
 	alvar.order_feed(foe)
 	await wait_seconds(0.6)
 	assert_eq(_visual(alvar).clip(), &"feed")
 	assert_eq(_visual(foe).clip(), &"stagger")
 
 func test_a_fallen_unit_shows_the_death_clip() -> void:
-	foe.take_hit(999)
+	foe.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	assert_eq(_visual(foe).clip(), &"death")
 	await wait_seconds(2.5)
@@ -95,12 +95,12 @@ func test_a_fallen_unit_shows_the_death_clip() -> void:
 func test_dying_mid_swing_falls_at_once() -> void:
 	alvar.order_attack(foe)
 	await wait_for_signal((alvar.get_node("Melee") as MeleeAttack).hit, 3.0)
-	alvar.take_hit(999)
+	alvar.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	assert_eq(_visual(alvar).clip(), &"death")
 
 func test_rising_returns_to_idle() -> void:
-	alvar.take_hit(999)
+	alvar.take_hit(Arena.LETHAL)
 	await wait_seconds(0.5)
 	alvar.revive()
 	await wait_seconds(2.0)
@@ -197,7 +197,7 @@ func _lean(unit: Unit) -> float:
 	return _visual(unit).model().position.length()
 
 func test_a_feeder_leans_in_while_drinking_and_back_after_the_feed() -> void:
-	foe.take_hit(45)
+	Arena.weaken(foe, 0.25)
 	alvar.order_feed(foe)
 	await wait_seconds(0.8)
 	assert_true(alvar.is_feeding())
@@ -207,7 +207,7 @@ func test_a_feeder_leans_in_while_drinking_and_back_after_the_feed() -> void:
 	assert_almost_eq(_lean(alvar), 0.0, 0.001)
 
 func test_a_broken_feed_leans_back() -> void:
-	foe.take_hit(45)
+	Arena.weaken(foe, 0.25)
 	alvar.order_feed(foe)
 	await wait_seconds(0.8)
 	assert_gt(_lean(alvar), 0.3)

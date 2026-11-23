@@ -33,21 +33,21 @@ func test_a_healthy_enemy_has_no_mark() -> void:
 
 func test_a_weakened_enemy_shows_a_mark_within_two_frames() -> void:
 	var foe: Unit = _crusader()
-	foe.take_hit(39)  # 21 of 60: 35 %
+	Arena.weaken(foe, main.player.feed_threshold)
 	await wait_physics_frames(2)
 	assert_true(foe.has_feed_mark())
 
 func test_healing_it_above_the_threshold_removes_the_mark() -> void:
 	var foe: Unit = _crusader()
-	foe.take_hit(40)
+	Arena.weaken(foe, 1.0 / 3.0)
 	await wait_physics_frames(2)
-	foe.stats.heal(30)
+	foe.stats.heal(foe.stats.max_health)
 	await wait_physics_frames(2)
 	assert_false(foe.has_feed_mark())
 
 func test_another_feeders_held_meal_shows_no_mark() -> void:
 	var foe: Unit = _crusader()
-	foe.take_hit(40)
+	Arena.weaken(foe, 1.0 / 3.0)
 	_hold(foe)
 	await wait_physics_frames(2)
 	assert_false(main.player.can_feed_on(foe))
@@ -55,14 +55,14 @@ func test_another_feeders_held_meal_shows_no_mark() -> void:
 
 func test_a_fallen_enemy_shows_no_mark() -> void:
 	var foe: Unit = _crusader()
-	foe.take_hit(40)
+	Arena.weaken(foe, 1.0 / 3.0)
 	await wait_physics_frames(2)
-	foe.take_hit(999)
+	foe.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	assert_false(foe.has_feed_mark())
 
 func test_marks_follow_the_selected_member() -> void:
-	_crusader().take_hit(40)
+	Arena.weaken(_crusader(), 1.0 / 3.0)
 	var zahra: Unit = main.party[1]
 	main.select(zahra)
 	assert_true(_crusader().has_feed_mark(), "updated on selection")
@@ -78,14 +78,14 @@ func test_marks_follow_the_selected_member() -> void:
 func test_marks_update_while_paused() -> void:
 	main.set_paused(true)
 	var foe: Unit = _crusader()
-	foe.take_hit(40)
+	Arena.weaken(foe, 1.0 / 3.0)
 	await wait_physics_frames(2)
 	assert_true(foe.has_feed_mark())
 
 func test_marks_hide_while_alvar_is_down_and_at_room_start() -> void:
-	_crusader().take_hit(40)
+	Arena.weaken(_crusader(), 1.0 / 3.0)
 	await wait_physics_frames(2)
-	main.player.take_hit(999)
+	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	for enemy: Unit in main.enemies:
 		assert_false(enemy.has_feed_mark())

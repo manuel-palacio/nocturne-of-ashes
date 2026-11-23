@@ -58,7 +58,7 @@ func test_the_last_lock_never_opens() -> void:
 	var state := GameState.skirmish()
 	await _boot(state)
 	for enemy: Unit in main.enemies:
-		enemy.take_hit(999)
+		enemy.take_hit(Arena.LETHAL)
 	await wait_physics_frames(3)
 	_door("LastLock").use(main.player)
 	await wait_physics_frames(2)
@@ -119,7 +119,7 @@ func test_no_leaving_while_alvar_is_in_the_fury() -> void:
 func test_no_leaving_while_a_member_walks_to_a_feed() -> void:
 	await _boot_in_a_calm_vault()
 	var meal: Unit = main.enemies[0]
-	meal.take_hit(40)
+	Arena.weaken(meal, 1.0 / 3.0)
 	main.party[1].order_feed(meal)
 	assert_eq(main.party[1].feed_target(), meal)
 	_door("WestDoor").use(main.player)
@@ -130,7 +130,7 @@ func test_no_leaving_while_a_member_walks_to_a_feed() -> void:
 func test_no_leaving_while_a_member_feeds() -> void:
 	await _boot_in_a_calm_vault()
 	var meal: Unit = main.enemies[0]
-	meal.take_hit(40)
+	Arena.weaken(meal, 1.0 / 3.0)
 	meal.global_position = main.party[1].global_position + Vector3(1.2, 0, 0)
 	main.party[1].order_feed(meal)
 	await wait_until(func() -> bool: return main.party[1].is_feeding(), 3.0)

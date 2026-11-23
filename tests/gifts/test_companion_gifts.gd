@@ -26,7 +26,7 @@ func test_mend_flesh_heals_an_ally_up_to_the_maximum() -> void:
 	assert_eq(zahra.stats.blood, 40)
 
 func test_mend_flesh_cannot_raise_the_fallen_or_help_an_enemy() -> void:
-	gonzalo.take_hit(999)
+	gonzalo.take_hit(Arena.LETHAL)
 	assert_false(_gifts(zahra).use(0, gonzalo))
 	assert_false(_gifts(zahra).use(0, foe))
 	assert_eq(zahra.stats.blood, 60)
@@ -35,7 +35,7 @@ func test_blood_lance_wounds_at_range() -> void:
 	foe.global_position = Vector3(0, 0, 9)
 	watch_signals(foe)
 	assert_true(_gifts(zahra).use(1, foe))
-	assert_eq(foe.stats.health, 30)
+	assert_eq(foe.stats.health, foe.stats.max_health - 30)
 	assert_signal_emitted_with_parameters(foe, "was_hit", [30, zahra])
 
 func test_stone_hide_hardens_gonzalo() -> void:
@@ -54,9 +54,9 @@ func test_stone_hide_draws_an_enemy_off_another_target() -> void:
 func test_hammerfall_hits_and_stuns_enemies_around_him_only() -> void:
 	var far: Unit = arena.spawn(Arena.CRUSADER, Vector3(8, 0, 0))
 	assert_true(_gifts(gonzalo).use(1))
-	assert_eq(foe.stats.health, 45)
+	assert_eq(foe.stats.health, foe.stats.max_health - 15)
 	assert_true(foe.is_stunned())
-	assert_eq(far.stats.health, 60)
+	assert_eq(far.stats.health, far.stats.max_health)
 	assert_false(far.is_stunned())
 	assert_eq(zahra.stats.health, 80)
 	assert_false(zahra.is_stunned())

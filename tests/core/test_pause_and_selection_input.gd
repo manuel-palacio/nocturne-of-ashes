@@ -41,7 +41,7 @@ func test_space_pauses_and_unpauses() -> void:
 	assert_false(main.is_paused())
 
 func test_space_no_longer_confirms() -> void:
-	main.player.take_hit(999)
+	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	await _tap(&"pause")
 	assert_false(main.player.is_alive())
@@ -81,7 +81,7 @@ func test_restart_unpauses() -> void:
 	assert_eq(main.selected, main.player)
 
 func test_no_selection_changes_while_alvar_is_down() -> void:
-	main.player.take_hit(999)
+	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	main.select(main.party[1])
 	assert_eq(main.selected, main.player)
@@ -92,7 +92,7 @@ func test_the_calm_timer_does_not_advance_while_paused() -> void:
 	(main.party[1].get_node("Brain") as CombatBrain).uses_gifts = false
 	main.calm_time = 0.5
 	main.set_paused(true)
-	main.party[1].take_hit(999)
+	main.party[1].take_hit(Arena.LETHAL)
 	await wait_seconds(1.0)
 	assert_false(main.party[1].is_alive(), "still down after the calm time, paused")
 	main.set_paused(false)
@@ -147,7 +147,7 @@ func test_a_baleful_eye_awaiting_its_target_is_used_on_a_click_while_paused() ->
 	assert_eq(main.input.targeting_gift(), 1)
 	_click_unit(foe)
 	assert_true(foe.is_stunned())
-	assert_eq(main.player.stats.blood, 45)
+	assert_eq(main.player.stats.blood, 50)
 	assert_eq(main.input.targeting_gift(), -1)
 
 func test_a_mend_flesh_awaiting_its_target_heals_a_hurt_ally_clicked_while_paused() -> void:

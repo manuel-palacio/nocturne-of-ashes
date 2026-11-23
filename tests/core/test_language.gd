@@ -35,7 +35,7 @@ func test_the_hud_follows_a_language_change() -> void:
 	await wait_physics_frames(2)
 	assert_eq(main.hud.gift_buttons()[0].text, "1 Tendón de Hierro (20)")
 	assert_eq(main.hud.panels()[0].find_child("NameLabel").text, "Hermano Álvar")
-	main.player.take_hit(999)
+	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	assert_eq(main.hud.find_child("FallenLabel").text, "Has caído — pulsa Intro o haz clic")
 	assert_eq(main.hud.panels()[0].find_child("StateLabel").text, "Caído")

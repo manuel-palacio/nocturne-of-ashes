@@ -29,7 +29,7 @@ func test_zahra_leaves_a_lightly_hurt_ally_alone() -> void:
 func test_zahra_throws_a_lance_at_her_enemy() -> void:
 	var foe: Unit = arena.spawn(Arena.CRUSADER, Vector3(0, 0, 6))
 	await wait_seconds(0.6)
-	assert_eq(foe.stats.health, 30)
+	assert_eq(foe.stats.health, foe.stats.max_health - 30)
 
 func test_gonzalo_hardens_when_two_enemies_close_in() -> void:
 	(zahra.get_node("Brain") as CombatBrain).enabled = false
@@ -51,7 +51,7 @@ func test_a_thirsty_companion_feeds_on_a_weakened_enemy() -> void:
 	(zahra.get_node("Brain") as CombatBrain).enabled = false  # or her lance would finish his meal
 	gonzalo.stats.spend_blood(35)  # 25
 	var foe: Unit = arena.spawn(Arena.CRUSADER, Vector3(3, 0, 1.2))
-	foe.take_hit(45)
+	Arena.weaken(foe, 0.25)
 	await wait_for_signal(gonzalo.fed, 6.0)
 	assert_eq(gonzalo.stats.blood, 65)
 
@@ -70,7 +70,7 @@ func test_zahra_does_not_lance_an_enemy_beyond_her_aggro_radius() -> void:
 func test_a_companion_does_not_lance_its_own_meal() -> void:
 	zahra.stats.spend_blood(35)  # 25: a lance would leave 10
 	var foe: Unit = arena.spawn(Arena.CRUSADER, Vector3(-5, 0, 0))  # a walk of several thinks
-	foe.take_hit(40)  # 20 of 60
+	Arena.weaken(foe, 1.0 / 3.0)
 	await wait_for_signal(zahra.fed, 6.0)
 	assert_gt(zahra.stats.blood, 25)
 
@@ -79,7 +79,7 @@ func test_a_companion_does_not_spoil_a_friends_meal() -> void:
 	zahra_brain.enabled = false
 	gonzalo.stats.spend_blood(35)  # 25
 	var foe: Unit = arena.spawn(Arena.CRUSADER, Vector3(3, 0, 1.2))
-	foe.take_hit(45)
+	Arena.weaken(foe, 0.25)
 	while not Feeder.is_held(foe):
 		await wait_physics_frames(1)
 	zahra_brain.enabled = true  # her lance reaches him; his health is 15 of 60
@@ -90,7 +90,7 @@ func test_a_taunt_comes_before_a_meal() -> void:
 	(zahra.get_node("Brain") as CombatBrain).enabled = false
 	gonzalo.stats.spend_blood(35)  # 25
 	var meal: Unit = arena.spawn(Arena.CRUSADER, Vector3(3, 0, 1.2))
-	meal.take_hit(45)
+	Arena.weaken(meal, 0.25)
 	var taunter: Unit = arena.spawn(Arena.CRUSADER, Vector3(3, 0, -2))
 	var taunt := StatusEffect.new()
 	taunt.id = &"taunt"
@@ -119,7 +119,7 @@ func test_a_meal_is_claimed_from_the_feed_order() -> void:
 	(gonzalo.get_node("Brain") as Node).process_physics_priority = -1
 	gonzalo.stats.spend_blood(35)  # 25
 	var foe: Unit = arena.spawn(Arena.CRUSADER, Vector3(3, 0, 3))  # in her lance's reach
-	foe.take_hit(45)  # 15 of 60
+	Arena.weaken(foe, 0.25)
 	await wait_for_signal(gonzalo.fed, 6.0)
 	assert_eq(gonzalo.stats.blood, 65)
 	assert_eq(zahra.stats.blood, 60, "no lance thrown at his meal")

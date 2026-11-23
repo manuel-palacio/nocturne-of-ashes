@@ -38,10 +38,10 @@ func test_a_learned_gift_appears_at_once() -> void:
 	assert_eq(main.hud.gift_buttons().size(), 0)
 	main.state.learn(&"alvar", &"baleful_eye")
 	await wait_physics_frames(2)
-	assert_eq(main.hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Baleful Eye (15)"])
+	assert_eq(main.hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Baleful Eye (10)"])
 	main.state.learn(&"alvar", &"iron_sinew")
 	await wait_physics_frames(2)
-	assert_eq(main.hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Iron Sinew (20)", "2 Baleful Eye (15)"])
+	assert_eq(main.hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Iron Sinew (20)", "2 Baleful Eye (10)"])
 
 func test_learning_keeps_a_running_cooldown() -> void:
 	main.state.learn(&"alvar", &"iron_sinew")

@@ -19,7 +19,7 @@ func test_a_hit_reports_its_amount_and_source() -> void:
 func test_zero_negative_and_posthumous_hits_do_nothing() -> void:
 	assert_eq(foe.take_hit(0), 0)
 	assert_eq(foe.take_hit(-5), 0)
-	foe.take_hit(999)
+	foe.take_hit(Arena.LETHAL)
 	assert_eq(foe.take_hit(10), 0)
 
 func test_melee_goes_through_take_hit() -> void:
@@ -28,12 +28,12 @@ func test_melee_goes_through_take_hit() -> void:
 	assert_signal_emitted_with_parameters(foe, "was_hit", [15, alvar])
 
 func test_a_dead_unit_cannot_strike() -> void:
-	alvar.take_hit(999)
+	alvar.take_hit(Arena.LETHAL)
 	assert_false(alvar.get_node("Melee").try_hit(foe))
 
 func test_revival_restores_a_working_unit() -> void:
 	watch_signals(alvar)
-	alvar.take_hit(999)
+	alvar.take_hit(Arena.LETHAL)
 	await wait_physics_frames(3)
 	alvar.revive()
 	await wait_physics_frames(3)
@@ -47,9 +47,9 @@ func test_revival_restores_a_working_unit() -> void:
 
 func test_a_revived_unit_can_die_again() -> void:
 	watch_signals(alvar)
-	alvar.take_hit(999)
+	alvar.take_hit(Arena.LETHAL)
 	alvar.revive()
-	alvar.take_hit(999)
+	alvar.take_hit(Arena.LETHAL)
 	assert_signal_emit_count(alvar, "died", 2)
 
 func test_reviving_the_living_does_nothing() -> void:

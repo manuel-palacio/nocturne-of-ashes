@@ -61,7 +61,7 @@ func test_enemy_gifts_need_a_living_hostile_in_range() -> void:
 	foe.global_position = Vector3(0, 0, 9)
 	assert_false(gifts.can_use(0, foe))
 	foe.global_position = Vector3(0, 0, 5)
-	foe.take_hit(999)
+	foe.take_hit(Arena.LETHAL)
 	assert_false(gifts.can_use(0, foe))
 
 func test_ally_gifts_accept_the_caster_and_friends_only() -> void:
@@ -84,7 +84,7 @@ func test_a_stunned_or_dead_caster_cannot_use_gifts() -> void:
 	alvar.add_effect(stun)
 	assert_false(gifts.can_use(0, foe))
 	alvar.clear_effects()
-	alvar.take_hit(999)
+	alvar.take_hit(Arena.LETHAL)
 	assert_false(gifts.can_use(0, foe))
 
 func test_an_index_out_of_range_is_refused() -> void:

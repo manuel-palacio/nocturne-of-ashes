@@ -121,7 +121,7 @@ func test_a_reload_mid_conversation_undoes_it() -> void:
 	assert_false(main.is_paused())
 
 func test_no_talking_after_a_fall() -> void:
-	main.player.take_hit(999)
+	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	main.talk(TALK, "start")
 	assert_false(main.is_talking())
@@ -222,7 +222,7 @@ func test_two_people_used_at_once_give_one_conversation_and_one_use() -> void:
 
 func test_a_use_refused_by_a_fall_does_not_count() -> void:
 	watch_signals(smith)
-	main.player.take_hit(999)
+	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	assert_false(smith.use(main.player))
 	assert_signal_not_emitted(smith, "used")

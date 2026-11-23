@@ -59,3 +59,13 @@ func add_interactable(at: Vector3, allow: Callable = Callable()) -> Interactable
 
 static func flat(a: Vector3, b: Vector3) -> float:
 	return Vector2(a.x - b.x, a.z - b.z).length()
+
+
+## Hits `unit` until `share` of its maximum health is left (as `take_hit()` does, so it is seen as a
+## blow); whatever its tuned health, the same share of it.
+static func weaken(unit: Unit, share: float, source: Unit = null) -> void:
+	unit.take_hit(unit.stats.health - roundi(unit.stats.max_health * share), source)
+
+
+## More than any unit's health: a hit of this kills.
+const LETHAL: int = 1000000

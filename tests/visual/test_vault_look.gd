@@ -167,7 +167,7 @@ func test_the_west_door_is_cut_with_its_wall_and_can_still_be_used() -> void:
 	story = Story.boot(self, GameState.skirmish())
 	await wait_physics_frames(3)
 	for enemy: Unit in story.enemies:
-		enemy.take_hit(999)
+		enemy.take_hit(Arena.LETHAL)
 	await wait_physics_frames(3)
 	# The story's vault, cleared, says the story rests here: the card is dismissed to play on.
 	assert_true(story.is_closing_open())
@@ -199,7 +199,7 @@ func test_the_last_locks_seal_is_cut_with_its_wall_and_the_lock_can_still_be_use
 	story = Story.boot(self, GameState.skirmish())
 	await wait_physics_frames(3)
 	for enemy: Unit in story.enemies:
-		enemy.take_hit(999)
+		enemy.take_hit(Arena.LETHAL)
 	await wait_physics_frames(3)
 	assert_true(story.is_closing_open())
 	story.hud.hide_closing()

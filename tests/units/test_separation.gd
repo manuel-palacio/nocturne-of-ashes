@@ -67,7 +67,7 @@ func test_a_feeder_and_its_meal_are_not_pushed_apart() -> void:
 	var meal: Unit = arena.spawn(Arena.CRUSADER, Vector3(0, 0, 0.5))
 	var bystander: Unit = arena.spawn(Arena.ZAHRA, Vector3(0.2, 0, 0.6))
 	await wait_physics_frames(3)
-	meal.take_hit(45)
+	Arena.weaken(meal, 0.25)
 	alvar.order_feed(meal)
 	await wait_physics_frames(3)
 	assert_true(alvar.is_feeding())
@@ -186,7 +186,7 @@ func test_a_fallen_unit_neither_is_pushed_nor_pushes() -> void:
 	var fallen: Unit = arena.spawn(Arena.CRUSADER, Vector3.ZERO)
 	var standing: Unit = arena.spawn(Arena.ZAHRA, Vector3(0.3, 0, 0))
 	await wait_physics_frames(3)
-	fallen.take_hit(1000)
+	fallen.take_hit(Arena.LETHAL)
 	var fallen_at: Vector3 = fallen.global_position
 	var standing_at: Vector3 = standing.global_position
 	await wait_seconds(1.5)

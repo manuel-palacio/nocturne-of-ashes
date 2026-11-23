@@ -38,7 +38,7 @@ func test_a_fall_reloads_the_last_checkpoint() -> void:
 	var state := GameState.skirmish()
 	await _boot(state)
 	main.state.change_conscience(-3)  # after the checkpoint: must be undone
-	main.player.take_hit(999)
+	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	assert_true(main.hud.is_fallen_shown())
 	Input.action_press("confirm")
@@ -87,7 +87,7 @@ func test_the_cleared_flag_is_saved_at_once() -> void:
 	var state := GameState.skirmish()
 	await _boot(state)
 	for enemy: Unit in main.enemies:
-		enemy.take_hit(999)
+		enemy.take_hit(Arena.LETHAL)
 	await wait_physics_frames(3)
 	assert_true(main.store.load_state().has_flag(&"vault_cleared"))
 
@@ -113,7 +113,7 @@ func test_a_fall_reloads_the_checkpoint_kept_in_memory_when_the_store_cannot_wri
 	main.store.clear()
 	main.store.path = _unwritable_path()
 	main.state.change_conscience(-3)  # after the checkpoint: must be undone
-	main.player.take_hit(999)
+	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	Input.action_press("confirm")
 	await wait_physics_frames(2)

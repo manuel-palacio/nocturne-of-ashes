@@ -4,10 +4,10 @@
 
 [resource]
 script = ExtResource("1_script")
-duration = 4.0
+duration = 5.0
 id = &"baleful_eye"
 display_name = "Baleful Eye"
-blood_cost = 15
+blood_cost = 10
 cooldown = 10.0
 targeting = 1
 cast_range = 8.0

@@ -498,7 +498,7 @@ func test_the_title_controls_button_opens_the_card_and_escape_closes_it() -> voi
 
 func test_the_fallen_prompt_says_enter_or_click() -> void:
 	await _skirmish()
-	main.player.take_hit(999)
+	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	assert_eq(main.hud.find_child("FallenLabel").text, "You have fallen — press Enter or click")
 	Language.apply("es")

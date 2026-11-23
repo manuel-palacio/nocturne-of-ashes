@@ -57,7 +57,7 @@ func test_damage_dealt_is_scaled() -> void:
 	sinew.damage_dealt_multiplier = 1.5
 	alvar.add_effect(sinew)
 	alvar.get_node("Melee").try_hit(foe)
-	assert_eq(foe.stats.health, 60 - 23)  # round(15 * 1.5) = 23
+	assert_eq(foe.stats.health, foe.stats.max_health - 23)  # round(15 * 1.5) = 23
 
 func test_a_stunned_unit_neither_walks_nor_strikes_and_then_resumes() -> void:
 	var stun := _effect(&"stun", 0.6)
@@ -91,7 +91,7 @@ func test_the_largest_taunt_radius_counts() -> void:
 
 func test_death_clears_effects() -> void:
 	alvar.add_effect(_effect(&"test", 5.0))
-	alvar.take_hit(999)
+	alvar.take_hit(Arena.LETHAL)
 	assert_false(alvar.has_effect(&"test"))
 
 func test_a_stunned_unit_resumes_its_attack_when_the_stun_ends() -> void:
@@ -100,7 +100,7 @@ func test_a_stunned_unit_resumes_its_attack_when_the_stun_ends() -> void:
 	alvar.add_effect(stun)
 	alvar.order_attack(foe)
 	await wait_seconds(0.4)
-	assert_eq(foe.stats.health, 60, "no strike while stunned")
+	assert_eq(foe.stats.health, foe.stats.max_health, "no strike while stunned")
 	assert_eq(alvar.current_order(), Unit.Order.ATTACK)
-	await wait_until(func() -> bool: return foe.stats.health < 60, 2.0)
-	assert_lt(foe.stats.health, 60, "struck once the stun ended")
+	await wait_until(func() -> bool: return foe.stats.health < foe.stats.max_health, 2.0)
+	assert_lt(foe.stats.health, foe.stats.max_health, "struck once the stun ended")

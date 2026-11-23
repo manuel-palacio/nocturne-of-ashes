@@ -27,7 +27,7 @@ func test_effect_ids_lists_the_active_effects_in_order() -> void:
 func test_is_cleared_once_the_last_enemy_falls_until_the_next_round() -> void:
 	assert_false(main.is_cleared())
 	for enemy: Unit in main.enemies:
-		enemy.take_hit(999)
+		enemy.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	assert_true(main.is_cleared())
 	main.start_room()

@@ -41,13 +41,13 @@ func test_the_state_label_shows_fallen_then_fury_then_feeding() -> void:
 	main.party[1].stats.spend_blood(55)
 	await wait_physics_frames(2)
 	assert_eq(_panel(1).find_child("StateLabel").text, "The Fury")
-	main.party[1].take_hit(999)
+	main.party[1].take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	assert_eq(_panel(1).find_child("StateLabel").text, "Fallen")
 	assert_eq(_panel(0).find_child("StateLabel").text, "")
 
 func test_the_gift_bar_shows_the_selected_members_gifts() -> void:
-	assert_eq(hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Iron Sinew (20)", "2 Baleful Eye (15)"])
+	assert_eq(hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Iron Sinew (20)", "2 Baleful Eye (10)"])
 	main.select(main.party[2])
 	assert_eq(hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Stone Hide (20)", "2 Hammerfall (25)"])
 
@@ -66,7 +66,7 @@ func test_a_gift_too_dear_is_disabled() -> void:
 	main.player.stats.spend_blood(42)  # 18
 	await wait_physics_frames(2)
 	assert_true(hud.gift_buttons()[0].disabled)   # 20
-	assert_false(hud.gift_buttons()[1].disabled)  # 15
+	assert_false(hud.gift_buttons()[1].disabled)  # 10
 
 func test_targeting_marks_its_button() -> void:
 	main.input.press_gift(1)
@@ -81,13 +81,13 @@ func test_pause_and_cleared_labels() -> void:
 	main.set_paused(false)
 	assert_false(hud.find_child("PausedLabel").visible)
 	for enemy: Unit in main.enemies:
-		enemy.take_hit(999)
+		enemy.take_hit(Arena.LETHAL)
 	await wait_physics_frames(3)
 	assert_true(hud.find_child("ClearedLabel").visible)
 	assert_eq(hud.find_child("ClearedLabel").text, "The vault is quiet")
 
 func test_the_fallen_prompt_shows_and_restart_clears_the_labels() -> void:
-	main.player.take_hit(999)
+	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	assert_true(hud.is_fallen_shown())
 	assert_eq(hud.find_child("FallenLabel").text, "You have fallen — press Enter or click")

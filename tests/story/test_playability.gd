@@ -14,6 +14,7 @@ var _pressed: Array[StringName] = []
 
 
 func after_each() -> void:
+	VaultFight.slow_down()
 	Story.finish(main)
 	# Nothing a test pressed stays down for the next.
 	for action: StringName in _pressed:
@@ -50,7 +51,7 @@ func _click(at: Vector2) -> void:
 
 func _clear_the_vault() -> void:
 	for enemy: Unit in main.enemies:
-		enemy.take_hit(999)
+		enemy.take_hit(Arena.LETHAL)
 	await wait_physics_frames(3)
 
 
@@ -151,7 +152,7 @@ func test_a_key_or_click_in_the_cards_first_moments_does_not_close_it() -> void:
 	_pressed.append(&"confirm")
 	Input.action_press(&"confirm")
 	for enemy: Unit in main.enemies:
-		enemy.take_hit(999)
+		enemy.take_hit(Arena.LETHAL)
 	await wait_until(func() -> bool: return main.is_closing_open(), 2.0)
 	assert_eq(opened_at.size(), 1, "the card opened")
 	if opened_at.is_empty():
@@ -185,7 +186,7 @@ func test_clicks_and_enter_kept_up_from_the_opening_frame_leave_the_card_open_un
 		if open:
 			opened_at.append(Time.get_ticks_msec()))
 	for enemy: Unit in main.enemies:
-		enemy.take_hit(999)
+		enemy.take_hit(Arena.LETHAL)
 	await wait_until(func() -> bool: return main.is_closing_open(), 2.0)
 	assert_eq(opened_at.size(), 1, "the card opened")
 	if opened_at.is_empty():
@@ -274,7 +275,7 @@ func test_the_card_waits_while_the_controls_card_is_open_and_opens_when_it_close
 	main.hud.find_child("ControlsButton").pressed.emit()
 	await wait_physics_frames(2)
 	for enemy: Unit in main.enemies:
-		enemy.take_hit(999)
+		enemy.take_hit(Arena.LETHAL)
 	await wait_physics_frames(3)
 	assert_false(main.is_closing_open(), "not over the controls card")
 	await _tap(&"cancel")
@@ -286,7 +287,7 @@ func test_the_card_waits_out_the_pause() -> void:
 	await _boot(PageBoot.haven_finished())
 	main.set_paused(true)
 	for enemy: Unit in main.enemies:
-		enemy.take_hit(999)
+		enemy.take_hit(Arena.LETHAL)
 	await wait_physics_frames(3)
 	assert_false(main.is_closing_open())
 	main.set_paused(false)
@@ -322,7 +323,7 @@ func test_the_skirmish_has_no_closing_card() -> void:
 	main = add_child_autofree(SKIRMISH.instantiate())
 	await wait_physics_frames(3)
 	for enemy: Unit in main.enemies:
-		enemy.take_hit(999)
+		enemy.take_hit(Arena.LETHAL)
 	await wait_physics_frames(3)
 	assert_false(main.is_closing_open())
 	assert_true((main.hud.find_child("ClearedLabel") as Label).visible, "its line stays")
@@ -361,7 +362,7 @@ func _second_group() -> Array[Unit]:
 
 func test_when_the_first_enemy_falls_the_rest_come_for_the_party() -> void:
 	await _boot(PageBoot.haven_finished())
-	main.enemies[0].take_hit(999)
+	main.enemies[0].take_hit(Arena.LETHAL)
 	var reached := func() -> bool:
 		return _second_group().all(func(enemy: Unit) -> bool:
 			return not enemy.is_alive() or enemy.attack_target() != null and main.party.any(
@@ -379,18 +380,6 @@ func test_ten_seconds_after_the_first_blow_every_enemy_is_alerted() -> void:
 	await wait_seconds(2.0)
 	assert_true(_second_group().all(func(enemy: Unit) -> bool: return enemy.attack_target() != null),
 			"all of them, after")
-
-
-## The nearest living enemy to Álvar, or null.
-func _nearest_enemy() -> Unit:
-	var best: Unit = null
-	var best_distance: float = INF
-	for enemy: Unit in main.enemies:
-		var distance: float = Arena.flat(enemy.global_position, main.player.global_position)
-		if enemy.is_alive() and distance < best_distance:
-			best_distance = distance
-			best = enemy
-	return best
 
 
 ## Plays the story's vault, brains on, for up to `seconds` of game time, calling `each_step` every tenth
@@ -418,14 +407,14 @@ func test_walking_into_the_first_group_and_doing_nothing_more_ends_the_fight() -
 	assert_true(outcome == "cleared" or outcome == "fall", "the fight ended (%s), it did not stall" % outcome)
 
 
-## Ordinary play wins: Álvar attacks the nearest enemy, no Rites, no feeding.
-func test_alvar_attacking_the_nearest_enemy_clears_the_vault() -> void:
-	var outcome: String = await _play_the_vault(60.0, func() -> void:
-		if main.player.is_alive() and main.player.attack_target() == null:
-			var enemy: Unit = _nearest_enemy()
-			if enemy != null:
-				main.player.order_attack(enemy))
-	assert_eq(outcome, "cleared")
+## Plain clicking no longer wins: Álvar attacking the nearest enemy, with no Rite and no feeding, falls;
+## the fight still ends, it does not stall. The scripted players' table is `test_fight_balance.gd`.
+func test_alvar_attacking_the_nearest_enemy_and_nothing_more_falls() -> void:
+	await _boot(PageBoot.haven_finished())
+	VaultFight.speed_up()
+	var result: Dictionary = await VaultFight.new(main, VaultFight.Kind.CLICKER).play(self, 150.0)
+	VaultFight.slow_down()
+	assert_eq(result.outcome, "fall", "after %.0f s of game time" % result.time)
 
 
 # --- 3. Leaving a fight is said aloud ---

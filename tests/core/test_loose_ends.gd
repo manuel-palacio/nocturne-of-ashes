@@ -32,17 +32,17 @@ func _click(control: Control, button: MouseButton = MOUSE_BUTTON_LEFT) -> void:
 func test_a_fallen_companion_hands_selection_to_the_next_living_member_while_alvar_is_down() -> void:
 	await _skirmish()
 	main.select(main.party[1])
-	main.player.take_hit(999)
-	main.party[1].take_hit(999)
+	main.player.take_hit(Arena.LETHAL)
+	main.party[1].take_hit(Arena.LETHAL)
 	assert_eq(main.selected, main.party[2])
 	assert_eq(main.rig.target, main.party[2])
 
 func test_selection_stays_on_alvar_when_nobody_lives() -> void:
 	await _skirmish()
 	main.select(main.party[1])
-	main.player.take_hit(999)
-	main.party[2].take_hit(999)
-	main.party[1].take_hit(999)
+	main.player.take_hit(Arena.LETHAL)
+	main.party[2].take_hit(Arena.LETHAL)
+	main.party[1].take_hit(Arena.LETHAL)
 	assert_eq(main.selected, main.player)
 
 # 2. Effects are not added to the fallen.
@@ -50,7 +50,7 @@ func test_selection_stays_on_alvar_when_nobody_lives() -> void:
 func test_effects_are_not_added_to_the_fallen() -> void:
 	await _skirmish()
 	var zahra: Unit = main.party[1]
-	zahra.take_hit(999)
+	zahra.take_hit(Arena.LETHAL)
 	var stun := StatusEffect.new()
 	stun.id = &"stun"
 	stun.duration = 1.0
@@ -68,7 +68,7 @@ func test_a_killing_blow_is_heard_as_a_hit_before_the_death() -> void:
 	var heard: Array[String] = []
 	foe.was_hit.connect(func(_amount: int, _source: Unit) -> void: heard.append("was_hit"))
 	foe.died.connect(func(_unit: Unit) -> void: heard.append("died"))
-	foe.take_hit(999)
+	foe.take_hit(Arena.LETHAL)
 	assert_eq(heard, ["was_hit", "died"] as Array[String])
 
 # 4. An order on a map that never becomes ready warns once and is dropped.
@@ -135,7 +135,7 @@ func test_the_left_button_on_panels_and_buttons_gives_no_order_in_the_world() ->
 
 func test_a_click_on_the_fallen_prompt_restarts_the_skirmish_once() -> void:
 	await _skirmish()
-	main.player.take_hit(999)
+	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	assert_true(main.hud.is_fallen_shown())
 	watch_signals(main)
@@ -150,7 +150,7 @@ func test_a_click_on_the_fallen_prompt_reloads_the_story_checkpoint_once() -> vo
 	main = Story.boot(self, state)
 	await wait_physics_frames(3)
 	main.state.change_conscience(-3)
-	main.player.take_hit(999)
+	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	watch_signals(main)
 	await _click(main.hud.find_child("FallenLabel") as Control)

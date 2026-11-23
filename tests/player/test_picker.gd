@@ -30,7 +30,7 @@ func test_finds_no_unit_over_bare_floor() -> void:
 	assert_null(Picker.unit_at(cam, _screen(Vector3(4, 0, 2))))
 
 func test_a_fallen_unit_is_not_picked() -> void:
-	foe.take_hit(999)
+	foe.take_hit(Arena.LETHAL)
 	await wait_physics_frames(3)
 	assert_null(Picker.unit_at(cam, _screen(foe.global_position + Vector3(0, 0.3, 0))))
 

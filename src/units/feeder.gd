@@ -5,7 +5,7 @@ extends Node
 ## feeder is stunned, the target dies or leaves the tree, or the target's hold is gone. The unit breaks
 ## it on any new order. A target held by one feed cannot be drunk from by another.
 
-## The feed completed: `target` died of it and the unit gained its Blood.
+## The feed completed: `target` died of it and the unit gained its Blood and some health.
 signal finished(target: Unit)
 ## A feed in progress was given up, with no Blood gained.
 signal broken
@@ -90,6 +90,7 @@ func _complete() -> void:
 	var target: Unit = _target
 	_release()
 	_unit.stats.gain_blood(_unit.feed_gain)
+	_unit.stats.heal(_unit.feed_heal)
 	# Enough that the hit, scaled by the damage the target takes, removes all its remaining health.
 	var multiplier: float = maxf(target.damage_taken_multiplier(), 0.01)
 	target.take_hit(ceili(target.stats.health / multiplier), _unit)

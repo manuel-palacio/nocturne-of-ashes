@@ -20,6 +20,7 @@ faction = &"player"
 member_id = &"alvar"
 display_name = "Brother Álvar"
 drinks_blood = true
+feed_threshold = 0.7
 
 [node name="Visual" parent="." index="1"]
 dress = ExtResource("9_dress")

@@ -54,14 +54,18 @@ func test_the_same_key_or_cancel_closes_targeting() -> void:
 	assert_eq(main.input.targeting_gift(), -1)
 
 func test_a_gift_that_cannot_be_paid_for_does_not_open_targeting() -> void:
-	main.player.stats.spend_blood(48)  # 12, above the Fury threshold
+	# Baleful Eye costs as much as the Fury's line: Blood that cannot pay for it is spent into the
+	# Fury, which is ended here, leaving Álvar free to act with 8 Blood.
+	main.player.stats.spend_blood(52)
+	main.player.remove_effect(&"fury")
+	assert_true(main.player.can_act())
 	main.input.press_gift(1)
 	assert_eq(main.input.targeting_gift(), -1)
 
 func test_the_target_dying_before_the_click_spends_nothing() -> void:
 	main.input.press_gift(1)
 	var at: Vector2 = _screen(foe.global_position + Vector3(0, 0.9, 0))
-	foe.take_hit(999)
+	foe.take_hit(Arena.LETHAL)
 	await wait_physics_frames(3)
 	main.input.click_at(at)
 	assert_eq(main.player.stats.blood, 60)
@@ -88,20 +92,20 @@ func test_gifts_can_be_used_while_paused() -> void:
 
 func test_restart_and_falling_close_targeting() -> void:
 	main.input.press_gift(1)
-	main.player.take_hit(999)
+	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	assert_eq(main.input.targeting_gift(), -1)
 	main.input.press_gift(0)
 	assert_false(main.player.has_effect(&"iron_sinew"))
 
 func test_a_click_on_a_weakened_enemy_feeds_while_short_of_blood() -> void:
-	foe.take_hit(40)  # 20 of 60, within the feed threshold
+	Arena.weaken(foe, 1.0 / 3.0)  # within the feed threshold
 	_click(foe)
 	assert_eq(main.player.current_order(), Unit.Order.FEED)
 
 func test_a_click_on_a_weakened_enemy_attacks_at_full_blood() -> void:
 	main.player.stats.gain_blood(100)
-	foe.take_hit(40)
+	Arena.weaken(foe, 1.0 / 3.0)
 	_click(foe)
 	assert_eq(main.player.current_order(), Unit.Order.ATTACK)
 	assert_eq(main.player.attack_target(), foe)

@@ -55,7 +55,7 @@ func test_the_fury_moves_on_when_its_target_dies() -> void:
 	await wait_physics_frames(2)
 	alvar.stats.spend_blood(55)
 	await wait_physics_frames(5)
-	friend.take_hit(999)
+	friend.take_hit(Arena.LETHAL)
 	await wait_physics_frames(5)
 	assert_eq(alvar.attack_target(), foe)
 
@@ -70,7 +70,7 @@ func test_death_ends_the_fury_once_and_revival_brings_none() -> void:
 	watch_signals(alvar)
 	alvar.stats.spend_blood(55)
 	await wait_physics_frames(5)
-	alvar.take_hit(999)
+	alvar.take_hit(Arena.LETHAL)
 	assert_false(alvar.is_in_fury())
 	assert_false(alvar.has_effect(&"fury"))
 	assert_signal_emit_count(alvar, "fury_ended", 1)
