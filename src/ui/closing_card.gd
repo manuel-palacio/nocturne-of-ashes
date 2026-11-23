@@ -29,8 +29,11 @@ const ANSWER_DELAY: float = 2.5
 var _alma: int = 0
 ## Whether the body says the game is saved.
 var _saved: bool = true
-## Seconds until a key or a click closes it.
-var _answer_wait: float = 0.0
+## When it opened, in milliseconds of `Time.get_ticks_msec()`: the delay is timed by the clock, as a
+## frame's delta also counts time from before the card opened.
+var _opened_at: int = 0
+## Whether it answers a key or a click: `ANSWER_DELAY` is over.
+var _answering: bool = false
 
 @onready var _heading: Label = %Heading
 @onready var _body: Label = %Body
@@ -43,13 +46,12 @@ func _ready() -> void:
 	_show_texts()
 
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if not visible:
 		return
-	if _answer_wait > 0.0:
-		_answer_wait -= delta
-		if _answer_wait <= 0.0:
-			_show_hint(true)
+	if not _answering:
+		_answering = Time.get_ticks_msec() - _opened_at >= roundi(ANSWER_DELAY * 1000.0)
+		_show_hint(_answering)
 		return
 	# Polled rather than read from events, so presses made with Input.action_press count too.
 	if (Input.is_action_just_pressed(&"confirm") or Input.is_action_just_pressed(&"pause")
@@ -65,7 +67,8 @@ func open(alma: int, saved: bool = true) -> void:
 	_show_texts()
 	if visible:
 		return
-	_answer_wait = ANSWER_DELAY
+	_opened_at = Time.get_ticks_msec()
+	_answering = false
 	_show_hint(false)
 	visible = true
 	toggled.emit(true)
@@ -84,7 +87,7 @@ func is_open() -> bool:
 
 ## Whether it is open and a key or a click would now close it.
 func accepts_answer() -> bool:
-	return visible and _answer_wait <= 0.0
+	return visible and _answering
 
 
 ## Whether the hint saying how to close it shows: only once it answers.
@@ -109,7 +112,7 @@ func _gui_input(event: InputEvent) -> void:
 	if button == null:
 		return
 	accept_event()
-	if button.pressed and button.button_index == MOUSE_BUTTON_LEFT and _answer_wait <= 0.0:
+	if button.pressed and button.button_index == MOUSE_BUTTON_LEFT and _answering:
 		close()
 
 
