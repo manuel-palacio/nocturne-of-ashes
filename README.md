@@ -38,14 +38,17 @@ filter. While the title is up, the rooms' shaders are compiled behind it a few a
 Firefox this takes about ten seconds, in steps of up to about two and a half; a game begun once it is
 done starts at once, one begun earlier waits for what is left on its first frame.
 
-- Design: [docs/superpowers/specs/2026-11-15-vertical-slice-design.md](docs/superpowers/specs/2026-11-15-vertical-slice-design.md)
-- Plans: [docs/superpowers/plans/2026-11-15-milestone-1-first-room.md](docs/superpowers/plans/2026-11-15-milestone-1-first-room.md), [docs/superpowers/plans/2026-11-16-milestone-2-party-and-blood.md](docs/superpowers/plans/2026-11-16-milestone-2-party-and-blood.md), [docs/superpowers/plans/2026-11-16-milestone-3-talk-and-choose.md](docs/superpowers/plans/2026-11-16-milestone-3-talk-and-choose.md)
+- Design: [docs/superpowers/specs/2026-11-15-vertical-slice-design.md](docs/superpowers/specs/2026-11-15-vertical-slice-design.md); the characters' faces and clothes: [docs/superpowers/specs/2026-11-21-character-art-design.md](docs/superpowers/specs/2026-11-21-character-art-design.md)
+- Plans: [docs/superpowers/plans/2026-11-15-milestone-1-first-room.md](docs/superpowers/plans/2026-11-15-milestone-1-first-room.md), [docs/superpowers/plans/2026-11-16-milestone-2-party-and-blood.md](docs/superpowers/plans/2026-11-16-milestone-2-party-and-blood.md), [docs/superpowers/plans/2026-11-16-milestone-3-talk-and-choose.md](docs/superpowers/plans/2026-11-16-milestone-3-talk-and-choose.md), [docs/superpowers/plans/2026-11-16-milestone-4-toledos-look.md](docs/superpowers/plans/2026-11-16-milestone-4-toledos-look.md), [docs/superpowers/plans/2026-11-21-milestone-5a-faces-and-clothes.md](docs/superpowers/plans/2026-11-21-milestone-5a-faces-and-clothes.md)
 
 ## Making the art
 
-Every character is one human model, `assets/characters/human/human.glb`, coloured by an 8 × 1
-pixel palette image (`palette-<name>.png`, squares left to right: skin, hair, tunic, sleeves,
-skirt, hose, boots, trim). `tools/make_character.py` makes the model and the palettes from
+Every character is one human model, `assets/characters/human/human.glb`, wearing a head and
+garments of its own and coloured by a 16 × 1 pixel palette image (`palette-<name>.png`, squares left
+to right: skin, hair, tunic, sleeves, skirt, hose, boots, trim for the body and clothes, then eye
+white, iris, brow, lips, beard, socket, shade and stubble for the face). The model has no head and no
+body under the clothes (chest, abdomen, upper arms): the head and the garments are its surface there.
+`tools/make_character.py` makes the model and the palettes from
 Quaternius's Universal Animation Library (CC0), which is not kept in the repository:
 
 1. Download the standard edition from https://quaternius.com/packs/universalanimationlibrary.html
@@ -67,6 +70,14 @@ refuses other versions, whose exporter may write other bytes):
 `blender -b --factory-startup -P tools/blender/gear.py`. Its docstring has the table of which bone
 each piece hangs from; `resources/gear/<piece>.tres` holds the same for the game, and each
 character's `resources/dress/<name>.tres` lists what it wears. It too writes the same bytes on every run.
+The heads are made the same way by `tools/blender/heads.py` (`assets/gear/head_<name>.glb`: faceted,
+painted flat, hair and beards in geometry) and the garments by `tools/blender/garments.py` (habits,
+robes, tunics and surcoats in rigid pieces per bone: chest, abdomen, sleeves, cuffs);
+`tools/blender/wearable.py` holds what the three share. Each face of a head or garment points at its
+square of the wearer's palette, so every figure is drawn with the body's one material. Their
+docstrings have the commands and tables. To look at the figures, `tools/lineup.gd` (it needs a window)
+draws the dressed eight in any clip, view and framing, or the game camera in a fight, into
+`build/shots/`; its header has the arguments.
 
 The rooms are built from a stone kit made by `tools/blender/kit.py`, one `assets/kit/<piece>.glb`
 each: floor slabs, stone and brick walls, a pier, horseshoe and round arch bays, a barrel vault, a
