@@ -12,14 +12,18 @@ extends SceneTree
 ##     godot --path . -s tools/render_portraits.gd [-- <name>...]
 ##
 ## With Álvar's it also writes the title's picture of him, `assets/portraits/title-alvar.png`, 512 ×
-## 512: the same view drawn larger, he moved towards its left (`TITLE_SHIFT`) so the face turned to
-## the title's words stays clear of them, its edges fading out to transparent rather than to dark, so
-## it melts into whatever ground the title has.
+## 512: a second render of him, not the portrait drawn larger, with the camera shifted so he stands
+## towards its left (`TITLE_SHIFT`) and the face turned to the title's words stays clear of them, its
+## edges fading out to transparent rather than to dark, so it melts into whatever ground the title has.
 ##
 ## With no names it renders every dress in `resources/dress/`. It draws, so it needs a window (not
 ## `--headless`). Each figure is drawn at 1024 px and scaled down on the CPU; the figure's own faint
 ## light for dark rooms (`UnitVisual.LIFT`) is turned off here, so the lights alone model the face and
-## it is not flattened. Two runs on the same machine write the same bytes.
+## it is not flattened. The key is held low enough that white cloth (a habit, a veil, a helmet) and a
+## pale face keep their modelling rather than burning out. Two runs on the same machine write the same
+## bytes. After a run, import the new images, so the game and the tests read them:
+##
+##     godot --headless --path . --import
 
 const DRESSES: String = "res://resources/dress/"
 const OUT: String = "res://assets/portraits/"
@@ -140,17 +144,17 @@ func _stage() -> SubViewport:
 	environment.background_color = GROUND
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color(0.32, 0.3, 0.34)
-	environment.ambient_light_energy = 0.25
+	environment.ambient_light_energy = 0.2
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	var world := WorldEnvironment.new()
 	world.environment = environment
 	viewport.add_child(world)
 	# The key: warm, raised a little, ahead of the face and to the side it looks towards, as from a
 	# torch; no shadows, so a helmet's brim does not put out the eyes.
-	_key = _light(Color(1.0, 0.87, 0.72), 1.0)
+	_key = _light(Color(1.0, 0.87, 0.72), 0.62)
 	# A faint cool fill from the other side, so the shadow side of the face keeps its shape, and a
 	# fainter cool rim from behind, so dark hair and cloth part from the dark ground.
-	_fill = _light(Color(0.62, 0.68, 0.86), 0.5)
+	_fill = _light(Color(0.62, 0.68, 0.86), 0.45)
 	_rim = _light(Color(0.6, 0.62, 0.8), 0.5)
 	for light: DirectionalLight3D in [_key, _fill, _rim]:
 		viewport.add_child(light)
