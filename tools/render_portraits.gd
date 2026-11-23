@@ -12,8 +12,9 @@ extends SceneTree
 ##     godot --path . -s tools/render_portraits.gd [-- <name>...]
 ##
 ## With Álvar's it also writes the title's picture of him, `assets/portraits/title-alvar.png`, 512 ×
-## 512, the same view drawn larger, whose edges fade out to transparent rather than to dark, so it
-## melts into whatever ground the title has.
+## 512: the same view drawn larger, he moved towards its left (`TITLE_SHIFT`) so the face turned to
+## the title's words stays clear of them, its edges fading out to transparent rather than to dark, so
+## it melts into whatever ground the title has.
 ##
 ## With no names it renders every dress in `resources/dress/`. It draws, so it needs a window (not
 ## `--headless`). Each figure is drawn at 1024 px and scaled down on the CPU; the figure's own faint
@@ -27,6 +28,9 @@ const SIZE: int = 256
 const TITLE_NAME: String = "alvar"
 const TITLE_SIZE: int = 512
 const TITLE_OUT: String = "res://assets/portraits/title-alvar.png"
+## How far towards the left of the title's picture the figure is moved, as a share of its width: the
+## title's words stand to the right of it, and the face turned towards them stays clear of them.
+const TITLE_SHIFT: float = 0.14
 ## The size each portrait is drawn at before it is scaled down.
 const DRAWN: int = 1024
 ## The ground behind the figure, at the middle and, as dark as the darkening makes it, at the edges.
@@ -89,7 +93,7 @@ func _run() -> void:
 		var drawn: Image = await _render(dress)
 		failed = not _save(_portrait(drawn), OUT + name + ".png") or failed
 		if name == TITLE_NAME:
-			failed = not _save(_title_picture(drawn), TITLE_OUT) or failed
+			failed = not _save(_title_picture(await _render(dress, TITLE_SHIFT)), TITLE_OUT) or failed
 	quit(1 if failed else 0)
 
 
@@ -172,8 +176,9 @@ func _aim(light: DirectionalLight3D, yaw: float, pitch: float) -> void:
 	light.basis = Basis.looking_at(-towards)
 
 
-## Draws the figure wearing `dress`, at `DRAWN` px, on its ground.
-func _render(dress: Dress) -> Image:
+## Draws the figure wearing `dress`, at `DRAWN` px, on its ground, moved `shift` of the picture's width
+## to the left.
+func _render(dress: Dress, shift: float = 0.0) -> Image:
 	var figure := UnitVisual.new()
 	figure.dress = dress
 	_viewport.add_child(figure)
@@ -201,6 +206,7 @@ func _render(dress: Dress) -> Image:
 	var turn: float = deg_to_rad(TURN_DEGREES * side)
 	camera.position = target + Vector3(-sin(turn), 0.0, -cos(turn)) * DISTANCE + Vector3.UP * EYE_ABOVE
 	camera.look_at(target)
+	camera.h_offset = shift * 2.0 * DISTANCE * tan(deg_to_rad(FOV) * 0.5)
 	for frame: int in 4:
 		await RenderingServer.frame_post_draw
 	var image: Image = _viewport.get_texture().get_image()
@@ -231,11 +237,11 @@ func _title_picture(drawn: Image) -> Image:
 	var image: Image = drawn.duplicate()
 	image.resize(TITLE_SIZE, TITLE_SIZE, Image.INTERPOLATE_LANCZOS)
 	image.convert(Image.FORMAT_RGBA8)
-	var middle := Vector2(TITLE_SIZE, TITLE_SIZE) * VIGNETTE_CENTRE
+	var centre: Vector2 = VIGNETTE_CENTRE - Vector2(TITLE_SHIFT, 0.0)
 	for y: int in TITLE_SIZE:
 		for x: int in TITLE_SIZE:
 			var pixel: Color = image.get_pixel(x, y)
-			pixel.a = 1.0 - _fade(Vector2(x + 0.5, y + 0.5) - middle, TITLE_SIZE)
+			pixel.a = 1.0 - _fade(Vector2(x + 0.5, y + 0.5) / TITLE_SIZE, centre)
 			image.set_pixel(x, y, pixel)
 	return image
 
@@ -251,17 +257,21 @@ func _without_own_light(figure: UnitVisual) -> void:
 ## Darkens the picture towards its edges: each pixel is scaled by how far it lies from
 ## `VIGNETTE_CENTRE`, from `VIGNETTE_FROM` of the way to an edge, so figure and ground fall off together.
 func _darken_edges(image: Image) -> void:
-	var middle := Vector2(SIZE, SIZE) * VIGNETTE_CENTRE
 	var ground_lum: float = GROUND.get_luminance()
 	var edge_lum: float = GROUND_EDGE.get_luminance()
 	for y: int in SIZE:
 		for x: int in SIZE:
-			var keep: float = lerpf(1.0, edge_lum / ground_lum, _fade(Vector2(x + 0.5, y + 0.5) - middle, SIZE))
+			var keep: float = lerpf(1.0, edge_lum / ground_lum, _fade(Vector2(x + 0.5, y + 0.5) / SIZE, VIGNETTE_CENTRE))
 			var pixel: Color = image.get_pixel(x, y)
 			image.set_pixel(x, y, Color(pixel.r * keep, pixel.g * keep, pixel.b * keep))
 
 
-## How far a pixel `from_middle` of a `size`-wide picture has faded, from 0 inside `VIGNETTE_FROM` of
-## the way to an edge's midpoint to 1 at it and beyond.
-func _fade(from_middle: Vector2, size: int) -> float:
-	return smoothstep(VIGNETTE_FROM, 1.0, from_middle.length() / (size * 0.5))
+## How far a pixel at `at` (as fractions of the picture's width and height) has faded towards the
+## edges, from 0 inside `VIGNETTE_FROM` of the way from `centre` to an edge to 1 at the edge and beyond:
+## the way to each edge is measured from `centre`, so a picture whose centre is off its middle fades
+## out fully on every side.
+func _fade(at: Vector2, centre: Vector2) -> float:
+	var off: Vector2 = at - centre
+	off.x /= centre.x if off.x < 0.0 else 1.0 - centre.x
+	off.y /= centre.y if off.y < 0.0 else 1.0 - centre.y
+	return smoothstep(VIGNETTE_FROM, 1.0, off.length())
