@@ -1,8 +1,8 @@
 // e2e/journey.spec.js
 // The story from New game to the last lock and back by Continue: the waking, the smith, Malakor before
 // the party is gathered and the barred stair, the captive, Zahra and Gonzalo joining, Malakor's order
-// and the letter, the stair down, the vault fought to cleared, the last lock, then a reload and
-// Continue. `calm=1` keeps it deterministic: the crusaders stand still and fall to the party's blows.
+// and the letter, the stair down, the vault fought to cleared, the closing card that says the story
+// rests there, the last lock, then a reload and Continue, which does not show the card again. `calm=1` keeps it deterministic: the crusaders stand still and fall to the party's blows.
 const { test, expect } = require('@playwright/test');
 const { state, open, until, talkThrough } = require('./helpers');
 
@@ -125,10 +125,18 @@ test('the story from New game to the last lock, and Continue after a reload', as
   s = await state(page);
   expect(s.cleared).toBe(true);
   expect(s.enemies).toBe(0);
-  await page.screenshot({ path: `build/e2e/journey-cleared-${test.info().project.name}.png` });
 
-  // The last lock does not yield.
-  await use(page, 'LastLock', (t) => t.notice === 'The last lock does not yield. Not yet.');
+  // The closing card says the story rests here; Enter closes it.
+  await until(page, () => { window.nocturneProbe(); return window.nocturneState.closing; });
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `build/e2e/journey-cleared-${test.info().project.name}.png` });
+  await page.keyboard.press('Enter');
+  await until(page, () => { window.nocturneProbe(); return !window.nocturneState.closing; });
+  s = await state(page);
+  expect(s.flags).toContain('rest_shown');
+
+  // The last lock does not yield, and says where the story rests.
+  await use(page, 'LastLock', (t) => t.notice === 'The last lock does not yield. This is where the story rests, for now.');
 
   // A reload, and Continue from the title: the cleared vault, the party and Conscience come back.
   await page.goto('/?probe=1&title=1');
@@ -148,5 +156,8 @@ test('the story from New game to the last lock, and Continue after a reload', as
   expect(s.cleared).toBe(true);
   expect(s.enemies).toBe(0);
   expect(s.talking).toBe(false);
+  // The card was seen: not again, and a short line says the story rests here.
+  expect(s.closing).toBe(false);
+  expect(s.notice).toBe('The vault is quiet. The story rests here, for now.');
   expect(errors).toEqual([]);
 });

@@ -49,6 +49,26 @@ test('Space pauses the world and orders wait for it', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+// The page cannot really be hidden under the tests (their pages stay visible), so the document says it
+// is: the game pauses on visibilitychange, shows the prompt, and does not resume when the page is back.
+test('a hidden page pauses the world, which stays paused when the page is back', async ({ page }) => {
+  test.setTimeout(90000);
+  const errors = await open(page, 'skirmish=1&probe=1&calm=1');
+  expect((await state(page)).paused).toBe(false);
+  const setHidden = (hidden) => page.evaluate((on) => {
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => on });
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (on ? 'hidden' : 'visible') });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, hidden);
+  await setHidden(true);
+  await page.waitForFunction(() => { window.nocturneProbe(); return window.nocturneState.paused; }, null, { timeout: 5000 });
+  await setHidden(false);
+  await page.waitForTimeout(1000);
+  expect((await state(page)).paused).toBe(true);
+  await page.screenshot({ path: 'build/e2e/hidden-pause.png' });
+  expect(errors).toEqual([]);
+});
+
 test('key 1 spends Blood on Iron Sinew', async ({ page }) => {
   test.setTimeout(90000);
   const errors = await open(page, 'skirmish=1&probe=1&calm=1');
