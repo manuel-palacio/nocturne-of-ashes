@@ -301,6 +301,36 @@ func test_on_arriving_from_the_vault_nobody_to_talk_to_is_under_the_party_panels
 	get_tree().root.size = window_size
 
 
+# --- 5. Silent refusals get a line ---
+
+func test_a_click_to_feed_with_full_blood_says_so_and_attacks() -> void:
+	main = add_child_autofree(SKIRMISH.instantiate())
+	await wait_physics_frames(3)
+	var meal: Unit = main.enemies[0]
+	meal.get_node("Brain").queue_free()
+	meal.take_hit(meal.stats.max_health - 10)
+	meal.global_position = main.player.global_position + Vector3(2.0, 0, 0)
+	main.player.stats.gain_blood(1000)
+	main.rig.snap_to_target()
+	await wait_physics_frames(3)
+	assert_true(main.player.can_feed_on(meal))
+	var at: Vector2 = main.rig.camera().unproject_position(meal.global_position + Vector3.UP * 0.9)
+	main.input.click_at(at)
+	assert_eq(main.player.current_order(), Unit.Order.ATTACK, "it still attacks")
+	assert_eq(main.hud.notice(), "%s's Blood is full")
+	assert_string_contains(main.hud.find_child("NoticeLabel").text, "Brother Álvar")
+
+
+func test_a_door_in_the_fury_in_the_empty_fragua_names_the_fury() -> void:
+	await _boot(_haven_after_the_order())
+	main.player.stats.spend_blood(main.player.stats.blood - 5)
+	assert_true(main.player.is_in_fury())
+	_door("StairDoor").use(main.player)
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"haven")
+	assert_eq(main.hud.notice(), "Not while the Fury has you.")
+
+
 # --- 8. Íñigo does not repeat his speech ---
 
 func test_inigo_says_it_all_once_then_reminds_in_two_lines() -> void:

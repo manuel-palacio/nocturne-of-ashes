@@ -92,6 +92,9 @@ msgstr "Preparando las bóvedas…"
 msgid "Not while they are upon you"
 msgstr "No mientras los tengas encima"
 
+msgid "Not while the Fury has you."
+msgstr "No mientras te domine la Furia."
+
 msgid "The stair is barred until Malakor says otherwise"
 msgstr "La escalera está cerrada hasta que Malakor diga otra cosa"
 
@@ -100,6 +103,10 @@ msgstr "El último cerrojo no cede. Aún no."
 
 msgid "The last lock does not yield. This is where the story rests, for now."
 msgstr "El último cerrojo no cede. Aquí se detiene la historia, por ahora."
+
+# Feeding
+msgid "%s's Blood is full"
+msgstr "%s tiene la Sangre llena"
 
 # People
 msgid "The captive"

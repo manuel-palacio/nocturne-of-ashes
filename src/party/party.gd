@@ -175,6 +175,11 @@ func leader_alive() -> bool:
 	return leader != null and leader.is_alive()
 
 
+## Whether the leader is there and in the Fury.
+func leader_in_fury() -> bool:
+	return leader != null and leader.is_in_fury()
+
+
 ## Whether something under way would be broken by leaving the room now: the leader is in the Fury, or
 ## a member feeds or walks to a feed.
 func is_busy() -> bool:

@@ -2,7 +2,7 @@ class_name Travel
 extends Node
 ## The doors of `Main`'s rooms in a story: takes the doors of each room entered and answers their uses.
 ## A use while a fight is on, while Álvar is in the Fury or while a member feeds or walks to a feed
-## shows a notice; a use of a barred door shows its `Door.locked_text_for()` the state; any other use
+## shows a notice (in the Fury with no enemy standing, as in the Fragua, one naming the Fury); a use of a barred door shows its `Door.locked_text_for()` the state; any other use
 ## takes the whole party through, wherever its members stand.
 ##
 ## Doors are used from a unit's physics step, and changing room removes every unit and the room at once,
@@ -10,6 +10,8 @@ extends Node
 ## input is off (in a conversation, on the title, after Álvar's fall), nor in a room not begun here.
 
 const FIGHT_TEXT: String = "Not while they are upon you"
+## In the Fury where no enemy lives, as in the Fragua, nobody is upon him: the Fury is named.
+const FURY_TEXT: String = "Not while the Fury has you."
 
 var _input: PlayerInput
 var _party: Party
@@ -50,7 +52,11 @@ func _take(door: Door) -> void:
 
 ## The notice for going through `door` now, or empty when the party may go.
 func _refusal(door: Door) -> String:
-	if _encounter.fight_is_on() or _party.is_busy():
+	if _encounter.fight_is_on():
+		return FIGHT_TEXT
+	if _party.leader_in_fury() and _encounter.enemies_alive() == 0:
+		return FURY_TEXT
+	if _party.is_busy():
 		return FIGHT_TEXT
 	if door.is_locked(_state):
 		return door.locked_text_for(_state)

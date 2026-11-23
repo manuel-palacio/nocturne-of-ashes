@@ -130,6 +130,7 @@ func _ready() -> void:
 	_party.member_added.connect(_on_member_added)
 	_party.gifts_changed.connect(_on_gifts_changed)
 	input.targeting_changed.connect(hud.show_targeting)
+	input.notice_requested.connect(hud.show_notice)
 	hud.member_pressed.connect(input.press_member)
 	hud.gift_chosen.connect(input.press_gift)
 	hud.fallen_pressed.connect(reload_checkpoint)

@@ -45,6 +45,8 @@ var _targeting_index: int = -1
 var _state: GameState
 ## The notice on show, as the untranslated source text; empty when none.
 var _notice: String = ""
+## What fills the notice's `%s` places, as untranslated source texts (such as a member's name).
+var _notice_args: Array = []
 ## Seconds until the notice goes.
 var _notice_left: float = 0.0
 ## Seconds the cleared line has been on show.
@@ -196,14 +198,16 @@ func is_closing_open() -> bool:
 
 
 ## Shows `text`, an English source text, in the middle of the screen for `notice_time` seconds, in
-## place of any notice on show. An empty text hides the notice.
-func show_notice(text: String) -> void:
+## place of any notice on show, with its `%s` places filled by `args`, source texts translated in turn.
+## An empty text hides the notice.
+func show_notice(text: String, args: Array = []) -> void:
 	if text.is_empty():
 		hide_notice()
 		return
 	_notice = text
+	_notice_args = args.duplicate()
 	_notice_left = notice_time
-	_notice_label.text = tr(text)
+	_notice_label.text = _notice_text()
 	_notice_label.visible = true
 
 
@@ -229,8 +233,15 @@ func _show_texts() -> void:
 	_paused_label.text = tr("Paused — give your orders")
 	_cleared_label.text = tr("The vault is quiet")
 	# Never `tr("")`, which gives the translation's header.
-	_notice_label.text = tr(_notice) if not _notice.is_empty() else ""
+	_notice_label.text = _notice_text() if not _notice.is_empty() else ""
 	_show_conscience()
+
+
+## The notice on show, translated, its places filled.
+func _notice_text() -> String:
+	if _notice_args.is_empty():
+		return tr(_notice)
+	return tr(_notice) % _notice_args.map(func(arg: Variant) -> String: return tr(str(arg)))
 
 
 func _show_conscience() -> void:
