@@ -2,7 +2,7 @@
 // The browser budget: frame rate with everyone on screen, the time a first load takes, and the frames
 // the owner is shown (build/e2e/look-<frame>-<browser>.png, 1280 × 720 at twice the pixel density).
 const { test, expect } = require('@playwright/test');
-const { state, open, until, talkThrough, usable, clickTowards, use } = require('./helpers');
+const { state, open, until, talkThrough, use, fightAsThePlayer } = require('./helpers');
 const fs = require('fs');
 
 // Where a frame for the owner is saved, by the browser that drew it.
@@ -173,15 +173,9 @@ test.describe('the frames for the owner', () => {
     const errors = await open(page, 'probe=1&fresh=1&at=vault&calm=1');
     await page.waitForTimeout(1000);
     await page.screenshot({ path: frame('vault') });
-    // The vault fought to cleared, `calm=1` keeping the crusaders still: Álvar is sent at the nearest
-    // one a click can reach until none stands. Then the closing card, which says the story rests here.
-    for (let i = 0; i < 150; i++) {
-      const s = await state(page);
-      if (s.cleared) break;
-      const foe = s.foes.find((at) => usable(at, s.view)) || s.foes[0];
-      await clickTowards(page, foe || [s.view[0] * 0.75, s.view[1] * 0.5]);
-      await page.waitForTimeout(1200);
-    }
+    // The vault fought to cleared, `calm=1` keeping the crusaders still, played with the Blood: Iron
+    // Sinew, feeds on the marked, blows at the rest. Then the closing card, which says the story rests here.
+    await fightAsThePlayer(page, 150);
     expect((await state(page)).cleared).toBe(true);
     await until(page, () => { window.nocturneProbe(); return window.nocturneState.closing_ready; });
     await page.waitForTimeout(500);
@@ -210,9 +204,9 @@ test.describe('the frames for the owner', () => {
     await page.waitForTimeout(3000);
     await page.screenshot({ path: frame('fight') });
     // A feed with the mark showing: as soon as a crusader is weak enough to show the mark, the world
-    // is paused and Álvar sent to feed on it; then the world is stepped in short paused steps until he
+    // is paused and Álvar sent to feed on it; then the world is stepped in short paused steps while he
     // is closing in with the mark still showing (it goes when the drinking begins). The last paused
-    // frame before it goes is kept.
+    // frame before it goes is kept, the frame of the order itself when the drinking begins at once.
     const look = () => { window.nocturneProbe(); return window.nocturneState; };
     const setPaused = async (on) => {
       await page.keyboard.press('Space');
@@ -233,7 +227,10 @@ test.describe('the frames for the owner', () => {
         continue;
       }
       await page.mouse.click(box.x + target[0], box.y + target[1]);
-      let last = null;
+      // The paused frame of the order itself: often the meal is the enemy he is already striking, and
+      // the drinking begins within the first step.
+      const ordered = await page.evaluate(look);
+      let last = ordered.party[0].feeding && ordered.marked.length > 0 ? await page.screenshot() : null;
       for (let step = 0; step < 60; step++) {
         await setPaused(false);
         await page.waitForTimeout(50);

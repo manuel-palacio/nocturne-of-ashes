@@ -3,9 +3,9 @@
 // the party is gathered and the barred stair, the captive, Zahra and Gonzalo joining, Malakor's order
 // and the letter, the stair down, the vault fought to cleared, the closing card that says the story
 // rests there, the last lock, then a reload and Continue, which does not show the card again.
-// `calm=1` keeps it deterministic: the crusaders stand still and fall to the party's blows.
+// `calm=1` keeps it deterministic: the crusaders stand still and fall to the party's blows and feeds.
 const { test, expect } = require('@playwright/test');
-const { state, open, until, talkThrough, usable, clickTowards, use } = require('./helpers');
+const { state, open, until, talkThrough, use, fightAsThePlayer } = require('./helpers');
 
 // Talks to `name`, taking choice `key` at each choice, and returns the lines spoken.
 async function talkTo(page, name, key) {
@@ -82,16 +82,10 @@ test('the story from New game to the last lock, and Continue after a reload', as
   expect(s.enemies).toBe(6);
   expect(s.cleared).toBe(false);
 
-  // The fight, to cleared: Álvar is sent at the nearest crusader he can reach until none stands.
-  for (let i = 0; i < 150; i++) {
-    s = await state(page);
-    if (s.cleared) break;
-    expect(s.fallen).toBe(false);
-    const foe = s.foes.find((at) => usable(at, s.view)) || s.foes[0];
-    await clickTowards(page, foe || [s.view[0] * 0.75, s.view[1] * 0.5]);
-    await page.waitForTimeout(1200);
-  }
+  // The fight, to cleared, played with the Blood: Iron Sinew, feeds on marked crusaders, blows at the rest.
+  await fightAsThePlayer(page, 150, (now) => expect(now.fallen).toBe(false));
   s = await state(page);
+  expect(s.fallen).toBe(false);
   expect(s.cleared).toBe(true);
   expect(s.enemies).toBe(0);
 

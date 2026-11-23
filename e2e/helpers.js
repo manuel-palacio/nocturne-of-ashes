@@ -52,6 +52,27 @@ async function clickTowards(page, at) {
   await page.mouse.click(box.x + x, box.y + y);
 }
 
+// Fights the room as a player who uses the Blood does, until it is cleared, Álvar falls or `rounds`
+// rounds of 1.2 s pass: Iron Sinew (key 1) whenever it is off and paying for it leaves him clear of the
+// Fury; a click on a marked enemy, to feed, while his Blood is short of full; else a click on an enemy a
+// click can reach. `each(state)` is called at the start of each round. Returns the last state.
+async function fightAsThePlayer(page, rounds = 150, each = () => {}) {
+  for (let i = 0; i < rounds; i++) {
+    const s = await state(page);
+    if (s.cleared || s.fallen) return s;
+    each(s);
+    const alvar = s.party[0];
+    if (s.selected === 0 && !alvar.fury && alvar.blood >= 30 && !alvar.effects.includes('iron_sinew')) {
+      await page.keyboard.press('1');
+    }
+    const meal = alvar.blood < 100 ? s.marked.find((at) => usable(at, s.view)) : undefined;
+    const foe = meal || s.foes.find((at) => usable(at, s.view)) || s.foes[0];
+    await clickTowards(page, foe || [s.view[0] * 0.75, s.view[1] * 0.5]);
+    await page.waitForTimeout(1200);
+  }
+  return state(page);
+}
+
 // Walks to and uses the person or door `name` until `done(state)` holds.
 async function use(page, name, done) {
   for (let i = 0; i < 30; i++) {
@@ -65,4 +86,4 @@ async function use(page, name, done) {
   expect(done(await state(page)), `using ${name}`).toBe(true);
 }
 
-module.exports = { state, open, until, talkThrough, usable, clickTowards, use };
+module.exports = { state, open, until, talkThrough, usable, clickTowards, use, fightAsThePlayer };
