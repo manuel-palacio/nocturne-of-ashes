@@ -21,6 +21,9 @@ msgstr "La cripta está en silencio"
 msgid "The vault is quiet. The story rests here, for now."
 msgstr "La cripta está en silencio. La historia se detiene aquí, por ahora."
 
+msgid "The vault's guard has closed ranks again."
+msgstr "La guardia de la cripta ha vuelto a cerrar filas."
+
 msgid "Alma"
 msgstr "Alma"
 

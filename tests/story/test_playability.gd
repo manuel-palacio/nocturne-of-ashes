@@ -247,6 +247,24 @@ func test_ten_seconds_after_the_first_blow_every_enemy_is_alerted() -> void:
 			"all of them, after")
 
 
+# --- 3. Leaving a fight is said aloud ---
+
+func test_coming_back_to_a_vault_whose_guard_was_restored_says_so() -> void:
+	await _boot(PageBoot.haven_finished())
+	assert_eq(main.hud.notice(), "", "nothing on a first entry")
+	main.enemies[0].take_hit(30)
+	_door("WestDoor").use(main.player)
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"haven")
+	_door("StairDoor").use(main.player)
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"vault")
+	assert_eq(main.hud.notice(), "The vault's guard has closed ranks again.")
+	main.reload_checkpoint()
+	await wait_physics_frames(3)
+	assert_eq(main.hud.notice(), "", "nothing on a reload or Continue")
+
+
 # --- 8. Íñigo does not repeat his speech ---
 
 func test_inigo_says_it_all_once_then_reminds_in_two_lines() -> void:

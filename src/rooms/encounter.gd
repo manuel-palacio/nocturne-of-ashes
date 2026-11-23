@@ -82,6 +82,12 @@ func is_alerted() -> bool:
 	return _alerted
 
 
+## Whether the fight has left a mark: an enemy is hurt or has fallen.
+func is_disturbed() -> bool:
+	return enemies.any(func(enemy: Unit) -> bool:
+		return not enemy.is_alive() or enemy.stats.health < enemy.stats.max_health)
+
+
 ## True while any living enemy is attacking someone.
 func fight_is_on() -> bool:
 	for enemy: Unit in enemies:

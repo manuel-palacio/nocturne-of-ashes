@@ -37,6 +37,8 @@ const STORY_REST_ROOM: StringName = &"vault"
 const REST_SHOWN_FLAG: StringName = &"rest_shown"
 ## Shown on entering the cleared `STORY_REST_ROOM` once the closing card has been seen.
 const REST_NOTICE: String = "The vault is quiet. The story rests here, for now."
+## Shown on coming back to a room left with its fight begun and enemies standing: they are restored.
+const REGROUPED_NOTICE: String = "The vault's guard has closed ranks again."
 
 enum Boot { SKIRMISH, STORY }
 
@@ -85,6 +87,9 @@ var _last_checkpoint: Dictionary = {}
 var _closing_due: bool = false
 ## True while the closing card is closed by a room change rather than by the player.
 var _closing_put_away: bool = false
+## The rooms left in this play through a door with their fight begun (an enemy hurt or fallen) and
+## enemies standing, whose enemies are whole again on the way back. Forgotten on a reload or a new game.
+var _left_mid_fight: Dictionary = {}  # StringName -> true
 
 @onready var input: PlayerInput = $PlayerInput
 @onready var rig: CameraRig = $CameraRig
@@ -189,6 +194,8 @@ func enter_room(room_id: StringName, entry: StringName = Room.START) -> void:
 		push_warning("There is no room %s; staying in %s" % [room_id, room.room_id])
 		return
 	_party.record(state)
+	if room != null and not _encounter.is_cleared() and _encounter.is_disturbed():
+		_left_mid_fight[room.room_id] = true
 	_enter(room_id, entry)
 	checkpoint()
 
@@ -298,6 +305,7 @@ func _play(from: GameState) -> void:
 		_title.close()
 		_world_hold.set_held(&"title", false)
 	state = from
+	_left_mid_fight.clear()
 	if not ROOMS.has(state.room):
 		var fresh := GameState.new_game()
 		push_warning("The game state's room %s does not exist; starting in %s" % [state.room, fresh.room])
@@ -330,6 +338,10 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	rig.far_fraction = room.camera_far_fraction
 	rig.set_bounds(room.floor_bounds())
 	_hand_control_to_alvar()
+	if _left_mid_fight.has(room_id):
+		_left_mid_fight.erase(room_id)
+		if not _encounter.is_cleared():
+			hud.show_notice(REGROUPED_NOTICE)
 	if _is_story_rest():
 		if state.has_flag(REST_SHOWN_FLAG):
 			hud.show_notice(REST_NOTICE)
