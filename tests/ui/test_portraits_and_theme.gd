@@ -7,6 +7,18 @@ const HAVEN := preload("res://scenes/rooms/forge_haven.tscn")
 const BOX := preload("res://scenes/ui/dialogue_box.tscn")
 const THEME := preload("res://resources/ui/theme.tres")
 const PALETTES: Array[String] = ["alvar", "captive", "crusader", "gonzalo", "malakor", "sergeant", "smith", "zahra"]
+## How a palette's square may look under the portraits' lights: from this much dimmer to this much
+## brighter, and this far off its colour once brought to its brightness.
+const PORTRAIT_DIMMEST: float = 0.35
+const PORTRAIT_BRIGHTEST: float = 1.6
+const PORTRAIT_HUE_SLACK: float = 0.15
+## How far an eye white lies from its iris at most, in pixels of a 256 px portrait, and how unlike
+## their brightness may be (as a factor) for them to be in the same light.
+const EYE_REACH: int = 4
+const EYE_SAME_LIGHT: float = 1.6
+## How unlike two portraits' light and shade (`_shape`) are at least, on average per pixel: the same
+## portrait recoloured scores about 0.03 to 0.11.
+const PORTRAITS_APART: float = 0.15
 
 var main: Main
 
@@ -98,6 +110,134 @@ func test_a_portrait_exists_for_each_palette_at_256_px() -> void:
 		var corner: Color = image.get_pixel(4, 4)
 		assert_gt(middle.get_luminance(), corner.get_luminance(), path)
 		assert_lt(corner.get_luminance(), 0.12, path)
+
+
+## The portrait of `palette` as an image, decompressed.
+func _portrait_image(palette: String) -> Image:
+	var image: Image = (load("res://assets/portraits/%s.png" % palette) as Texture2D).get_image()
+	if image.is_compressed():
+		image.decompress()
+	image.convert(Image.FORMAT_RGB8)
+	return image
+
+
+## The colour of `region`'s square in the palette `palette`.
+func _square(palette: String, region: Dress.Region) -> Color:
+	var image: Image = (load("res://assets/characters/human/palette-%s.png" % palette) as Texture2D).get_image()
+	if image.is_compressed():
+		image.decompress()
+	return image.get_pixel(region * image.get_width() / Dress.Region.size(), 0)
+
+
+## How strongly `square`'s colour is lit at each pixel of `image`: the pixel's brightness over the
+## square's where the pixel is that colour under some light (as bright as it from `PORTRAIT_DIMMEST` to
+## `PORTRAIT_BRIGHTEST` times, and, brought to its brightness, within `PORTRAIT_HUE_SLACK` of it); 0
+## where it is not.
+func _lit_as(image: Image, square: Color) -> PackedFloat32Array:
+	var lit := PackedFloat32Array()
+	lit.resize(image.get_width() * image.get_height())
+	var square_lum: float = maxf(square.get_luminance(), 0.001)
+	for y: int in image.get_height():
+		for x: int in image.get_width():
+			var pixel: Color = image.get_pixel(x, y)
+			var ratio: float = maxf(pixel.get_luminance(), 0.001) / square_lum
+			if ratio < PORTRAIT_DIMMEST or ratio > PORTRAIT_BRIGHTEST:
+				continue
+			var scaled: Color = pixel * (1.0 / ratio)
+			var off: float = maxf(maxf(absf(scaled.r - square.r), absf(scaled.g - square.g)), absf(scaled.b - square.b))
+			if off < PORTRAIT_HUE_SLACK:
+				lit[y * image.get_width() + x] = ratio
+	return lit
+
+
+## Whether any pixel of `lit` (a `_lit_as` of a `width`-wide image) in the box `box` is non-zero.
+func _any_in(lit: PackedFloat32Array, width: int, box: Rect2i) -> bool:
+	for y: int in range(box.position.y, box.end.y):
+		for x: int in range(box.position.x, box.end.x):
+			if lit[y * width + x] > 0.0:
+				return true
+	return false
+
+
+## How many pixels of the middle third of `palette`'s portrait are the iris of an eye: the iris's
+## colour with the eye white's on both sides of it, within `EYE_REACH` and in the same light (their
+## brightness within `EYE_SAME_LIGHT` of each other's), and skin above and below it.
+func _eye_pixels(palette: String) -> int:
+	var image: Image = _portrait_image(palette)
+	var width: int = image.get_width()
+	var skin: PackedFloat32Array = _lit_as(image, _square(palette, Dress.Region.SKIN))
+	var white: PackedFloat32Array = _lit_as(image, _square(palette, Dress.Region.EYE_WHITE))
+	var iris: PackedFloat32Array = _lit_as(image, _square(palette, Dress.Region.IRIS))
+	var third: int = width / 3
+	var found: int = 0
+	for y: int in range(third, 2 * third):
+		for x: int in range(third, 2 * third):
+			var light: float = iris[y * width + x]
+			if light == 0.0:
+				continue
+			var sides: Array[bool] = [false, false]
+			for side: int in 2:
+				for step: int in range(1, EYE_REACH + 1):
+					for dy: int in range(-1, 2):
+						var at: float = white[(y + dy) * width + x + (step if side == 1 else -step)]
+						if at > 0.0 and absf(log(at / light)) < log(EYE_SAME_LIGHT):
+							sides[side] = true
+			if sides[0] and sides[1] and _any_in(skin, width, Rect2i(x - 5, y - 10, 11, 8)) \
+					and _any_in(skin, width, Rect2i(x - 5, y + 3, 11, 8)):
+				found += 1
+	return found
+
+
+## How many pixels of the middle third of `palette`'s portrait are its skin.
+func _skin_pixels(palette: String) -> int:
+	var image: Image = _portrait_image(palette)
+	var skin: PackedFloat32Array = _lit_as(image, _square(palette, Dress.Region.SKIN))
+	var third: int = image.get_width() / 3
+	var found: int = 0
+	for y: int in range(third, 2 * third):
+		for x: int in range(third, 2 * third):
+			if skin[y * image.get_width() + x] > 0.0:
+				found += 1
+	return found
+
+
+func test_no_two_portraits_are_the_same_picture() -> void:
+	var shapes: Dictionary[String, PackedFloat32Array] = {}
+	for palette: String in PALETTES:
+		shapes[palette] = _shape(_portrait_image(palette))
+	for a: int in PALETTES.size():
+		for b: int in range(a + 1, PALETTES.size()):
+			var total: float = 0.0
+			for i: int in shapes[PALETTES[a]].size():
+				total += absf(shapes[PALETTES[a]][i] - shapes[PALETTES[b]][i])
+			assert_gt(total / shapes[PALETTES[a]].size(), PORTRAITS_APART, "%s and %s" % [PALETTES[a], PALETTES[b]])
+
+
+## The picture's light and shade, whatever its colours: `image` at 32 × 32, each pixel's brightness
+## less the mean, over the spread, so a portrait recoloured keeps nearly the same shape.
+func _shape(image: Image) -> PackedFloat32Array:
+	var small: Image = image.duplicate()
+	small.resize(32, 32, Image.INTERPOLATE_BILINEAR)
+	var values := PackedFloat32Array()
+	for y: int in 32:
+		for x: int in 32:
+			values.append(small.get_pixel(x, y).get_luminance())
+	var mean: float = 0.0
+	for value: float in values:
+		mean += value / values.size()
+	var spread: float = 0.0
+	for value: float in values:
+		spread += (value - mean) * (value - mean) / values.size()
+	spread = maxf(sqrt(spread), 0.001)
+	for i: int in values.size():
+		values[i] = (values[i] - mean) / spread
+	return values
+
+
+func test_each_portrait_has_a_face_in_its_middle_third() -> void:
+	for palette: String in PALETTES:
+		assert_gt(_skin_pixels(palette), 1000, "%s: skin" % palette)
+		assert_gt(_eye_pixels(palette), 8, "%s: eyes" % palette)
 
 
 func test_each_party_panel_shows_its_members_portrait() -> void:

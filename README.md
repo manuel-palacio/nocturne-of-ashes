@@ -80,7 +80,9 @@ materials' tiling textures, colour maps at 1024 px and normal maps at 512 px, ar
 Haven in `assets/textures/` (see `CREDITS.md`), imported with mipmaps.
 
 The portraits (`assets/portraits/`) are rendered from the dressed figures by
-`godot --path . -s tools/render_portraits.gd` (it needs a window). The interface's typefaces and
+`godot --path . -s tools/render_portraits.gd` (it needs a window): each character's head and
+shoulders, faced and clothed as in the game, in a three-quarter view under one warm side light, with
+what it holds in its hands left out of frame; the title's Álvar is the same picture drawn larger. The interface's typefaces and
 panel frames (`assets/ui/`) are made by `tools/make_ui.py`; its docstring has the command. Both write
 the same bytes on every run. These small interface images keep Godot's lossless 2D import: they are
 drawn at or near their own size in the interface, where block compression would smear the thin

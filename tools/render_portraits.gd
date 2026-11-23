@@ -1,10 +1,13 @@
 extends SceneTree
 ## Renders a head-and-shoulders portrait of each dressed character to `assets/portraits/<name>.png`,
 ## 256 × 256: the game's own figure (a `UnitVisual` wearing `resources/dress/<name>.tres`, so its
-## model, palette and gear), standing in the first frame of its idle clip, seen in a three-quarter
-## view, lit warm from one side with a faint cool fill and rim, on a dark ground; towards the edges
-## the whole picture darkens to `GROUND_EDGE`'s depth, so it sits on any dark panel without a seam.
-## `<name>` is the dress's palette name (`palette-<name>.png`).
+## model, palette, head and clothes), its cloth settled as the game settles it, held in its idle clip
+## at `HOLD_AT`, framed from the top of the head to the top of the chest in a three-quarter view from
+## a little below the eyes (so they show under a helmet's brim), lit by one warm key ahead of the face
+## and to the side it looks towards, a faint cool fill on the other side and a fainter cool rim, on a
+## dark ground. What it holds in its hands is hidden: it would only crowd the frame. Towards the edges,
+## from a centre on the face, the whole picture darkens to `GROUND_EDGE`'s depth, so it sits on any
+## dark panel without a seam. `<name>` is the dress's palette name (`palette-<name>.png`).
 ##
 ##     godot --path . -s tools/render_portraits.gd [-- <name>...]
 ##
@@ -14,8 +17,8 @@ extends SceneTree
 ##
 ## With no names it renders every dress in `resources/dress/`. It draws, so it needs a window (not
 ## `--headless`). Each figure is drawn at 1024 px and scaled down on the CPU; the figure's own faint
-## light (`UnitVisual.LIFT`) is turned off here, so the side light alone models the face. Two runs on
-## the same machine write the same bytes.
+## light for dark rooms (`UnitVisual.LIFT`) is turned off here, so the lights alone model the face and
+## it is not flattened. Two runs on the same machine write the same bytes.
 
 const DRESSES: String = "res://resources/dress/"
 const OUT: String = "res://assets/portraits/"
@@ -29,19 +32,41 @@ const DRAWN: int = 1024
 ## The ground behind the figure, at the middle and, as dark as the darkening makes it, at the edges.
 const GROUND: Color = Color(0.085, 0.065, 0.055)
 const GROUND_EDGE: Color = Color(0.008, 0.006, 0.006)
-## The camera: how far round from straight in front (towards the figure's left), its field of view,
-## and where it looks, as fractions of the figure's height.
-const TURN_DEGREES: float = -34.0
-const FOV: float = 24.0
-const LOOK_AT: float = 0.78
-const DISTANCE: float = 2.4
-const EYE_ABOVE: float = 0.05
-## Which way the key light comes from, turned about the vertical, in degrees.
-const KEY_YAW: float = -110.0
-## Where the darkening towards the edges starts, as a fraction of the way from the middle to an edge.
-const VIGNETTE_FROM: float = 0.45
+## The camera: how far round from straight in front (towards the figure's left, positive; this is round
+## to its right, so its face looks across the picture to the right), its field of view, how far it
+## stands from the head, and the point it looks at, above the head bone's joint, in metres.
+const TURN_DEGREES: float = -18.0
+const FOV: float = 20.0
+const DISTANCE: float = 1.55
+const LOOK_ABOVE_HEAD: float = 0.06
+## How far above the point it looks at the camera stands, in metres: below it, so the eyes show
+## under a helmet's brim.
+const EYE_ABOVE: float = -0.08
+## Where the warm key stands, seen from the head: turned about the vertical from straight in front
+## (towards the figure's left, positive: the side its face looks towards) and raised, in degrees; and
+## the faint cool fill, on the other side.
+const KEY_YAW: float = 35.0
+const KEY_PITCH: float = 12.0
+const FILL_YAW: float = -70.0
+const FILL_PITCH: float = 5.0
+## The rim's place, behind the figure, as the key's.
+const RIM_YAW: float = 160.0
+const RIM_PITCH: float = 20.0
+## Who looks across the picture to the left rather than the right (the camera, key and fill all
+## mirrored): the sergeant, so the two soldiers, alike in helmet and frame, are not one picture.
+const FACING_LEFT: Array[String] = ["sergeant"]
+## The idle clip's time the figure is held at, in seconds.
+const HOLD_AT: float = 0.0
+## Where the darkening towards the edges is centred, as fractions of the picture's width and height:
+## on the face, so the chest falls off into the dark sooner than the head.
+const VIGNETTE_CENTRE: Vector2 = Vector2(0.5, 0.42)
+## Where the darkening towards the edges starts, as a fraction of the way from its centre to an edge.
+const VIGNETTE_FROM: float = 0.6
 
 var _viewport: SubViewport
+var _key: DirectionalLight3D
+var _fill: DirectionalLight3D
+var _rim: DirectionalLight3D
 
 
 func _initialize() -> void:
@@ -111,16 +136,20 @@ func _stage() -> SubViewport:
 	environment.background_color = GROUND
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color(0.32, 0.3, 0.34)
-	environment.ambient_light_energy = 0.35
+	environment.ambient_light_energy = 0.25
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	var world := WorldEnvironment.new()
 	world.environment = environment
 	viewport.add_child(world)
-	# The key: warm, high and to the figure's right, as from a torch beside it.
-	viewport.add_child(_light(Color(1.0, 0.84, 0.68), 1.3, Vector3(-30.0, KEY_YAW, 0.0), true))
-	# A faint cool fill from the other side and a rim from behind, so the dark side keeps its shape.
-	viewport.add_child(_light(Color(0.45, 0.52, 0.7), 0.35, Vector3(-10.0, KEY_YAW + 132.0, 0.0), false))
-	viewport.add_child(_light(Color(0.75, 0.7, 0.9), 0.9, Vector3(-20.0, 160.0, 0.0), false))
+	# The key: warm, raised a little, ahead of the face and to the side it looks towards, as from a
+	# torch; no shadows, so a helmet's brim does not put out the eyes.
+	_key = _light(Color(1.0, 0.87, 0.72), 1.0)
+	# A faint cool fill from the other side, so the shadow side of the face keeps its shape, and a
+	# fainter cool rim from behind, so dark hair and cloth part from the dark ground.
+	_fill = _light(Color(0.62, 0.68, 0.86), 0.5)
+	_rim = _light(Color(0.6, 0.62, 0.8), 0.5)
+	for light: DirectionalLight3D in [_key, _fill, _rim]:
+		viewport.add_child(light)
 	var camera := Camera3D.new()
 	camera.fov = FOV
 	camera.current = true
@@ -128,13 +157,19 @@ func _stage() -> SubViewport:
 	return viewport
 
 
-func _light(colour: Color, energy: float, degrees: Vector3, shadows: bool) -> DirectionalLight3D:
+func _light(colour: Color, energy: float) -> DirectionalLight3D:
 	var light := DirectionalLight3D.new()
 	light.light_color = colour
 	light.light_energy = energy
-	light.rotation_degrees = degrees
-	light.shadow_enabled = shadows
 	return light
+
+
+## Turns `light` to shine at the figure from `yaw` degrees round from straight in front of it (towards
+## its left, positive) and `pitch` degrees above.
+func _aim(light: DirectionalLight3D, yaw: float, pitch: float) -> void:
+	var towards: Vector3 = Vector3(0.0, 0.0, -1.0).rotated(Vector3.UP, deg_to_rad(yaw))
+	towards = towards.rotated(towards.cross(Vector3.UP).normalized(), deg_to_rad(pitch))
+	light.basis = Basis.looking_at(-towards)
 
 
 ## Draws the figure wearing `dress`, at `DRAWN` px, on its ground.
@@ -142,15 +177,28 @@ func _render(dress: Dress) -> Image:
 	var figure := UnitVisual.new()
 	figure.dress = dress
 	_viewport.add_child(figure)
-	# Held in its first idle frame: the clip is set and posed on entering the tree.
+	# Held in its idle clip at `HOLD_AT`; the clip is set on entering the tree.
 	figure.process_mode = Node.PROCESS_MODE_DISABLED
+	var player := figure.model().find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer
+	player.play(&"idle")
+	player.seek(HOLD_AT, true)
+	player.advance(0.0)
 	_without_own_light(figure)
+	_without_hand_gear(figure)
 	# Its cloth fitted to the held pose, as the game fits it to a figure standing still.
 	figure.settle_cloth()
+	await RenderingServer.frame_post_draw
+	var skeleton := figure.model().find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
+	var head: Transform3D = skeleton.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone(&"DEF-head"))
+	var target: Vector3 = head.origin + Vector3.UP * LOOK_ABOVE_HEAD
+	var side: float = -1.0 if dress.palette_name() in FACING_LEFT else 1.0
+	_aim(_key, KEY_YAW * side, KEY_PITCH)
+	_aim(_fill, FILL_YAW * side, FILL_PITCH)
+	_aim(_rim, RIM_YAW * side, RIM_PITCH)
 	var camera: Camera3D = _viewport.get_camera_3d()
-	var target := Vector3(0.0, dress.height * LOOK_AT, 0.0)
-	# The model faces -Z; the camera stands in front of it, turned towards the figure's left.
-	var turn: float = deg_to_rad(TURN_DEGREES)
+	# The model faces -Z; the camera stands in front of it, turned round to its right, so the face
+	# looks across the picture towards the right (to the left for those `FACING_LEFT`).
+	var turn: float = deg_to_rad(TURN_DEGREES * side)
 	camera.position = target + Vector3(-sin(turn), 0.0, -cos(turn)) * DISTANCE + Vector3.UP * EYE_ABOVE
 	camera.look_at(target)
 	for frame: int in 4:
@@ -160,6 +208,14 @@ func _render(dress: Dress) -> Image:
 	figure.free()
 	image.convert(Image.FORMAT_RGB8)
 	return image
+
+
+## Hides what the figure holds in its hands (sword, shield, hammer, staff): in a head-and-shoulders
+## picture it only crowds the frame or cuts across the face.
+func _without_hand_gear(figure: UnitVisual) -> void:
+	for node: Node in figure.find_children("*", "BoneAttachment3D", true, false):
+		if String((node as BoneAttachment3D).bone_name).contains("hand"):
+			(node as BoneAttachment3D).visible = false
 
 
 ## The portrait: `drawn` at `SIZE`, darkened towards its edges.
@@ -175,7 +231,7 @@ func _title_picture(drawn: Image) -> Image:
 	var image: Image = drawn.duplicate()
 	image.resize(TITLE_SIZE, TITLE_SIZE, Image.INTERPOLATE_LANCZOS)
 	image.convert(Image.FORMAT_RGBA8)
-	var middle := Vector2(TITLE_SIZE, TITLE_SIZE) * 0.5
+	var middle := Vector2(TITLE_SIZE, TITLE_SIZE) * VIGNETTE_CENTRE
 	for y: int in TITLE_SIZE:
 		for x: int in TITLE_SIZE:
 			var pixel: Color = image.get_pixel(x, y)
@@ -192,10 +248,10 @@ func _without_own_light(figure: UnitVisual) -> void:
 			material.emission_energy_multiplier = 0.0
 
 
-## Darkens the picture towards its edges: each pixel is scaled by how far it lies from the middle,
-## from `VIGNETTE_FROM` of the way to an edge's midpoint, so figure and ground fall off together.
+## Darkens the picture towards its edges: each pixel is scaled by how far it lies from
+## `VIGNETTE_CENTRE`, from `VIGNETTE_FROM` of the way to an edge, so figure and ground fall off together.
 func _darken_edges(image: Image) -> void:
-	var middle := Vector2(SIZE, SIZE) * 0.5
+	var middle := Vector2(SIZE, SIZE) * VIGNETTE_CENTRE
 	var ground_lum: float = GROUND.get_luminance()
 	var edge_lum: float = GROUND_EDGE.get_luminance()
 	for y: int in SIZE:
