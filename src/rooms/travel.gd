@@ -1,15 +1,20 @@
 class_name Travel
 extends Node
 ## The doors of `Main`'s rooms in a story: takes the doors of each room entered and answers their uses.
-## A use while a fight is on, while Álvar is in the Fury or while a member feeds or walks to a feed
-## shows a notice (in the Fury with no enemy standing, as in the Fragua, one naming the Fury); a use of a barred door shows its `Door.locked_text_for()` the state; any other use
-## takes the whole party through, wherever its members stand.
+## A use while an enemy stands within `BREAK_AWAY` of Álvar, while Álvar is in the Fury or while a
+## member feeds or walks to a feed shows a notice (in the Fury with no enemy standing, as in the Fragua,
+## one naming the Fury); a use of a barred door shows its `Door.locked_text_for()` the state; any other
+## use takes the whole party through, wherever its members stand, a fight under way included: the party
+## can always break away once nobody is upon Álvar. Doors are his alone, so the distance is his,
+## whoever is selected.
 ##
 ## Doors are used from a unit's physics step, and changing room removes every unit and the room at once,
 ## so the party goes through at the end of the frame, if it still may then. No door is used while player
 ## input is off (in a conversation, on the title, after Álvar's fall), nor in a room not begun here.
 
 const FIGHT_TEXT: String = "Not while they are upon you"
+## An enemy this near Álvar, flat, in metres, keeps the party from going through a door.
+const BREAK_AWAY: float = 3.0
 ## In the Fury where no enemy lives, as in the Fragua, nobody is upon him: the Fury is named.
 const FURY_TEXT: String = "Not while the Fury has you."
 
@@ -52,7 +57,7 @@ func _take(door: Door) -> void:
 
 ## The notice for going through `door` now, or empty when the party may go.
 func _refusal(door: Door) -> String:
-	if _encounter.fight_is_on():
+	if _encounter.enemy_within(_party.leader.global_position, BREAK_AWAY):
 		return FIGHT_TEXT
 	if _party.leader_in_fury() and _encounter.enemies_alive() == 0:
 		return FURY_TEXT

@@ -10,7 +10,7 @@ max_health = 1450
 
 [node name="CrusaderSergeant" instance=ExtResource("1_crusader")]
 stats = SubResource("Resource_stats")
-move_speed = 3.2
+move_speed = 2.0
 display_name = "Sergeant"
 
 [node name="Visual" parent="." index="1"]

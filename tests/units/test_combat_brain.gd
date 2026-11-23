@@ -89,6 +89,7 @@ func test_leaves_an_order_it_did_not_give() -> void:
 
 func test_follows_its_leader_when_idle() -> void:
 	var friend: Unit = arena.spawn(Arena.CRUSADER, Vector3(-8, 0, 8), true)
+	friend.move_speed = 3.2  # the pace this walk was timed for; a crusader's own is slower
 	(friend.get_node("Brain") as CombatBrain).leader = foe
 	await wait_seconds(5.0)
 	assert_lt(Arena.flat(friend.global_position, foe.global_position), 4.5)
@@ -117,6 +118,7 @@ func test_an_attack_running_when_re_enabled_is_left_alone() -> void:
 func test_a_follow_walk_reaims_when_the_leader_moves() -> void:
 	var leader: Unit = arena.spawn(Arena.CRUSADER, Vector3(8, 0, 8))
 	var friend: Unit = arena.spawn(Arena.CRUSADER, Vector3(-8, 0, 8), true)
+	friend.move_speed = 3.2  # the pace this walk was timed for; a crusader's own is slower
 	(friend.get_node("Brain") as CombatBrain).leader = leader
 	await wait_seconds(1.0)
 	assert_true(friend.is_moving())

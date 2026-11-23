@@ -96,6 +96,15 @@ func fight_is_on() -> bool:
 	return false
 
 
+## Whether a living enemy stands within `radius` of `point`, flat on XZ.
+func enemy_within(point: Vector3, radius: float) -> bool:
+	for enemy: Unit in enemies:
+		var gap: Vector3 = enemy.global_position - point
+		if enemy.is_alive() and Vector2(gap.x, gap.z).length() <= radius:
+			return true
+	return false
+
+
 func enemies_alive() -> int:
 	var alive: int = 0
 	for enemy: Unit in enemies:

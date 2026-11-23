@@ -28,17 +28,20 @@ func test_a_sergeant_has_1450_health_and_hits_for_10_every_2_seconds() -> void:
 	await wait_physics_frames(3)
 	assert_eq(sergeant.stats.health, 1450)
 	assert_eq(sergeant.stats.max_health, 1450)
+	assert_eq(sergeant.move_speed, 2.0)
 	assert_eq(sergeant.get_node("Melee").cooldown, 2.0)
 	assert_true(sergeant.get_node("Melee").try_hit(alvar))
 	assert_eq(alvar.stats.health, 110)
 
 
-func test_a_crusader_has_800_health_and_hits_for_3_every_2_seconds() -> void:
+func test_a_crusader_has_900_health_and_hits_for_3_every_2_seconds() -> void:
 	var arena := Arena.new(self)
 	var crusader: Unit = arena.spawn(Arena.CRUSADER, Vector3.ZERO)
 	var alvar: Unit = arena.spawn(Arena.ALVAR, Vector3(0, 0, 1.2))
 	await wait_physics_frames(3)
-	assert_eq(crusader.stats.max_health, 800)
+	assert_eq(crusader.stats.max_health, 900)
+	# Slower than Álvar by half, so a party breaking away can open the distance a door asks for.
+	assert_eq(crusader.move_speed, 2.0)
 	assert_eq(crusader.get_node("Melee").cooldown, 2.0)
 	assert_true(crusader.get_node("Melee").try_hit(alvar))
 	assert_eq(alvar.stats.health, 117)

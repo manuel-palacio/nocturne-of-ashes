@@ -32,15 +32,61 @@ func test_with_the_order_the_stair_leads_to_the_vault() -> void:
 	assert_eq(main.enemies_alive(), 6)
 	assert_eq(main.store.load_state().room, &"vault")
 
-func test_no_leaving_while_a_fight_is_on() -> void:
-	var state := GameState.skirmish()
-	await _boot(state)
-	main.enemies[0].order_attack(main.player)
-	await wait_physics_frames(2)
+## An enemy `metres` from Álvar, flat, in a fight already begun: it is attacking Zahra, its brain taken
+## out so it stays where it is put.
+func _fight_with_an_enemy_at(metres: float, state: GameState = GameState.skirmish()) -> Unit:
+	await _boot_in_a_calm_vault(state)
+	var enemy: Unit = main.enemies[0]
+	enemy.global_position = main.player.global_position + Vector3(metres, 0, 0)
+	enemy.order_attack(main.party[1])
+	await wait_physics_frames(1)
+	assert_true(main.fight_is_on(), "the fight is on")
+	return enemy
+
+
+func test_no_leaving_with_an_enemy_within_three_metres_of_alvar() -> void:
+	var enemy: Unit = await _fight_with_an_enemy_at(2.0)
 	_door("WestDoor").use(main.player)
 	await wait_physics_frames(2)
+	assert_lt(Arena.flat(enemy.global_position, main.player.global_position), 3.0)
 	assert_eq(main.room.room_id, &"vault")
 	assert_eq(main.hud.notice(), "Not while they are upon you")
+
+
+func test_the_party_breaks_away_mid_fight_with_no_enemy_within_three_metres_of_alvar() -> void:
+	await _fight_with_an_enemy_at(4.0)
+	_door("WestDoor").use(main.player)
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"haven")
+	assert_eq(main.party.size(), 3, "the whole party goes through")
+
+
+func test_the_distance_is_measured_to_alvar_whoever_is_selected() -> void:
+	await _fight_with_an_enemy_at(4.0)
+	var zahra: Unit = main.party[1]
+	main.select(zahra)
+	zahra.global_position = main.player.global_position + Vector3(5.0, 0, 0)
+	main.enemies[0].global_position = zahra.global_position + Vector3(1.0, 0, 0)
+	await wait_physics_frames(1)
+	assert_gt(Arena.flat(main.enemies[0].global_position, main.player.global_position), 3.0)
+	_door("WestDoor").use(main.player)
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"haven", "an enemy upon Zahra does not hold Álvar at the door")
+
+
+func test_a_vault_left_mid_fight_has_its_guard_whole_again_and_says_so() -> void:
+	await _fight_with_an_enemy_at(4.0, PageBoot.haven_finished())
+	Arena.weaken(main.enemies[1], 0.5)
+	_door("WestDoor").use(main.player)
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"haven")
+	_door("StairDoor").use(main.player)
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"vault")
+	assert_eq(main.enemies_alive(), 6)
+	for enemy: Unit in main.enemies:
+		assert_eq(enemy.stats.health, enemy.stats.max_health)
+	assert_eq(main.hud.notice(), "The vault's guard has closed ranks again.")
 
 func test_the_way_back_to_the_haven_arrives_on_the_stairs_side_clear_of_it() -> void:
 	var state := GameState.skirmish()
@@ -100,8 +146,8 @@ func test_doors_do_nothing_in_the_skirmish() -> void:
 	assert_eq(main.hud.notice(), "")
 
 ## The skirmish's state in the story, with the enemies' brains taken out, so no fight starts.
-func _boot_in_a_calm_vault() -> void:
-	await _boot(GameState.skirmish())
+func _boot_in_a_calm_vault(state: GameState = GameState.skirmish()) -> void:
+	await _boot(state)
 	for enemy: Unit in main.enemies:
 		var brain: Node = enemy.get_node("Brain")
 		enemy.remove_child(brain)
@@ -172,10 +218,11 @@ func test_a_door_is_inert_while_the_title_shows() -> void:
 	assert_eq(main.hud.notice(), "")
 	assert_signal_not_emitted(door, "travel_requested")
 
-func test_a_door_used_just_before_the_fight_starts_does_not_travel() -> void:
+func test_a_door_used_just_before_an_enemy_comes_upon_alvar_does_not_travel() -> void:
 	await _boot_in_a_calm_vault()
 	assert_true(_door("WestDoor").use(main.player))
 	# In the same frame, before the party would go through at its end.
+	main.enemies[0].global_position = main.player.global_position + Vector3(2.0, 0, 0)
 	main.enemies[0].order_attack(main.player)
 	await wait_physics_frames(3)
 	assert_eq(main.room.room_id, &"vault")
