@@ -93,7 +93,8 @@ and Malakor, its master, speaks to him first. In the Fragua he can talk with Mal
 smith, with a captive crusader in his alcove, and with Zahra and Gonzalo, who join the party. Two
 choices move his Alma: what he does with the captive, and what he tells Malakor about the
 letter he carried. Once Malakor gives the order, the stair opens onto the vault below, where the
-crusaders wait; its last lock does not open yet.
+crusaders wait; its last lock does not open yet. This is where the story rests for now: once the vault
+is cleared, a card says so, once, and that the game and its Alma are kept for when the story goes on.
 
 ## Controls
 
@@ -102,7 +103,8 @@ crusaders wait; its last lock does not open yet.
 - Left click on a companion, or press Tab, to select another party member.
 - 1 and 2 use the selected member's Rites; a Rite that needs a target waits for a click on one.
 - Escape (or a right click) cancels a Rite's targeting.
-- Space pauses and resumes the world; orders given while paused begin on resume.
+- Space pauses and resumes the world; orders given while paused begin on resume. The world also pauses
+  itself when the page is hidden (another tab, a minimised window), and waits for Space.
 - Q and E turn the camera; the mouse wheel zooms.
 - Left click on someone to have Álvar walk up and talk with them, whoever is selected; Enter, Space or a click on the box goes on, and 1–4 (or a click) take a choice.
 - Left click on a door to have Álvar take the party through it, whoever is selected; a door stays shut while a fight is on or until the story opens it.
@@ -110,7 +112,9 @@ crusaders wait; its last lock does not open yet.
 - Enter, after Álvar falls, plays on from the last checkpoint.
 
 Progress is saved in the browser: on entering a room, at the end of each conversation and when a room
-is cleared. The title offers Continue when there is a save, and New game.
+is cleared. The title offers Continue when there is a save, and New game. When the browser will not keep
+saves (its site data blocked, or a save that does not read back), the title says progress lasts only
+until the page is closed; a private window that keeps data until it closes cannot be told apart.
 
 ## Test parameters
 
