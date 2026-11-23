@@ -300,6 +300,53 @@ func test_ten_seconds_after_the_first_blow_every_enemy_is_alerted() -> void:
 			"all of them, after")
 
 
+## The nearest living enemy to Álvar, or null.
+func _nearest_enemy() -> Unit:
+	var best: Unit = null
+	var best_distance: float = INF
+	for enemy: Unit in main.enemies:
+		var distance: float = Arena.flat(enemy.global_position, main.player.global_position)
+		if enemy.is_alive() and distance < best_distance:
+			best_distance = distance
+			best = enemy
+	return best
+
+
+## Plays the story's vault, brains on, for up to `seconds` of game time, calling `each_step` every tenth
+## of a second; returns "cleared", "fall" or "stall".
+func _play_the_vault(seconds: float, each_step: Callable) -> String:
+	await _boot(PageBoot.haven_finished())
+	var steps: int = roundi(seconds * 10.0)
+	var frames: int = maxi(1, Engine.physics_ticks_per_second / 10)
+	for step: int in steps:
+		each_step.call()
+		await wait_physics_frames(frames)
+		if main.is_cleared():
+			return "cleared"
+		if not main.player.is_alive():
+			return "fall"
+	return "stall"
+
+
+## Walked into the first group with no further order, the fight still ends: the second group comes.
+func test_walking_into_the_first_group_and_doing_nothing_more_ends_the_fight() -> void:
+	var outcome: String = await _play_the_vault(60.0, func() -> void:
+		if main.player.current_order() == Unit.Order.NONE and main.enemies_alive() == 6 \
+				and main.player.global_position.x < -5.0:
+			main.player.order_move(Vector3(0.5, 0.0, 0.0)))
+	assert_true(outcome == "cleared" or outcome == "fall", "the fight ended (%s), it did not stall" % outcome)
+
+
+## Ordinary play wins: Álvar attacks the nearest enemy, no Rites, no feeding.
+func test_alvar_attacking_the_nearest_enemy_clears_the_vault() -> void:
+	var outcome: String = await _play_the_vault(60.0, func() -> void:
+		if main.player.is_alive() and main.player.attack_target() == null:
+			var enemy: Unit = _nearest_enemy()
+			if enemy != null:
+				main.player.order_attack(enemy))
+	assert_eq(outcome, "cleared")
+
+
 # --- 3. Leaving a fight is said aloud ---
 
 func test_coming_back_to_a_vault_whose_guard_was_restored_says_so() -> void:
