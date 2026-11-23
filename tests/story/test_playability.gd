@@ -217,3 +217,16 @@ func test_malakor_sends_nobody_anywhere_once_the_vault_is_cleared() -> void:
 	assert_eq(after.size(), 1, "one closing line")
 	assert_false(" ".join(after).contains("Go down"))
 	assert_false(" ".join(after).contains("stair is open"))
+
+
+# --- 8. Íñigo does not repeat his speech ---
+
+func test_inigo_says_it_all_once_then_reminds_in_two_lines() -> void:
+	await _boot(_haven_after_the_order())
+	var first: Array[String] = await _lines_of("smith")
+	assert_gt(first.size(), 4)
+	var second: Array[String] = await _lines_of("smith")
+	assert_between(second.size(), 1, 2)
+	var said: String = " ".join(second)
+	assert_string_contains(said, "drink")
+	assert_string_contains(said, "Fury")

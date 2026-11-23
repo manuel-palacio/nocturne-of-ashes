@@ -147,12 +147,13 @@ func test_keeping_the_letter() -> void:
 	assert_true(main.state.has_flag(&"kept_letter"))
 	assert_false(main.state.has_flag(&"gave_letter"))
 
-func test_the_smith_talks_without_changing_anything() -> void:
+func test_the_smith_talks_without_changing_anything_but_that_he_has_said_it() -> void:
 	await _boot(_after_waking())
-	var before: Dictionary = main.state.to_dict()
+	var expected: GameState = GameState.from_dict(main.state.to_dict())
+	expected.set_flag(&"smith_heard")
 	await _talk("smith")
 	await _talk("smith")
-	assert_eq(main.state.to_dict(), before)
+	assert_eq(main.state.to_dict(), expected.to_dict())
 
 func test_the_whole_haven_can_be_played_to_the_vault() -> void:
 	await _boot()

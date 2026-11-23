@@ -50,6 +50,10 @@ else
 => END
 
 ~ smith
+if has_flag("smith_heard")
+	Íñigo: I said it once. When the Blood runs low, you drink.
+	Íñigo: Let it run dry and the Fury chooses for you. Now mind the sparks.
+	=> END
 if has_flag("captive_done")
 	Íñigo: Stand clear of the quench. You have been to the alcove, I can see it on you. Listen while I work.
 else
@@ -59,6 +63,7 @@ else
 Íñigo: Let it run dry and the Fury takes you. Then you do not choose whom you drink from. You drink from whoever is near.
 Íñigo: And the Silence. The living up there must never learn what walks beneath them. Not one of them, not ever.
 Íñigo: That is all. Hand me the tongs on your way out.
+do set_flag("smith_heard")
 => END
 
 ~ captive
