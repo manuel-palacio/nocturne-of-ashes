@@ -5,39 +5,7 @@
 // rests there, the last lock, then a reload and Continue, which does not show the card again.
 // `calm=1` keeps it deterministic: the crusaders stand still and fall to the party's blows.
 const { test, expect } = require('@playwright/test');
-const { state, open, until, talkThrough } = require('./helpers');
-
-// A screen point a click can reach: clear of the party panels on the left, the Gift bar at the bottom
-// and the edges.
-const usable = (at, view) => at && at[0] > 240 && at[0] < view[0] - 30 && at[1] > 30 && at[1] < view[1] - 90;
-
-// Clicks a point `at` (CSS pixels relative to the canvas) if a click can reach it, else a point on
-// the way to it, 220 px from the middle of the screen, so Álvar walks towards it.
-async function clickTowards(page, at) {
-  const box = await page.locator('canvas').boundingBox();
-  const s = await state(page);
-  let [x, y] = at;
-  if (!usable(at, s.view)) {
-    const cx = s.view[0] / 2, cy = s.view[1] / 2;
-    const k = Math.min(1, 220 / Math.hypot(at[0] - cx, at[1] - cy));
-    x = cx + (at[0] - cx) * k;
-    y = cy + (at[1] - cy) * k;
-  }
-  await page.mouse.click(box.x + x, box.y + y);
-}
-
-// Walks to and uses the person or door `name` until `done(state)` holds.
-async function use(page, name, done) {
-  for (let i = 0; i < 30; i++) {
-    const s = await state(page);
-    if (done(s)) return;
-    const at = s.people[name];
-    if (!at) throw new Error(`${name} is not on show; on show: ${Object.keys(s.people).join(', ')}`);
-    await clickTowards(page, at);
-    await page.waitForTimeout(1300);
-  }
-  expect(done(await state(page)), `using ${name}`).toBe(true);
-}
+const { state, open, until, talkThrough, usable, clickTowards, use } = require('./helpers');
 
 // Talks to `name`, taking choice `key` at each choice, and returns the lines spoken.
 async function talkTo(page, name, key) {

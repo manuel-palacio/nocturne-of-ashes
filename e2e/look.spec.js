@@ -2,7 +2,7 @@
 // The browser budget: frame rate with everyone on screen, the time a first load takes, and the frames
 // the owner is shown (build/e2e/look-<frame>-<browser>.png, 1280 × 720 at twice the pixel density).
 const { test, expect } = require('@playwright/test');
-const { state, open, until, talkThrough } = require('./helpers');
+const { state, open, until, talkThrough, usable, clickTowards, use } = require('./helpers');
 const fs = require('fs');
 
 // Where a frame for the owner is saved, by the browser that drew it.
@@ -168,22 +168,31 @@ test.describe('the frames for the owner', () => {
     expect(errors).toEqual([]);
   });
 
-  test('the vault at spawn and the last lock', async ({ page }) => {
-    test.setTimeout(120000);
+  test('the vault at spawn, the closing card and the last lock', async ({ page }) => {
+    test.setTimeout(300000);
     const errors = await open(page, 'probe=1&fresh=1&at=vault&calm=1');
     await page.waitForTimeout(1000);
     await page.screenshot({ path: frame('vault') });
-    const box = await page.locator('canvas').boundingBox();
-    for (let i = 0; i < 12; i++) {
+    // The vault fought to cleared, `calm=1` keeping the crusaders still: Álvar is sent at the nearest
+    // one a click can reach until none stands. Then the closing card, which says the story rests here.
+    for (let i = 0; i < 150; i++) {
       const s = await state(page);
-      if (s.notice) break;
-      const lock = s.people['LastLock'];
-      if (lock && inside(lock, box)) await page.mouse.click(box.x + lock[0], box.y + lock[1]);
-      else await page.mouse.click(box.x + box.width * 0.8, box.y + box.height * 0.4);
-      await page.waitForTimeout(1500);
+      if (s.cleared) break;
+      const foe = s.foes.find((at) => usable(at, s.view)) || s.foes[0];
+      await clickTowards(page, foe || [s.view[0] * 0.75, s.view[1] * 0.5]);
+      await page.waitForTimeout(1200);
     }
-    expect((await state(page)).notice).not.toBe('');
+    expect((await state(page)).cleared).toBe(true);
+    await until(page, () => { window.nocturneProbe(); return window.nocturneState.closing_ready; });
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: frame('closing') });
+    // The card closed, the last lock tried: it does not yield, and says where the story rests.
+    await page.keyboard.press('Enter');
+    await until(page, () => { window.nocturneProbe(); return !window.nocturneState.closing; });
+    const line = 'The last lock does not yield. This is where the story rests, for now.';
+    await use(page, 'LastLock', (t) => t.notice === line);
     await settle(page);
+    expect((await state(page)).notice).toBe(line);
     await page.screenshot({ path: frame('lock') });
     expect(errors).toEqual([]);
   });
