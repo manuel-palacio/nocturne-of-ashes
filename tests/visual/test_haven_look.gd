@@ -13,9 +13,9 @@ const OLD_POSITIONS: Dictionary = {
 	"Entry_start/Companion1": Vector2(-7, 1.5),
 	"Entry_start/Companion2": Vector2(-7, -1.5),
 	# Moved west from (7, 0) so that on arrival from the vault Malakor stands clear of the party panels.
-	"Entry_from_vault": Vector2(2, -0.8),
-	"Entry_from_vault/Companion1": Vector2(2, 0.7),
-	"Entry_from_vault/Companion2": Vector2(3.5, -1.3),
+	"Entry_from_vault": Vector2(1.5, -0.8),
+	"Entry_from_vault/Companion1": Vector2(1.5, 0.7),
+	"Entry_from_vault/Companion2": Vector2(3, -1.3),
 	"StairDoor": Vector2(8.85, 2.5),
 	"Malakor": Vector2(-2.2, -4.2),
 	"Smith": Vector2(2.6, -3.5),

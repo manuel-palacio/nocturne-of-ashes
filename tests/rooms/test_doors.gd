@@ -50,7 +50,7 @@ func test_the_way_back_to_the_haven_arrives_on_the_stairs_side_clear_of_it() -> 
 	assert_eq(main.room.room_id, &"haven")
 	# Moved west of the stair so that, on arrival, nobody stands under the party panels.
 	var from_stair: float = Arena.flat(main.player.global_position, _door("StairDoor").global_position)
-	assert_lt(from_stair, 8.0)
+	assert_lt(from_stair, 9.0)
 	assert_gt(from_stair, 1.5, "far enough not to use the stair again")
 	assert_gt(main.player.global_position.x, 0.0, "on the stair's side of the forge")
 
