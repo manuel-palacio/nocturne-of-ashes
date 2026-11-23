@@ -16,6 +16,15 @@ const PORTRAIT_HUE_SLACK: float = 0.15
 ## their brightness may be (as a factor) for them to be in the same light.
 const EYE_REACH: int = 4
 const EYE_SAME_LIGHT: float = 1.6
+## An eye's iris, in pixels of a 256 px portrait: its size, fewest and most; how far the middle third's
+## columns are widened to look for it (the sergeant, facing left, has his far eye's middle 3 px outside
+## the third); how far apart two eyes' middles lie, least and most; how far apart their rows may be; and
+## how many pixels of skin lie between them at least.
+const EYE_SIZE: Vector2i = Vector2i(3, 150)
+const EYE_MARGIN: int = 8
+const EYE_APART: Vector2 = Vector2(18.0, 50.0)
+const EYE_LEVEL: float = 5.0
+const EYE_BRIDGE: int = 5
 ## How unlike two portraits' light and shade (`_shape`) are at least, on average per pixel: the same
 ## portrait recoloured scores about 0.03 to 0.11.
 const PORTRAITS_APART: float = 0.15
@@ -150,43 +159,82 @@ func _lit_as(image: Image, square: Color) -> PackedFloat32Array:
 	return lit
 
 
-## Whether any pixel of `lit` (a `_lit_as` of a `width`-wide image) in the box `box` is non-zero.
-func _any_in(lit: PackedFloat32Array, width: int, box: Rect2i) -> bool:
-	for y: int in range(box.position.y, box.end.y):
-		for x: int in range(box.position.x, box.end.x):
-			if lit[y * width + x] > 0.0:
-				return true
-	return false
-
-
-## How many pixels of the middle third of `palette`'s portrait are the iris of an eye: the iris's
-## colour with the eye white's on both sides of it, within `EYE_REACH` and in the same light (their
-## brightness within `EYE_SAME_LIGHT` of each other's), and skin above and below it.
-func _eye_pixels(palette: String) -> int:
-	var image: Image = _portrait_image(palette)
+## The clusters of the iris's colour near the middle third of `palette`'s portrait (its rows, and its
+## columns widened by `EYE_MARGIN` on each side) that could be an eye: 8-connected, of `EYE_SIZE`
+## pixels, and with the eye white's colour beside them (beside some of their pixels, within `EYE_REACH`
+## along the row, in the same light: brightness within `EYE_SAME_LIGHT` of each other's; one side is
+## enough, as the far eye in a three-quarter view shows white on one side only). Each is a Dictionary: `size`,
+## `centre` (Vector2), `left` and `right` (its outermost columns).
+func _eye_clusters(image: Image, palette: String) -> Array[Dictionary]:
 	var width: int = image.get_width()
-	var skin: PackedFloat32Array = _lit_as(image, _square(palette, Dress.Region.SKIN))
 	var white: PackedFloat32Array = _lit_as(image, _square(palette, Dress.Region.EYE_WHITE))
 	var iris: PackedFloat32Array = _lit_as(image, _square(palette, Dress.Region.IRIS))
 	var third: int = width / 3
-	var found: int = 0
-	for y: int in range(third, 2 * third):
-		for x: int in range(third, 2 * third):
-			var light: float = iris[y * width + x]
-			if light == 0.0:
+	var area := Rect2i(third - EYE_MARGIN, third, third + 2 * EYE_MARGIN, third)
+	var seen: Dictionary[Vector2i, bool] = {}
+	var clusters: Array[Dictionary] = []
+	for y: int in range(area.position.y, area.end.y):
+		for x: int in range(area.position.x, area.end.x):
+			if iris[y * width + x] == 0.0 or seen.has(Vector2i(x, y)):
 				continue
-			var sides: Array[bool] = [false, false]
-			for side: int in 2:
-				for step: int in range(1, EYE_REACH + 1):
-					for dy: int in range(-1, 2):
-						var at: float = white[(y + dy) * width + x + (step if side == 1 else -step)]
-						if at > 0.0 and absf(log(at / light)) < log(EYE_SAME_LIGHT):
-							sides[side] = true
-			if sides[0] and sides[1] and _any_in(skin, width, Rect2i(x - 5, y - 10, 11, 8)) \
-					and _any_in(skin, width, Rect2i(x - 5, y + 3, 11, 8)):
-				found += 1
-	return found
+			var cluster: Array[Vector2i] = [Vector2i(x, y)]
+			seen[Vector2i(x, y)] = true
+			var next: int = 0
+			while next < cluster.size():
+				var at: Vector2i = cluster[next]
+				next += 1
+				for dy: int in range(-1, 2):
+					for dx: int in range(-1, 2):
+						var near: Vector2i = at + Vector2i(dx, dy)
+						if area.has_point(near) and not seen.has(near) and iris[near.y * width + near.x] > 0.0:
+							seen[near] = true
+							cluster.append(near)
+			if cluster.size() < EYE_SIZE.x or cluster.size() > EYE_SIZE.y:
+				continue
+			var beside: Array[bool] = [false, false]
+			var centre := Vector2.ZERO
+			var left: int = width
+			var right: int = 0
+			for at: Vector2i in cluster:
+				centre += Vector2(at) / cluster.size()
+				left = mini(left, at.x)
+				right = maxi(right, at.x)
+				var light: float = iris[at.y * width + at.x]
+				for step: int in range(-EYE_REACH, EYE_REACH + 1):
+					var other: float = white[at.y * width + at.x + step]
+					if step != 0 and other > 0.0 and absf(log(other / light)) < log(EYE_SAME_LIGHT):
+						beside[0 if step < 0 else 1] = true
+			if beside[0] or beside[1]:
+				clusters.append({"size": cluster.size(), "centre": centre, "left": left, "right": right})
+	return clusters
 
+
+## The two eyes of `palette`'s portrait: two of `_eye_clusters`, one either side of the face's vertical
+## midline, which in a three-quarter view is the skin between the eyes (the outline's middle is no
+## guide: the near eye lies on it), so: at least `EYE_BRIDGE` pixels of skin on the row between them, the
+## two `EYE_APART` pixels apart and level (rows within `EYE_LEVEL`). Of such pairs, the one with the
+## most iris pixels; empty when there is none.
+func _eyes(palette: String) -> Array[Dictionary]:
+	var image: Image = _portrait_image(palette)
+	var width: int = image.get_width()
+	var skin: PackedFloat32Array = _lit_as(image, _square(palette, Dress.Region.SKIN))
+	var clusters: Array[Dictionary] = _eye_clusters(image, palette)
+	var best: Array[Dictionary] = []
+	var best_size: int = 0
+	for a: Dictionary in clusters:
+		for b: Dictionary in clusters:
+			var gap: float = (b.centre as Vector2).x - (a.centre as Vector2).x
+			if gap < EYE_APART.x or gap > EYE_APART.y or absf((b.centre as Vector2).y - (a.centre as Vector2).y) > EYE_LEVEL:
+				continue
+			var row: int = roundi(((a.centre as Vector2).y + (b.centre as Vector2).y) / 2.0)
+			var bridge: int = 0
+			for x: int in range(int(a.right) + 1, int(b.left)):
+				if skin[row * width + x] > 0.0 or skin[(row - 1) * width + x] > 0.0 or skin[(row + 1) * width + x] > 0.0:
+					bridge += 1
+			if bridge >= EYE_BRIDGE and int(a.size) + int(b.size) > best_size:
+				best_size = int(a.size) + int(b.size)
+				best = [a, b]
+	return best
 
 ## How many pixels of the middle third of `palette`'s portrait are its skin.
 func _skin_pixels(palette: String) -> int:
@@ -201,6 +249,8 @@ func _skin_pixels(palette: String) -> int:
 	return found
 
 
+## A guard against a portrait that is another recoloured: their light and shade must differ. It passed
+## before the portraits were relit as well as after.
 func test_no_two_portraits_are_the_same_picture() -> void:
 	var shapes: Dictionary[String, PackedFloat32Array] = {}
 	for palette: String in PALETTES:
@@ -234,10 +284,18 @@ func _shape(image: Image) -> PackedFloat32Array:
 	return values
 
 
+## Each portrait shows a face: skin in its middle third, and two eyes, the iris's colour with the eye
+## white's beside it, one either side of the face's middle, level. Iris pixels per eye (near, far) as
+## rendered: alvar 42, 21; captive 50, 19; crusader 29, 15; gonzalo 45, 33; malakor 87, 20; sergeant 39,
+## 8; smith 28, 26; zahra 27, 14 (also printed by the test).
 func test_each_portrait_has_a_face_in_its_middle_third() -> void:
 	for palette: String in PALETTES:
 		assert_gt(_skin_pixels(palette), 1000, "%s: skin" % palette)
-		assert_gt(_eye_pixels(palette), 8, "%s: eyes" % palette)
+		var eyes: Array[Dictionary] = _eyes(palette)
+		assert_eq(eyes.size(), 2, "%s: two eyes, either side of the face's middle" % palette)
+		if eyes.size() == 2:
+			gut.p("%s: eyes of %d and %d iris pixels at %s and %s" % [palette, eyes[0].size, eyes[1].size,
+					eyes[0].centre, eyes[1].centre])
 
 
 func test_each_party_panel_shows_its_members_portrait() -> void:
