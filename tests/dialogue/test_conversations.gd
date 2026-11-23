@@ -5,10 +5,16 @@ const TALK := preload("res://tests/fixtures/test_talk.dialogue")
 const NPC := preload("res://scenes/rooms/npc.tscn")
 
 var main: Main
+## The actions a test pressed, released after it.
+var _pressed: Array[StringName] = []
 var smith: Npc
 
 func after_each() -> void:
 	Story.finish(main)
+	# Nothing a test pressed stays down for the next.
+	for action: StringName in _pressed:
+		Input.action_release(action)
+	_pressed.clear()
 
 func before_each() -> void:
 	main = Story.boot(self)
@@ -25,10 +31,13 @@ func _box() -> DialogueBox:
 	return main.find_child("DialogueBox") as DialogueBox
 
 func _tap(action: StringName) -> void:
+	_pressed.append(action)
 	Input.action_press(action)
-	await wait_physics_frames(2)
+	# Drawn frames, not physics ticks: the dialogue box and the cards poll `is_action_just_pressed` in
+	# `_process`, and under load two physics ticks can fall within one drawn frame.
+	await wait_process_frames(2)
 	Input.action_release(action)
-	await wait_physics_frames(2)
+	await wait_process_frames(2)
 
 func test_walking_up_to_someone_opens_the_conversation() -> void:
 	main.player.order_interact(smith)

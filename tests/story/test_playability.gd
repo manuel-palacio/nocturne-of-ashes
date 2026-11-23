@@ -9,10 +9,16 @@ const GAME := preload("res://scenes/game.tscn")
 const SKIRMISH := preload("res://scenes/main.tscn")
 
 var main: Main
+## The actions a test pressed, released after it.
+var _pressed: Array[StringName] = []
 
 
 func after_each() -> void:
 	Story.finish(main)
+	# Nothing a test pressed stays down for the next.
+	for action: StringName in _pressed:
+		Input.action_release(action)
+	_pressed.clear()
 
 
 func _boot(state: GameState) -> void:
@@ -21,10 +27,13 @@ func _boot(state: GameState) -> void:
 
 
 func _tap(action: StringName) -> void:
+	_pressed.append(action)
 	Input.action_press(action)
-	await wait_physics_frames(2)
+	# Drawn frames, not physics ticks: the dialogue box and the cards poll `is_action_just_pressed` in
+	# `_process`, and under load two physics ticks can fall within one drawn frame.
+	await wait_process_frames(2)
 	Input.action_release(action)
-	await wait_physics_frames(2)
+	await wait_process_frames(2)
 
 
 func _click(at: Vector2) -> void:
@@ -139,6 +148,7 @@ func test_a_key_or_click_in_the_cards_first_moments_does_not_close_it() -> void:
 		if open:
 			opened_at.append(Time.get_ticks_msec()))
 	# Enter held down as the last enemy falls: pressed in the frame the card opens.
+	_pressed.append(&"confirm")
 	Input.action_press(&"confirm")
 	for enemy: Unit in main.enemies:
 		enemy.take_hit(999)
@@ -185,6 +195,7 @@ func test_clicks_and_enter_kept_up_from_the_opening_frame_leave_the_card_open_un
 	var clicks: int = 0
 	var presses: int = 0
 	var elapsed: float = 0.0
+	_pressed.append(&"confirm")
 	while elapsed < 2.4:
 		elapsed = (Time.get_ticks_msec() - opened_at[0]) / 1000.0
 		if Input.is_action_pressed(&"confirm"):
