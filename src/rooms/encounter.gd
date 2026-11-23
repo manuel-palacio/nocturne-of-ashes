@@ -18,6 +18,9 @@ const ALERT_TIME: float = 10.0
 
 ## Seconds without a fight before fallen companions rise.
 @export var calm_time: float = 3.0
+## The share of its tuned health each enemy of the next `begin()` has, as a guard tired by Álvar's
+## falls (`Main.guard_health()`); 1 is the guard as tuned.
+var guard_health: float = 1.0
 
 ## While true the fight does not advance; the feed marks still follow, so they are right while the
 ## player plans.
@@ -66,6 +69,11 @@ func begin(room: Room, state: GameState, parent: Node) -> void:
 	for marker: Marker3D in markers:
 		var scene: PackedScene = SERGEANT if room.sergeant_spawns.has(StringName(marker.name)) else CRUSADER
 		var enemy: Unit = scene.instantiate()
+		if guard_health < 1.0:
+			# Its own copy, which the enemy's `_ready()` copies again and fills to this maximum.
+			var stats: Stats = enemy.stats.duplicate()
+			stats.max_health = maxi(roundi(stats.max_health * guard_health), 1)
+			enemy.stats = stats
 		parent.add_child(enemy)
 		enemy.global_transform = marker.global_transform
 		enemy.was_hit.connect(_on_blow)

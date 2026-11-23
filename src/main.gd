@@ -43,6 +43,13 @@ const REST_SHOWN_FLAG: StringName = &"rest_shown"
 const REST_NOTICE: String = "The vault is quiet. The story rests here, for now."
 ## Shown on coming back to a room left with its fight begun and enemies standing: they are restored.
 const REGROUPED_NOTICE: String = "The vault's guard has closed ranks again."
+## Shown on coming back to a room after a fall that has tired its guard (`guard_health()`).
+const TIRING_NOTICE: String = "The guard is tiring."
+## From this fall of Álvar's in the same room on, its guard comes back tired.
+const TIRING_FROM_FALL: int = 3
+## Each such fall takes this share of the guard's tuned health, down to `TIRING_FLOOR`.
+const TIRING_STEP: float = 0.1
+const TIRING_FLOOR: float = 0.7
 
 enum Boot { SKIRMISH, STORY }
 
@@ -98,6 +105,11 @@ var _visibility_callback: JavaScriptObject
 ## The rooms left in this play through a door with their fight begun (an enemy hurt or fallen) and
 ## enemies standing, whose enemies are whole again on the way back. Forgotten on a reload or a new game.
 var _left_mid_fight: Dictionary = {}  # StringName -> true
+## Álvar's falls in the room `_falls_room` since it was entered by a door, cleared, or a game begun. Kept
+## in this play only, outside the state: a fall's reload of the checkpoint keeps it, nothing saves it,
+## so a page reload forgets it.
+var _falls: int = 0
+var _falls_room: StringName = &""
 
 @onready var input: PlayerInput = $PlayerInput
 @onready var rig: CameraRig = $CameraRig
@@ -206,6 +218,7 @@ func enter_room(room_id: StringName, entry: StringName = Room.START) -> void:
 	_party.record(state)
 	if room != null and not _encounter.is_cleared() and _encounter.is_disturbed():
 		_left_mid_fight[room.room_id] = true
+	_forget_falls()
 	_enter(room_id, entry)
 	checkpoint()
 
@@ -241,6 +254,7 @@ func new_game() -> void:
 	if store != null:
 		store.clear()
 	_last_checkpoint = {}
+	_forget_falls()
 	_play(GameState.new_game())
 
 
@@ -309,6 +323,15 @@ func enemies_alive() -> int:
 	return _encounter.enemies_alive()
 
 
+## The share of its tuned health the guard of the current room comes back with after Álvar's falls
+## there: whole for the first `TIRING_FROM_FALL` − 1 falls, then `TIRING_STEP` less for each, never
+## below `TIRING_FLOOR`.
+func guard_health() -> float:
+	if _falls < TIRING_FROM_FALL:
+		return 1.0
+	return maxf(1.0 - TIRING_STEP * (_falls - TIRING_FROM_FALL + 1), TIRING_FLOOR)
+
+
 ## Off the web, the window losing focus hides the game. On the web the engine sends no application
 ## focus-out (only the window's, when its canvas loses focus) and nothing when the page is hidden, so
 ## the page's visibility is followed instead.
@@ -372,6 +395,9 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	_clear_units()
 	_load_room(room_id)
 	var arrived_at: StringName = _spawn_party(entry_name)
+	if room_id != _falls_room:
+		_forget_falls()
+	_encounter.guard_health = guard_health()
 	_encounter.begin(room, state, _units)
 	_party.arrive(_encounter.is_cleared())
 	_conversation.begin_room(room, state)
@@ -388,6 +414,8 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 		_left_mid_fight.erase(room_id)
 		if not _encounter.is_cleared():
 			hud.show_notice(REGROUPED_NOTICE)
+	if guard_health() < 1.0 and not _encounter.is_cleared():
+		hud.show_notice(TIRING_NOTICE)
 	if _is_story_rest():
 		if state.has_flag(REST_SHOWN_FLAG):
 			hud.show_notice(REST_NOTICE)
@@ -475,6 +503,7 @@ func _on_selection_changed(unit: Unit) -> void:
 func _on_member_died(unit: Unit) -> void:
 	party_changed.emit()
 	if unit == player:
+		_count_fall()
 		input.cancel_targeting()
 		input.enabled = false
 		hud.show_fallen()
@@ -498,6 +527,7 @@ func _is_story_rest() -> bool:
 
 
 func _on_room_cleared() -> void:
+	_forget_falls()
 	if _is_story_rest():
 		_closing_due = true
 		_open_closing_when_free()
@@ -557,3 +587,18 @@ func _on_gifts_changed(unit: Unit) -> void:
 	if unit == selected:
 		input.cancel_targeting()
 		hud.show_selected(unit)
+
+
+## Counts a fall of Álvar's in the current room, starting the count again in a room other than the last.
+func _count_fall() -> void:
+	if room == null:
+		return
+	if room.room_id != _falls_room:
+		_forget_falls()
+		_falls_room = room.room_id
+	_falls += 1
+
+
+func _forget_falls() -> void:
+	_falls = 0
+	_falls_room = &""
