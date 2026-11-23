@@ -27,6 +27,9 @@ const ANSWER_DELAY: float = 0.5
 var _has_save: bool = false
 ## Seconds until the answers take a press.
 var _answer_wait: float = 0.0
+## The preparing steps done, of the total; none counted yet while the total is 0.
+var _preparing_done: int = 0
+var _preparing_total: int = 0
 
 @onready var _continue_button: Button = %ContinueButton
 @onready var _new_game_button: Button = %NewGameButton
@@ -60,6 +63,13 @@ func open(can_continue: bool) -> void:
 ## `ShaderWarmup`). The buttons work all the while.
 func show_preparing(on: bool) -> void:
 	_preparing.visible = on
+
+
+## Shows how far the preparing has come: `done` of `total` steps.
+func show_preparing_step(done: int, total: int) -> void:
+	_preparing_done = done
+	_preparing_total = total
+	_show_preparing_text()
 
 
 func is_preparing_shown() -> bool:
@@ -128,8 +138,15 @@ func _show_texts() -> void:
 	_question.text = tr("Erase the saved game?")
 	_yes_button.text = tr("Yes, begin anew")
 	_no_button.text = tr("No")
-	_preparing.text = tr("Preparing the cellars…")
+	_show_preparing_text()
 	_storage.text = tr("This browser is not keeping saves: progress lasts until the page is closed.")
+
+
+func _show_preparing_text() -> void:
+	if _preparing_total <= 0:
+		_preparing.text = tr("Preparing the cellars…")
+	else:
+		_preparing.text = tr("Preparing the cellars… %d of %d") % [_preparing_done, _preparing_total]
 
 
 func _on_new_game_pressed() -> void:

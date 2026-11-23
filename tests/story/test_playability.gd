@@ -403,3 +403,18 @@ func test_inigo_says_it_all_once_then_reminds_in_two_lines() -> void:
 	var said: String = " ".join(second)
 	assert_string_contains(said, "drink")
 	assert_string_contains(said, "Fury")
+
+
+# --- 9. The preparing line moves ---
+
+func test_the_preparing_line_counts_its_steps() -> void:
+	var title: TitleScreen = await _title_with("user://test_playability_%d.json" % randi())
+	var line := title.find_child("PreparingLabel") as Label
+	var warmup := main.find_child("ShaderWarmup") as ShaderWarmup
+	var seen: Dictionary = {line.text: true}
+	# Read at each step, once the title has heard of it (it was connected first).
+	warmup.stepped.connect(func(_done: int, _total: int) -> void: seen[line.text] = true)
+	await wait_until(func() -> bool: return not warmup.is_warming(), 5.0)
+	assert_gt(seen.size(), 3, "it changes between steps: %s" % [seen.keys()])
+	assert_true(seen.keys().any(func(text: String) -> bool: return text.ends_with("of 12")), "%s" % [seen.keys()])
+	assert_true(seen.has("Preparing the cellars… 12 of 12"), "it counts to the end: %s" % [seen.keys()])

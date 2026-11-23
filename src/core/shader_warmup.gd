@@ -14,12 +14,15 @@ extends Node
 ## one for each of the two programs the renderer links for it at once; that is the longest frame.
 ## The frame after the last kind, the view is freed and the next room's is added. `finished` is
 ## emitted after the last room; `stop()` frees whatever is left without it. Either way `ended` follows,
-## once. Nothing of it stays in the game's world.
+## once. Nothing of it stays in the game's world. Each frame that draws something new is a step,
+## `STEPS_PER_ROOM` a room, and `stepped` counts them, so the title can show the work advancing.
 
 ## Emitted once every room given to `start()` has been drawn whole.
 signal finished
 ## Emitted once the warmup is over, whether it finished or was stopped.
 signal ended
+## Emitted after each step drawn: `done` of the `total` steps of every room given to `start()`.
+signal stepped(done: int, total: int)
 
 ## Frames the title is drawn on before the first room is, so it shows before the work starts.
 const TITLE_FRAMES: int = 10
@@ -33,10 +36,15 @@ const VIEW_SIZE_METRES: float = 34.0
 
 ## What a room shows, a step at a time, after the frame with only the ring.
 enum Step { KIT, PIECES, SHADOWS, PEOPLE, AIR, DONE }
+## Steps drawn for each room: the frame with only the ring, then one for each `Step` before `DONE`.
+const STEPS_PER_ROOM: int = 1 + Step.DONE
 
 var _waiting: Array[PackedScene] = []
 var _title_frames: int = 0
 var _warming: bool = false
+## Steps drawn so far, of `_total`.
+var _done: int = 0
+var _total: int = 0
 var _view: SubViewport
 var _step: Step = Step.DONE
 ## The room's drawn things by kind, hidden until their step, and its lights that cast shadows.
@@ -56,6 +64,8 @@ func start(rooms: Array[PackedScene]) -> void:
 	stop()
 	_waiting = rooms.duplicate()
 	_title_frames = TITLE_FRAMES
+	_done = 0
+	_total = rooms.size() * STEPS_PER_ROOM
 	_warming = true
 	set_process(true)
 
@@ -87,6 +97,7 @@ func _process(_delta: float) -> void:
 	if _view != null and _step != Step.DONE:
 		_show(_step)
 		_step = (_step + 1) as Step
+		_count_step()
 		return
 	_free_view()
 	if _waiting.is_empty():
@@ -99,6 +110,12 @@ func _process(_delta: float) -> void:
 	# In the tree first, so that the room's people have dressed by the time they are sorted.
 	_fill(_view, _waiting.pop_front())
 	_step = Step.KIT
+	_count_step()
+
+
+func _count_step() -> void:
+	_done += 1
+	stepped.emit(_done, _total)
 
 
 func _show(step: Step) -> void:
