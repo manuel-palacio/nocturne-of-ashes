@@ -184,8 +184,10 @@ func is_controls_open() -> bool:
 	return _controls_card.is_open()
 
 
-## Opens the closing card, with `alma`, the Alma carried, in its text.
+## Opens the closing card, with `alma`, the Alma carried, in its text, in place of the cleared line it
+## would show through.
 func show_closing(alma: int) -> void:
+	hide_cleared()
 	_closing_card.open(alma)
 
 
