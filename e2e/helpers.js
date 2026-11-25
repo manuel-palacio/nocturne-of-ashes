@@ -33,9 +33,18 @@ async function talkThrough(page, key) {
   throw new Error('the conversation did not end');
 }
 
-// A screen point a click can reach: clear of the party panels on the left, the Gift bar at the bottom
-// and the edges.
-const usable = (at, view) => at && at[0] > 240 && at[0] < view[0] - 30 && at[1] > 30 && at[1] < view[1] - 90;
+// A screen point a click can reach: inside the view, off its very edges, and not on the HUD: the party
+// panels at the top left (three panels reach about 294 px down and 262 px across), the Gift bar at the
+// bottom middle and the controls button at the bottom right. Below the panels, at the left, is game.
+const usable = (at, view) => {
+  if (!at) return false;
+  const [x, y] = at;
+  if (x < 12 || x > view[0] - 12 || y < 12 || y > view[1] - 12) return false;
+  if (x < 272 && y < 304) return false;
+  if (y > view[1] - 70 && Math.abs(x - view[0] / 2) < 210) return false;
+  if (x > view[0] - 70 && y > view[1] - 70) return false;
+  return true;
+};
 
 // Clicks a point `at` (CSS pixels relative to the canvas) if a click can reach it, else a point on
 // the way to it, 220 px from the middle of the screen, so Álvar walks towards it.
