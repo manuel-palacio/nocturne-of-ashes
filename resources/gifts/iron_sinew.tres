@@ -6,7 +6,7 @@
 script = ExtResource("1_script")
 duration = 8.0
 speed_multiplier = 1.4
-damage_dealt_multiplier = 2.0
+damage_dealt_multiplier = 1.5
 id = &"iron_sinew"
 display_name = "Iron Sinew"
 blood_cost = 20

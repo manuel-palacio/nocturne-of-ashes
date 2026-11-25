@@ -41,10 +41,11 @@ func test_blood_lance_wounds_at_range() -> void:
 func test_stone_hide_hardens_gonzalo() -> void:
 	assert_true(_gifts(gonzalo).use(0))
 	assert_eq(gonzalo.take_hit(10), 4)
-	assert_eq(gonzalo.taunt_radius(), 8.0)
+	assert_eq(gonzalo.taunt_radius(), 2.0)
 
 func test_stone_hide_draws_an_enemy_off_another_target() -> void:
-	var hunter: Unit = arena.spawn(Arena.CRUSADER, Vector3(0, 0, 3), true)
+	# Nearer Zahra, and within the taunt of Gonzalo, 2 m to her side.
+	var hunter: Unit = arena.spawn(Arena.CRUSADER, Vector3(0.9, 0, 1.2), true)
 	await wait_seconds(0.6)
 	assert_eq(hunter.attack_target(), zahra)
 	_gifts(gonzalo).use(0)

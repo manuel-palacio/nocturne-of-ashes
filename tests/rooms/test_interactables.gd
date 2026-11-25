@@ -150,7 +150,7 @@ func test_a_target_out_of_reach_of_the_floor_ends_the_order_quietly() -> void:
 func test_an_interact_order_breaks_a_feed_and_proceeds() -> void:
 	var foe: Unit = arena.spawn(Arena.CRUSADER, Vector3(0, 0, -1.2))
 	await wait_physics_frames(3)
-	Arena.weaken(foe, 0.25)
+	Arena.weaken(foe, 0.15)
 	alvar.order_feed(foe)
 	await wait_seconds(0.8)
 	assert_true(alvar.is_feeding())

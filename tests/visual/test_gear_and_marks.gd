@@ -122,7 +122,7 @@ func test_the_feed_mark_is_a_drop_over_the_head_that_follows_can_feed_on() -> vo
 	await _skirmish()
 	var foe: Unit = _crusader()
 	assert_false(_visual(foe).is_feed_mark_shown())
-	Arena.weaken(foe, 1.0 / 3.0)
+	Arena.weaken(foe, 0.15)
 	await wait_physics_frames(2)
 	assert_true(main.player.can_feed_on(foe))
 	assert_true(foe.has_feed_mark())
@@ -164,7 +164,7 @@ func test_the_nearest_usable_one_within_four_metres_shows_its_ring_but_not_while
 func test_a_fallen_unit_shows_no_marks() -> void:
 	await _skirmish()
 	var foe: Unit = _crusader()
-	Arena.weaken(foe, 1.0 / 3.0)
+	Arena.weaken(foe, 0.15)
 	await wait_physics_frames(2)
 	foe.take_hit(Arena.LETHAL)
 	foe.set_feed_mark(true)

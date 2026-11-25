@@ -99,13 +99,13 @@ func test_restart_and_falling_close_targeting() -> void:
 	assert_false(main.player.has_effect(&"iron_sinew"))
 
 func test_a_click_on_a_weakened_enemy_feeds_while_short_of_blood() -> void:
-	Arena.weaken(foe, 1.0 / 3.0)  # within the feed threshold
+	Arena.weaken(foe, 0.15)  # within the feed threshold
 	_click(foe)
 	assert_eq(main.player.current_order(), Unit.Order.FEED)
 
 func test_a_click_on_a_weakened_enemy_attacks_at_full_blood() -> void:
 	main.player.stats.gain_blood(100)
-	Arena.weaken(foe, 1.0 / 3.0)
+	Arena.weaken(foe, 0.15)
 	_click(foe)
 	assert_eq(main.player.current_order(), Unit.Order.ATTACK)
 	assert_eq(main.player.attack_target(), foe)

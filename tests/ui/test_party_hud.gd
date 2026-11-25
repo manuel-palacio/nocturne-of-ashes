@@ -47,9 +47,9 @@ func test_the_state_label_shows_fallen_then_fury_then_feeding() -> void:
 	assert_eq(_panel(0).find_child("StateLabel").text, "")
 
 func test_the_gift_bar_shows_the_selected_members_gifts() -> void:
-	assert_eq(hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Iron Sinew (20)", "2 Baleful Eye (10)"])
+	assert_eq(hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Iron Sinew (20)", "2 Baleful Eye (15)"])
 	main.select(main.party[2])
-	assert_eq(hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Stone Hide (20)", "2 Hammerfall (25)"])
+	assert_eq(hud.gift_buttons().map(func(b: GiftButton) -> String: return b.text), ["1 Stone Hide (30)", "2 Hammerfall (25)"])
 
 func test_a_gift_button_uses_the_gift() -> void:
 	hud.gift_buttons()[0].chosen.emit(0)
@@ -66,7 +66,7 @@ func test_a_gift_too_dear_is_disabled() -> void:
 	main.player.stats.spend_blood(42)  # 18
 	await wait_physics_frames(2)
 	assert_true(hud.gift_buttons()[0].disabled)   # 20
-	assert_false(hud.gift_buttons()[1].disabled)  # 10
+	assert_false(hud.gift_buttons()[1].disabled)  # 15
 
 func test_targeting_marks_its_button() -> void:
 	main.input.press_gift(1)

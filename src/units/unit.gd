@@ -28,11 +28,11 @@ signal fury_ended
 ## Whether the unit can feed on enemies for Blood.
 @export var drinks_blood: bool = false
 ## A target can be fed on at or below this fraction of its maximum health.
-@export var feed_threshold: float = 0.5
-@export var feed_time: float = 2.0
+@export var feed_threshold: float = 0.2
+@export var feed_time: float = 2.5
 @export var feed_gain: int = 40
 ## Health a completed feed gives back, up to the maximum.
-@export var feed_heal: int = 50
+@export var feed_heal: int = 55
 ## Spending Blood from at or above this to below it starts the Fury.
 @export var fury_threshold: int = 10
 @export var fury_time: float = 5.0

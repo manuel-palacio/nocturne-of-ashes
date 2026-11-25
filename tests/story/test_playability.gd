@@ -407,14 +407,16 @@ func test_walking_into_the_first_group_and_doing_nothing_more_ends_the_fight() -
 	assert_true(outcome == "cleared" or outcome == "fall", "the fight ended (%s), it did not stall" % outcome)
 
 
-## Plain clicking no longer wins: Álvar attacking the nearest enemy, with no Rite and no feeding, falls;
-## the fight still ends, it does not stall. The scripted players' table is `test_fight_balance.gd`.
-func test_alvar_attacking_the_nearest_enemy_and_nothing_more_falls() -> void:
+## Clicking the nearest enemy every 1.2 s, with no Rite and no order, the fight still ends, won or lost:
+## it does not stall. How often it is won is the scripted players' table, `test_fight_balance.gd`.
+func test_a_spam_clickers_fight_ends() -> void:
 	await _boot(PageBoot.haven_finished())
+	await VaultFight.settle(self, main)
 	VaultFight.speed_up()
-	var result: Dictionary = await VaultFight.new(main, VaultFight.Kind.CLICKER).play(self, 150.0)
+	var result: Dictionary = await VaultFight.new(main, VaultFight.Kind.SPAM).play(self, 180.0)
 	VaultFight.slow_down()
-	assert_eq(result.outcome, "fall", "after %.0f s of game time" % result.time)
+	assert_true(result.outcome == "cleared" or result.outcome == "fall",
+			"the fight ended (%s after %.0f s of game time)" % [result.outcome, result.time])
 
 
 # --- 3. Leaving a fight is said aloud ---

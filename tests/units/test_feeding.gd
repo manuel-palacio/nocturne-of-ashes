@@ -27,7 +27,7 @@ func test_mortals_do_not_feed_and_friends_are_not_food() -> void:
 
 func test_a_full_feed_kills_the_target_and_gives_blood() -> void:
 	watch_signals(alvar)
-	Arena.weaken(foe, 0.25)
+	Arena.weaken(foe, 0.15)
 	alvar.order_feed(foe)
 	await wait_seconds(0.5)
 	assert_true(alvar.is_feeding())
@@ -41,21 +41,21 @@ func test_a_full_feed_kills_the_target_and_gives_blood() -> void:
 
 func test_blood_gained_is_capped_at_the_maximum() -> void:
 	alvar.stats.gain_blood(30)  # 90
-	Arena.weaken(foe, 0.25)
+	Arena.weaken(foe, 0.15)
 	alvar.order_feed(foe)
 	await wait_seconds(2.6)
 	assert_eq(alvar.stats.blood, 100)
 
 func test_the_feeder_walks_to_a_distant_target_first() -> void:
 	foe.global_position = Vector3(0, 0, 6)
-	Arena.weaken(foe, 0.25)
+	Arena.weaken(foe, 0.15)
 	alvar.order_feed(foe)
 	await wait_for_signal(alvar.fed, 8.0)
 	assert_false(foe.is_alive())
 
 func test_a_new_order_breaks_the_feed_and_frees_the_target() -> void:
 	watch_signals(alvar)
-	Arena.weaken(foe, 0.25)
+	Arena.weaken(foe, 0.15)
 	alvar.order_feed(foe)
 	await wait_seconds(0.8)
 	alvar.order_move(Vector3(4, 0, 0))
@@ -67,7 +67,7 @@ func test_a_new_order_breaks_the_feed_and_frees_the_target() -> void:
 	assert_signal_emitted(alvar, "feed_broken")
 
 func test_a_stun_breaks_the_feed() -> void:
-	Arena.weaken(foe, 0.25)
+	Arena.weaken(foe, 0.15)
 	alvar.order_feed(foe)
 	await wait_seconds(0.8)
 	var stun := StatusEffect.new()
@@ -80,7 +80,7 @@ func test_a_stun_breaks_the_feed() -> void:
 	assert_false(foe.has_effect(&"fed_on"))
 
 func test_a_target_killed_by_another_ends_the_feed_without_blood() -> void:
-	Arena.weaken(foe, 0.25)
+	Arena.weaken(foe, 0.15)
 	alvar.order_feed(foe)
 	await wait_seconds(0.8)
 	foe.take_hit(Arena.LETHAL)
@@ -90,7 +90,7 @@ func test_a_target_killed_by_another_ends_the_feed_without_blood() -> void:
 	assert_eq(alvar.current_order(), Unit.Order.NONE)
 
 func test_a_target_freed_mid_feed_causes_no_error() -> void:
-	Arena.weaken(foe, 0.25)
+	Arena.weaken(foe, 0.15)
 	alvar.order_feed(foe)
 	await wait_seconds(0.8)
 	foe.free()
@@ -100,7 +100,7 @@ func test_a_target_freed_mid_feed_causes_no_error() -> void:
 
 func test_the_feeder_dying_breaks_the_feed_once_and_revives_without_one() -> void:
 	watch_signals(alvar)
-	Arena.weaken(foe, 0.25)
+	Arena.weaken(foe, 0.15)
 	alvar.order_feed(foe)
 	await wait_seconds(0.8)
 	alvar.take_hit(Arena.LETHAL)
@@ -118,7 +118,7 @@ func test_the_feeder_dying_breaks_the_feed_once_and_revives_without_one() -> voi
 	assert_signal_not_emitted(alvar, "fed")
 
 func test_a_target_already_held_by_a_feed_cannot_be_fed_on_by_another() -> void:
-	Arena.weaken(foe, 0.25)
+	Arena.weaken(foe, 0.15)
 	alvar.order_feed(foe)
 	await wait_seconds(0.5)
 	var zahra: Unit = arena.spawn(Arena.ZAHRA, Vector3(0, 0, 2.4))
@@ -132,7 +132,7 @@ func test_a_target_already_held_by_a_feed_cannot_be_fed_on_by_another() -> void:
 func _two_feeders_on_one_target() -> Array[Unit]:
 	var zahra: Unit = arena.spawn(Arena.ZAHRA, Vector3(0, 0, 2.4))
 	await wait_physics_frames(3)
-	Arena.weaken(foe, 0.25)
+	Arena.weaken(foe, 0.15)
 	watch_signals(alvar)
 	watch_signals(zahra)
 	alvar.order_feed(foe)
@@ -185,7 +185,7 @@ func test_can_act_only_when_alive_unstunned_not_feeding_and_not_in_the_fury() ->
 	assert_false(alvar.can_act())
 	alvar.remove_effect(&"stun")
 	assert_true(alvar.can_act())
-	Arena.weaken(foe, 0.25)
+	Arena.weaken(foe, 0.15)
 	alvar.order_feed(foe)
 	await wait_seconds(0.5)
 	assert_true(alvar.is_feeding())

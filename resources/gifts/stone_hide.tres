@@ -4,12 +4,12 @@
 
 [resource]
 script = ExtResource("1_script")
-duration = 8.0
+duration = 6.0
 damage_taken_multiplier = 0.4
-taunt_radius = 8.0
+taunt_radius = 2.0
 id = &"stone_hide"
 display_name = "Stone Hide"
-blood_cost = 20
+blood_cost = 30
 cooldown = 15.0
 targeting = 0
 cast_range = 0.0

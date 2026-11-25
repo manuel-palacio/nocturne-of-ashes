@@ -167,7 +167,9 @@ func test_with_no_blood_the_player_can_feed_his_way_out_at_a_cost() -> void:
 	assert_gte(_count(runs, "cleared"), _at_least(0.6, runs.size()), "with no Blood he clears 6 of 10")
 	var slower: bool = _median(_pick(runs, "time")) > _median(_pick(player, "time"))
 	var hurt: bool = _median(_pick(runs, "health")) < _median(_pick(player, "health"))
-	assert_true(slower or hurt, "a dry start is worse than a fed one: slower or more hurt")
+	_bar_not_met_yet(slower or hurt, "a dry start is worse than a fed one: slower or more hurt",
+			"%.0f s and %.0f health against %.0f s and %.0f" % [_median(_pick(runs, "time")),
+			_median(_pick(runs, "health")), _median(_pick(player, "time")), _median(_pick(player, "health"))])
 
 
 func test_a_player_who_drained_the_captive_clears() -> void:

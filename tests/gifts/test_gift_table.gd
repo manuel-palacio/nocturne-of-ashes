@@ -7,15 +7,15 @@ const GIFTS: String = "res://resources/gifts/"
 ## The design table: id -> the Gift's numbers as its resource holds them.
 const TABLE: Dictionary = {
 	&"iron_sinew": {"display_name": "Iron Sinew", "targeting": Gift.Targeting.SELF, "cast_range": 0.0, "blood_cost": 20,
-			"cooldown": 12.0, "duration": 8.0, "speed_multiplier": 1.4, "damage_dealt_multiplier": 2.0},
-	&"baleful_eye": {"display_name": "Baleful Eye", "targeting": Gift.Targeting.ENEMY, "cast_range": 8.0, "blood_cost": 10,
+			"cooldown": 12.0, "duration": 8.0, "speed_multiplier": 1.4, "damage_dealt_multiplier": 1.5},
+	&"baleful_eye": {"display_name": "Baleful Eye", "targeting": Gift.Targeting.ENEMY, "cast_range": 8.0, "blood_cost": 15,
 			"cooldown": 10.0, "duration": 5.0},
 	&"mend_flesh": {"display_name": "Mend Flesh", "targeting": Gift.Targeting.ALLY, "cast_range": 8.0, "blood_cost": 20,
 			"cooldown": 6.0, "amount": 40},
 	&"blood_lance": {"display_name": "Blood Lance", "targeting": Gift.Targeting.ENEMY, "cast_range": 10.0, "blood_cost": 15,
 			"cooldown": 4.0, "damage": 30},
-	&"stone_hide": {"display_name": "Stone Hide", "targeting": Gift.Targeting.SELF, "cast_range": 0.0, "blood_cost": 20,
-			"cooldown": 15.0, "duration": 8.0, "damage_taken_multiplier": 0.4, "taunt_radius": 8.0},
+	&"stone_hide": {"display_name": "Stone Hide", "targeting": Gift.Targeting.SELF, "cast_range": 0.0, "blood_cost": 30,
+			"cooldown": 15.0, "duration": 6.0, "damage_taken_multiplier": 0.4, "taunt_radius": 2.0},
 	&"hammerfall": {"display_name": "Hammerfall", "targeting": Gift.Targeting.SELF, "cast_range": 0.0, "blood_cost": 25,
 			"cooldown": 12.0, "radius": 3.5, "damage": 15, "stun_time": 2.5},
 }

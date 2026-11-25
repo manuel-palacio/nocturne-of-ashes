@@ -67,7 +67,7 @@ func test_a_feeder_and_its_meal_are_not_pushed_apart() -> void:
 	var meal: Unit = arena.spawn(Arena.CRUSADER, Vector3(0, 0, 0.5))
 	var bystander: Unit = arena.spawn(Arena.ZAHRA, Vector3(0.2, 0, 0.6))
 	await wait_physics_frames(3)
-	Arena.weaken(meal, 0.25)
+	Arena.weaken(meal, 0.15)
 	alvar.order_feed(meal)
 	await wait_physics_frames(3)
 	assert_true(alvar.is_feeding())

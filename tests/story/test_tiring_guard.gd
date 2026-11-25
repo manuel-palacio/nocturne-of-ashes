@@ -1,7 +1,7 @@
 # tests/story/test_tiring_guard.gd
 extends GutTest
 ## Nobody is walled in by the vault: from the third fall in the same room on, each fall leaves the guard
-## there with 10% less health than the last, down to 70% of its tuned health, and the re-entry says the
+## there with 10% less health than the last, down to half its tuned health, and the re-entry says the
 ## guard is tiring. The count lives in `Main` for the session: a fall's reload keeps it, clearing the
 ## room or leaving it forgets it, and nothing of it goes into the save.
 
@@ -54,9 +54,9 @@ func test_the_first_two_falls_leave_the_guard_whole() -> void:
 		assert_ne(main.hud.notice(), "The guard is tiring.")
 
 
-func test_from_the_third_fall_the_guard_tires_by_a_tenth_down_to_seven_tenths() -> void:
+func test_from_the_third_fall_the_guard_tires_by_a_tenth_down_to_half() -> void:
 	await _boot()
-	var expected: Array[int] = [100, 100, 90, 80, 70, 70]
+	var expected: Array[int] = [100, 100, 90, 80, 70, 60, 50, 50]
 	for fall: int in expected.size():
 		await _fall_and_get_up()
 		assert_eq(_guard_shares(), _all(expected[fall]), "after fall %d" % (fall + 1))

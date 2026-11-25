@@ -49,7 +49,7 @@ const TIRING_NOTICE: String = "The guard is tiring."
 const TIRING_FROM_FALL: int = 3
 ## Each such fall takes this share of the guard's tuned health, down to `TIRING_FLOOR`.
 const TIRING_STEP: float = 0.1
-const TIRING_FLOOR: float = 0.7
+const TIRING_FLOOR: float = 0.5
 
 enum Boot { SKIRMISH, STORY }
 
