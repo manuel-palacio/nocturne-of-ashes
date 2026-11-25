@@ -1,12 +1,12 @@
 class_name Travel
 extends Node
 ## The doors of `Main`'s rooms in a story: takes the doors of each room entered and answers their uses.
-## A use while an enemy stands within `BREAK_AWAY` of Álvar, while Álvar is in the Fury or while a
-## member feeds or walks to a feed shows a notice (in the Fury with no enemy standing, as in the Fragua,
-## one naming the Fury); a use of a barred door shows its `Door.locked_text_for()` the state; any other
-## use takes the whole party through, wherever its members stand, a fight under way included: the party
-## can always break away once nobody is upon Álvar. Doors are his alone, so the distance is his,
-## whoever is selected.
+## A use while an enemy stands within `BREAK_AWAY` of Álvar, while Álvar is in the Fury or while he
+## feeds or walks to a feed shows a notice (in the Fury with no enemy standing, as in the Fragua, one
+## naming the Fury); a use of a barred door shows its `Door.locked_text_for()` the state; any other use
+## takes the whole party through, wherever its members stand, a fight under way included: the party can
+## always break away once nobody is upon Álvar. A companion's feed does not hold the party: it is called
+## off as they go. Doors are his alone, so the distance is his, whoever is selected.
 ##
 ## Doors are used from a unit's physics step, and changing room removes every unit and the room at once,
 ## so the party goes through at the end of the frame, if it still may then. No door is used while player
@@ -87,4 +87,5 @@ func _go_through(door: Door) -> void:
 		return
 	if not _refusal(door).is_empty():
 		return
+	_party.call_off_feeds()
 	_go.call(door.to_room, door.to_entry)

@@ -162,25 +162,57 @@ func test_no_leaving_while_alvar_is_in_the_fury() -> void:
 	assert_eq(main.room.room_id, &"vault")
 	assert_eq(main.hud.notice(), "Not while they are upon you")
 
-func test_no_leaving_while_a_member_walks_to_a_feed() -> void:
+## A companion's brain takes a meal when its Blood runs low; a hurt player at the door must not be held
+## for it: the door calls the companion off and the party goes through.
+func test_a_door_calls_a_companion_off_a_walk_to_a_feed_and_the_party_goes_through() -> void:
 	await _boot_in_a_calm_vault()
 	var meal: Unit = main.enemies[0]
-	Arena.weaken(meal, 1.0 / 3.0)
-	main.party[1].order_feed(meal)
-	assert_eq(main.party[1].feed_target(), meal)
+	var zahra: Unit = main.party[1]
+	Arena.weaken(meal, zahra.feed_threshold * 0.5)
+	zahra.order_feed(meal, Unit.Issuer.BRAIN)
+	assert_eq(zahra.feed_target(), meal)
+	# Zahra is freed with the room, so the call-off is noted as it happens.
+	var called_off: Array[bool] = [false]
+	zahra.feed_broken.connect(func() -> void: called_off[0] = true)
 	_door("WestDoor").use(main.player)
 	await wait_physics_frames(3)
-	assert_eq(main.room.room_id, &"vault")
-	assert_eq(main.hud.notice(), "Not while they are upon you")
+	assert_true(called_off[0], "called off")
+	assert_eq(main.room.room_id, &"haven")
 
-func test_no_leaving_while_a_member_feeds() -> void:
+
+func test_a_door_calls_a_feeding_companion_off_and_the_party_goes_through() -> void:
 	await _boot_in_a_calm_vault()
 	var meal: Unit = main.enemies[0]
-	Arena.weaken(meal, 1.0 / 3.0)
-	meal.global_position = main.party[1].global_position + Vector3(1.2, 0, 0)
-	main.party[1].order_feed(meal)
-	await wait_until(func() -> bool: return main.party[1].is_feeding(), 3.0)
-	assert_true(main.party[1].is_feeding())
+	var zahra: Unit = main.party[1]
+	Arena.weaken(meal, zahra.feed_threshold * 0.5)
+	meal.global_position = zahra.global_position + Vector3(1.2, 0, 0)
+	zahra.order_feed(meal, Unit.Issuer.BRAIN)
+	await wait_until(func() -> bool: return zahra.is_feeding(), 3.0)
+	assert_true(zahra.is_feeding())
+	# Álvar stands clear of the meal, so nothing is upon him.
+	main.player.global_position = zahra.global_position + Vector3(0, 0, -4.5)
+	await wait_physics_frames(1)
+	assert_gt(Arena.flat(meal.global_position, main.player.global_position), Travel.BREAK_AWAY, "the meal is not upon Álvar")
+	var called_off: Array[bool] = [false]
+	zahra.feed_broken.connect(func() -> void: called_off[0] = true)
+	_door("WestDoor").use(main.player)
+	await wait_physics_frames(3)
+	assert_true(called_off[0], "called off")
+	assert_eq(main.room.room_id, &"haven")
+
+
+func test_no_leaving_while_alvar_himself_feeds() -> void:
+	await _boot_in_a_calm_vault()
+	var meal: Unit = main.enemies[0]
+	Arena.weaken(meal, main.player.feed_threshold * 0.5)
+	meal.global_position = main.player.global_position + Vector3(0, 0, -1.2)
+	main.player.order_feed(meal)
+	await wait_until(func() -> bool: return main.player.is_feeding(), 3.0)
+	assert_true(main.player.is_feeding())
+	# The drinking holds on wherever the meal stands; set 5 m off, only his feeding can refuse.
+	meal.global_position = main.player.global_position + Vector3(0, 0, -5.0)
+	await wait_physics_frames(1)
+	assert_true(main.player.is_feeding())
 	_door("WestDoor").use(main.player)
 	await wait_physics_frames(3)
 	assert_eq(main.room.room_id, &"vault")

@@ -180,12 +180,17 @@ func leader_in_fury() -> bool:
 	return leader != null and leader.is_in_fury()
 
 
-## Whether something under way would be broken by leaving the room now: the leader is in the Fury, or
-## a member feeds or walks to a feed.
+## Whether the leader is held by something of his own that leaving would break: the Fury, or a feed of
+## his, walking to it or drinking. A companion's feed does not hold the party (`call_off_feeds()`).
 func is_busy() -> bool:
-	if leader != null and leader.is_in_fury():
-		return true
-	return members.any(func(member: Unit) -> bool: return member.feed_target() != null)
+	return leader != null and (leader.is_in_fury() or leader.feed_target() != null)
+
+
+## Calls every companion off a feed, walking to it or drinking, as the party leaves the room.
+func call_off_feeds() -> void:
+	for member: Unit in members:
+		if member != leader and member.feed_target() != null:
+			member.stop()
 
 
 ## The selected member's brain is off; every other member's follows the selected one.
