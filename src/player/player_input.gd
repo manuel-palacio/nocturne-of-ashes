@@ -149,10 +149,11 @@ func cancel_targeting() -> void:
 ## While targeting, uses the Gift on a unit under the point that it can target, else does nothing;
 ## targeting whose Gift is no longer ready is closed first, and the click counts as a plain one.
 ## Otherwise asks to select a living friend under the point; feeds on a living hostile there when the
-## unit can and is short of Blood, else attacks it, saying the Blood is full when that was why; else has an interactable under it used, by the
-## leader when it is leader-only, which leaves the selection as it is, else by the unit, and does
-## nothing when that one may not use it; else walks to the ground under it. A click on the controlled
-## unit itself does nothing.
+## unit can and is short of Blood, else attacks it, saying the Blood is full when that was why, and
+## leaves an attack already on that very enemy going as it is (no new chase); else has an interactable
+## under it used, by the leader when it is leader-only, which leaves the selection as it is, else by
+## the unit, and does nothing when that one may not use it; else walks to the ground under it. A click
+## on the controlled unit itself does nothing.
 func click_at(screen_position: Vector2) -> void:
 	if not enabled or suspended or unit == null or not unit.is_alive():
 		return
@@ -170,7 +171,8 @@ func click_at(screen_position: Vector2) -> void:
 		elif unit.is_hostile_to(other):
 			if unit.can_feed_on(other):
 				notice_requested.emit(FULL_BLOOD_TEXT, [unit.display_name])
-			unit.order_attack(other)
+			if unit.current_order() != Unit.Order.ATTACK or unit.attack_target() != other:
+				unit.order_attack(other)
 		else:
 			select_requested.emit(other)
 		return

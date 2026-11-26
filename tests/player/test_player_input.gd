@@ -60,3 +60,28 @@ func test_a_dead_unit_takes_no_clicks() -> void:
 	alvar.stats.take_damage(999)
 	input.click_at(_screen(Vector3(3, 0, 2)))
 	assert_false(alvar.is_moving())
+
+## `who` closes on the foe and strikes it once; then a click on the foe again keeps that strike going: no new
+## chase is begun (the walk a new attack order starts), the order and its target stay as they were.
+func _click_again_keeps_the_strike(who: Unit) -> void:
+	input.unit = who
+	input.click_at(_screen(foe.global_position + Vector3(0, 1.5, 0)))
+	assert_eq(who.attack_target(), foe)
+	await wait_until(func() -> bool: return foe.stats.health < foe.stats.max_health, 5.0)
+	await wait_physics_frames(2)
+	assert_false(who.is_moving(), "standing and striking")
+	input.click_at(_screen(foe.global_position + Vector3(0, 1.5, 0)))
+	assert_eq(who.current_order(), Unit.Order.ATTACK)
+	assert_eq(who.attack_target(), foe)
+	assert_false(who.is_moving(), "no new chase")
+
+func test_a_click_on_the_enemy_already_struck_keeps_the_strike() -> void:
+	await _click_again_keeps_the_strike(alvar)
+
+func test_a_selected_companion_keeps_her_strike_too() -> void:
+	var zahra: Unit = preload("res://scenes/units/zahra.tscn").instantiate()
+	zahra.get_node("Brain").free()
+	room.add_child(zahra)
+	zahra.global_position = Vector3(1.5, 0, 0)
+	await wait_physics_frames(3)
+	await _click_again_keeps_the_strike(zahra)
