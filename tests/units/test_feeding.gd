@@ -46,6 +46,32 @@ func test_blood_gained_is_capped_at_the_maximum() -> void:
 	await wait_seconds(2.6)
 	assert_eq(alvar.stats.blood, 100)
 
+## The Blood is set directly, not spent: spending it under the Fury's line would start the Fury.
+func _feed_with(blood: int) -> void:
+	alvar.stats.blood = blood
+	alvar.take_hit(80)  # 40 of 120
+	Arena.weaken(foe, 0.15)
+	alvar.order_feed(foe)
+	await wait_for_signal(alvar.fed, 5.0)
+
+
+func test_a_parched_drinker_is_healed_in_full() -> void:
+	await _feed_with(0)
+	assert_eq(alvar.stats.blood, alvar.feed_gain)
+	assert_eq(alvar.stats.health, 40 + alvar.feed_heal)
+
+
+func test_a_drinker_nearly_full_of_blood_is_healed_by_what_he_takes_back() -> void:
+	await _feed_with(90)
+	assert_eq(alvar.stats.blood, 100, "10 Blood taken back")
+	assert_eq(alvar.stats.health, 40 + roundi(alvar.feed_heal * 10.0 / alvar.feed_gain))
+
+
+func test_a_drinker_full_of_blood_is_not_healed() -> void:
+	await _feed_with(100)
+	assert_eq(alvar.stats.health, 40)
+
+
 func test_the_feeder_walks_to_a_distant_target_first() -> void:
 	foe.global_position = Vector3(0, 0, 6)
 	Arena.weaken(foe, 0.15)

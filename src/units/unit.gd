@@ -31,7 +31,8 @@ signal fury_ended
 @export var feed_threshold: float = 0.2
 @export var feed_time: float = 2.5
 @export var feed_gain: int = 40
-## Health a completed feed gives back, up to the maximum.
+## Health a completed feed gives back when it restores the whole `feed_gain` of Blood; a feed that
+## restores less (the Blood nearly full) gives the same share of it.
 @export var feed_heal: int = 55
 ## Spending Blood from at or above this to below it starts the Fury.
 @export var fury_threshold: int = 10
