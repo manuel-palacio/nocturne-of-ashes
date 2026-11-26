@@ -11,6 +11,8 @@ extends Node
 
 ## How high up a character or door its screen point is taken, in metres.
 const PERSON_HEIGHT: float = 0.9
+## How high up an enemy's head is, in metres: in a crowd seen from above, the part least often covered.
+const HEAD_HEIGHT: float = 1.6
 
 var _main: Main
 var _calm: bool = false
@@ -113,6 +115,8 @@ func _member_state(member: Unit) -> Dictionary:
 		"fury": member.is_in_fury(),
 		# Has a feed order: walking in to a weakened enemy, or drinking.
 		"feeding": member.feed_target() != null,
+		# Has an enemy to strike, walking to it or striking.
+		"attacking": member.attack_target() != null,
 		"effects": effects,
 	}
 
@@ -139,7 +143,8 @@ func _enemy_points(view: Vector2, marked_only: bool) -> Array[Array]:
 	return points
 
 
-## Each living enemy in front of the camera, as `_enemy_points()` places it: its point, its kind (its
+## Each living enemy in front of the camera, as `_enemy_points()` places it: its point and its head's
+## (`HEAD_HEIGHT` up), its kind (its
 ## untranslated name in lower case: "crusader" or "sergeant"), whether it shows the feed mark, whether
 ## it is attacking a party member, and whether it is stunned. What a player sees on screen, no more.
 func _foe_details(view: Vector2) -> Array[Dictionary]:
@@ -155,9 +160,11 @@ func _foe_details(view: Vector2) -> Array[Dictionary]:
 		if camera.is_position_behind(point):
 			continue
 		var at: Vector2 = camera.unproject_position(point) * to_css
+		var head: Vector2 = camera.unproject_position(enemy.global_position + Vector3.UP * HEAD_HEIGHT) * to_css
 		var victim: Unit = enemy.attack_target()
 		details.append({
 			"at": [roundi(at.x), roundi(at.y)],
+			"head": [roundi(head.x), roundi(head.y)],
 			"kind": enemy.display_name.to_lower(),
 			"marked": enemy.has_feed_mark(),
 			"attacking": victim != null and _main.party.has(victim),
