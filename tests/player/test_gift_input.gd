@@ -103,12 +103,28 @@ func test_a_click_on_a_weakened_enemy_feeds_while_short_of_blood() -> void:
 	_click(foe)
 	assert_eq(main.player.current_order(), Unit.Order.FEED)
 
-func test_a_click_on_a_weakened_enemy_attacks_at_full_blood() -> void:
+func test_a_click_on_a_weakened_enemy_attacks_when_blood_and_health_are_full() -> void:
 	main.player.stats.gain_blood(100)
 	Arena.weaken(foe, 0.15)
 	_click(foe)
 	assert_eq(main.player.current_order(), Unit.Order.ATTACK)
 	assert_eq(main.player.attack_target(), foe)
+	assert_eq(main.hud.notice(), "%s's Blood is full")
+
+
+## Hurt, with his Blood full, he drinks all the same: past need, the drink mends half as much.
+func test_a_hurt_drinker_with_full_blood_feeds_and_is_healed_half() -> void:
+	for member: Unit in main.party.slice(1):
+		(member.get_node("Brain") as CombatBrain).enabled = false  # no mending meanwhile
+	main.player.stats.gain_blood(100)
+	main.player.take_hit(80)  # 40 of 120
+	Arena.weaken(foe, 0.15)
+	_click(foe)
+	assert_eq(main.player.current_order(), Unit.Order.FEED)
+	assert_ne(main.hud.notice(), "%s's Blood is full")
+	await wait_for_signal(main.player.fed, 6.0)
+	assert_eq(main.player.stats.blood, 100)
+	assert_eq(main.player.stats.health, 40 + roundi(main.player.feed_heal * 0.5))
 
 func test_targeting_closes_when_the_unit_is_stunned() -> void:
 	main.input.press_gift(1)

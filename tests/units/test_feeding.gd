@@ -67,9 +67,9 @@ func test_a_drinker_nearly_full_of_blood_is_healed_by_what_he_takes_back() -> vo
 	assert_eq(alvar.stats.health, 40 + roundi(alvar.feed_heal * 10.0 / alvar.feed_gain))
 
 
-func test_a_drinker_full_of_blood_is_not_healed() -> void:
+func test_a_drinker_full_of_blood_is_healed_half() -> void:
 	await _feed_with(100)
-	assert_eq(alvar.stats.health, 40)
+	assert_eq(alvar.stats.health, 40 + roundi(alvar.feed_heal * Feeder.FULL_BLOOD_HEAL))
 
 
 func test_the_feeder_walks_to_a_distant_target_first() -> void:

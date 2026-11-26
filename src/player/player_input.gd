@@ -17,7 +17,8 @@ signal targeting_changed(index: int)
 ## `%s` places filled by `args`, as `Hud.show_notice()` takes them.
 signal notice_requested(text: String, args: Array)
 
-## Said when a click to feed finds the controlled unit's Blood full, and it attacks instead.
+## Said when a click to feed finds the controlled unit's Blood and health both full, and it attacks
+## instead.
 const FULL_BLOOD_TEXT: String = "%s's Blood is full"
 
 ## A usable interactable this near the leader, flat, in metres, shows its ring when the mouse is on
@@ -149,7 +150,8 @@ func cancel_targeting() -> void:
 ## While targeting, uses the Gift on a unit under the point that it can target, else does nothing;
 ## targeting whose Gift is no longer ready is closed first, and the click counts as a plain one.
 ## Otherwise asks to select a living friend under the point; feeds on a living hostile there when the
-## unit can and is short of Blood, else attacks it, saying the Blood is full when that was why, and
+## unit can and is short of Blood or of health, else attacks it, saying the Blood is full when that
+## was why (both full), and
 ## leaves an attack already on that very enemy going as it is (no new chase); else has an interactable
 ## under it used, by the leader when it is leader-only, which leaves the selection as it is, else by
 ## the unit, and does nothing when that one may not use it; else walks to the ground under it. A click
@@ -166,7 +168,8 @@ func click_at(screen_position: Vector2) -> void:
 	if other == unit:
 		return
 	if other != null and other.is_alive():
-		if unit.can_feed_on(other) and unit.stats.blood < unit.stats.max_blood:
+		var short: bool = unit.stats.blood < unit.stats.max_blood or unit.stats.health < unit.stats.max_health
+		if unit.can_feed_on(other) and short:
 			unit.order_feed(other)
 		elif unit.is_hostile_to(other):
 			if unit.can_feed_on(other):
