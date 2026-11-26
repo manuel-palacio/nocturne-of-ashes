@@ -21,7 +21,7 @@ func test_the_room_has_four_crusaders_and_a_sergeant_in_each_group() -> void:
 	assert_eq(xs.filter(func(x: float) -> bool: return x > 5.0).size(), 1, "one in the far group")
 
 ## The vault's numbers as tuned so that the fight needs the Blood (see `test_fight_balance.gd`).
-func test_a_sergeant_has_1200_health_and_hits_for_15_every_3_seconds() -> void:
+func test_a_sergeant_has_1200_health_and_hits_for_16_every_3_seconds() -> void:
 	var arena := Arena.new(self)
 	var sergeant: Unit = arena.spawn(Arena.SERGEANT, Vector3.ZERO)
 	var alvar: Unit = arena.spawn(Arena.ALVAR, Vector3(0, 0, 1.2))
@@ -31,7 +31,7 @@ func test_a_sergeant_has_1200_health_and_hits_for_15_every_3_seconds() -> void:
 	assert_eq(sergeant.move_speed, 2.0)
 	assert_eq(sergeant.get_node("Melee").cooldown, 3.0)
 	assert_true(sergeant.get_node("Melee").try_hit(alvar))
-	assert_eq(alvar.stats.health, 105)
+	assert_eq(alvar.stats.health, 104)
 
 
 func test_a_crusader_has_120_health_and_hits_for_3_every_1_4_seconds() -> void:

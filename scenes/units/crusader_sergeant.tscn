@@ -17,5 +17,5 @@ display_name = "Sergeant"
 dress = ExtResource("9_dress")
 
 [node name="Melee" parent="." index="4"]
-damage = 15
+damage = 16
 cooldown = 3.0
