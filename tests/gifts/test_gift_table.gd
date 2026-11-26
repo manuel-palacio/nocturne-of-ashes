@@ -8,7 +8,7 @@ const GIFTS: String = "res://resources/gifts/"
 const TABLE: Dictionary = {
 	&"iron_sinew": {"display_name": "Iron Sinew", "targeting": Gift.Targeting.SELF, "cast_range": 0.0, "blood_cost": 20,
 			"cooldown": 12.0, "duration": 8.0, "speed_multiplier": 1.4, "damage_dealt_multiplier": 1.5},
-	&"baleful_eye": {"display_name": "Baleful Eye", "targeting": Gift.Targeting.ENEMY, "cast_range": 8.0, "blood_cost": 15,
+	&"baleful_eye": {"display_name": "Baleful Eye", "targeting": Gift.Targeting.ENEMY, "cast_range": 8.0, "blood_cost": 10,
 			"cooldown": 10.0, "duration": 5.0},
 	&"mend_flesh": {"display_name": "Mend Flesh", "targeting": Gift.Targeting.ALLY, "cast_range": 8.0, "blood_cost": 20,
 			"cooldown": 6.0, "amount": 40},

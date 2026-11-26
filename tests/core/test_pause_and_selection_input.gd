@@ -147,7 +147,7 @@ func test_a_baleful_eye_awaiting_its_target_is_used_on_a_click_while_paused() ->
 	assert_eq(main.input.targeting_gift(), 1)
 	_click_unit(foe)
 	assert_true(foe.is_stunned())
-	assert_eq(main.player.stats.blood, 45)
+	assert_eq(main.player.stats.blood, 50)
 	assert_eq(main.input.targeting_gift(), -1)
 
 func test_a_mend_flesh_awaiting_its_target_heals_a_hurt_ally_clicked_while_paused() -> void:

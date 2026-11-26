@@ -53,7 +53,7 @@ func test_a_thirsty_companion_feeds_on_a_weakened_enemy() -> void:
 	var foe: Unit = arena.spawn(Arena.CRUSADER, Vector3(3, 0, 1.2))
 	Arena.weaken(foe, 0.15)
 	await wait_for_signal(gonzalo.fed, 6.0)
-	assert_eq(gonzalo.stats.blood, 65)
+	assert_eq(gonzalo.stats.blood, mini(25 + gonzalo.feed_gain, gonzalo.stats.max_blood))
 
 func test_a_disabled_brain_spends_nothing() -> void:
 	(zahra.get_node("Brain") as CombatBrain).enabled = false
@@ -84,7 +84,7 @@ func test_a_companion_does_not_spoil_a_friends_meal() -> void:
 		await wait_physics_frames(1)
 	zahra_brain.enabled = true  # her lance reaches him; his health is 15 of 60
 	await wait_for_signal(gonzalo.fed, 6.0)
-	assert_eq(gonzalo.stats.blood, 65)
+	assert_eq(gonzalo.stats.blood, mini(25 + gonzalo.feed_gain, gonzalo.stats.max_blood))
 
 func test_a_taunt_comes_before_a_meal() -> void:
 	(zahra.get_node("Brain") as CombatBrain).enabled = false
@@ -121,5 +121,5 @@ func test_a_meal_is_claimed_from_the_feed_order() -> void:
 	var foe: Unit = arena.spawn(Arena.CRUSADER, Vector3(3, 0, 3))  # in her lance's reach
 	Arena.weaken(foe, 0.15)
 	await wait_for_signal(gonzalo.fed, 6.0)
-	assert_eq(gonzalo.stats.blood, 65)
+	assert_eq(gonzalo.stats.blood, mini(25 + gonzalo.feed_gain, gonzalo.stats.max_blood))
 	assert_eq(zahra.stats.blood, 60, "no lance thrown at his meal")
