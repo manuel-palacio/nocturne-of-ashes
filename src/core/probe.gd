@@ -70,6 +70,7 @@ func _write_state(_args: Array) -> void:
 		"enemies": _main.enemies_alive(),
 		"marked": _enemy_points(view, true),
 		"foes": _enemy_points(view, false),
+		"foe_details": _foe_details(view),
 		"fallen": is_instance_valid(_main.player) and not _main.player.is_alive(),
 		"paused": _main.is_paused(),
 		"cleared": _main.is_cleared(),
@@ -136,6 +137,33 @@ func _enemy_points(view: Vector2, marked_only: bool) -> Array[Array]:
 		var at: Vector2 = camera.unproject_position(point) * to_css
 		points.append([roundi(at.x), roundi(at.y)])
 	return points
+
+
+## Each living enemy in front of the camera, as `_enemy_points()` places it: its point, its kind (its
+## untranslated name in lower case: "crusader" or "sergeant"), whether it shows the feed mark, whether
+## it is attacking a party member, and whether it is stunned. What a player sees on screen, no more.
+func _foe_details(view: Vector2) -> Array[Dictionary]:
+	var details: Array[Dictionary] = []
+	var camera: Camera3D = get_viewport().get_camera_3d()
+	if camera == null:
+		return details
+	var to_css: Vector2 = view / get_viewport().get_visible_rect().size
+	for enemy: Unit in _main.enemies:
+		if not is_instance_valid(enemy) or not enemy.is_alive():
+			continue
+		var point: Vector3 = enemy.global_position + Vector3.UP * PERSON_HEIGHT
+		if camera.is_position_behind(point):
+			continue
+		var at: Vector2 = camera.unproject_position(point) * to_css
+		var victim: Unit = enemy.attack_target()
+		details.append({
+			"at": [roundi(at.x), roundi(at.y)],
+			"kind": enemy.display_name.to_lower(),
+			"marked": enemy.has_feed_mark(),
+			"attacking": victim != null and _main.party.has(victim),
+			"stunned": enemy.is_stunned(),
+		})
+	return details
 
 
 func _title() -> TitleScreen:

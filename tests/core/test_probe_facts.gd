@@ -32,3 +32,24 @@ func test_is_cleared_once_the_last_enemy_falls_until_the_next_round() -> void:
 	assert_true(main.is_cleared())
 	main.start_room()
 	assert_false(main.is_cleared())
+
+## The probe's foe details, read with the probe pointed at this game (on the web `watch()` does that).
+func test_foe_details_tell_the_kinds_the_marks_the_attacks_and_the_stuns() -> void:
+	var probe: Node = get_node("/root/Probe")
+	probe._main = main
+	var sergeant: Unit = main.enemies.filter(func(e: Unit) -> bool: return e.display_name == "Sergeant")[0]
+	var crusader: Unit = main.enemies.filter(func(e: Unit) -> bool: return e.display_name == "Crusader")[0]
+	Arena.weaken(crusader, 0.15)
+	sergeant.order_attack(main.player)
+	var stun := _effect(&"stun")
+	stun.stuns = true
+	crusader.add_effect(stun)
+	await wait_physics_frames(2)
+	var details: Array[Dictionary] = probe._foe_details(Vector2(1280, 720))
+	probe._main = null
+	var kinds: Array = details.map(func(d: Dictionary) -> String: return d.kind)
+	assert_eq(kinds.filter(func(k: String) -> bool: return k == "sergeant").size(),
+			main.enemies.filter(func(e: Unit) -> bool: return e.display_name == "Sergeant").size())
+	assert_true(details.any(func(d: Dictionary) -> bool: return d.kind == "sergeant" and d.attacking))
+	assert_true(details.any(func(d: Dictionary) -> bool: return d.kind == "crusader" and d.marked and d.stunned))
+	assert_false(details.any(func(d: Dictionary) -> bool: return d.kind == "crusader" and d.attacking))

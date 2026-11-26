@@ -14,6 +14,20 @@ test('the party of three starts with Álvar selected', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test('the probe tells crusaders from sergeants, as a player sees them', async ({ page }) => {
+  test.setTimeout(90000);
+  const errors = await open(page, 'skirmish=1&probe=1&calm=1');
+  const s = await state(page);
+  const kinds = s.foe_details.map((f) => f.kind).sort();
+  expect(kinds.every((k) => k === 'crusader' || k === 'sergeant')).toBe(true);
+  // The near group, two crusaders and a sergeant, stands in view at the start.
+  expect(kinds).toContain('sergeant');
+  expect(kinds).toContain('crusader');
+  expect(s.foe_details.length).toBe(s.foes.length);
+  expect(s.foe_details.every((f) => f.marked === false && f.attacking === false && f.stunned === false)).toBe(true);
+  expect(errors).toEqual([]);
+});
+
 test('Tab selects the next member and the companions follow the leader', async ({ page }) => {
   test.setTimeout(90000);
   const errors = await open(page, 'skirmish=1&probe=1&calm=1');
