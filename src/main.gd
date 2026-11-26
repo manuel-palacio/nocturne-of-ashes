@@ -46,9 +46,9 @@ const REGROUPED_NOTICE: String = "The vault's guard has closed ranks again."
 ## Shown on coming back to a room after a fall that has tired its guard (`guard_health()`).
 const TIRING_NOTICE: String = "The guard is tiring."
 ## From this fall of Álvar's in the same room on, its guard comes back tired.
-const TIRING_FROM_FALL: int = 3
+const TIRING_FROM_FALL: int = 2
 ## Each such fall takes this share of the guard's tuned health, down to `TIRING_FLOOR`.
-const TIRING_STEP: float = 0.1
+const TIRING_STEP: float = 0.15
 const TIRING_FLOOR: float = 0.5
 
 enum Boot { SKIRMISH, STORY }
@@ -324,8 +324,8 @@ func enemies_alive() -> int:
 
 
 ## The share of its tuned health the guard of the current room comes back with after Álvar's falls
-## there: whole for the first `TIRING_FROM_FALL` − 1 falls, then `TIRING_STEP` less for each, never
-## below `TIRING_FLOOR`.
+## there: whole for the first `TIRING_FROM_FALL` − 1 falls, then `TIRING_STEP` of it less for each,
+## never below `TIRING_FLOOR`.
 func guard_health() -> float:
 	if _falls < TIRING_FROM_FALL:
 		return 1.0
