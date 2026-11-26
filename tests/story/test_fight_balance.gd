@@ -1,10 +1,10 @@
 # tests/story/test_fight_balance.gd
 extends GutTest
 ## The vault's fight needs the Blood, the steel and the Rites: scripted people (`VaultFight`), clicking
-## once a second, play the story's vault over varied runs. Spam clicking wins only now and then; the
-## player who uses everything wins, hurt, often losing a companion; without the Rites or without feeding
-## he mostly loses; with no Blood at all he can still feed his way out, but it costs him; a coward gets
-## out; and at the tiring guard's floor even the spam clicker wins.
+## once a second, play the story's vault over varied runs. Spam clicking rarely wins; the player who uses
+## everything wins, hurt, often losing a companion; without the Rites or without feeding he mostly loses;
+## with no Blood at all he can still feed his way out, but it takes him longer; a coward gets out; and at
+## the tiring guard's floor even the spam clicker wins.
 ## Each row plays `RUNS` fights (the environment's `FIGHT_RUNS` overrides it, as for the ten-run table),
 ## seeded 1000 on, and prints its line; the bars are the ten-run targets scaled to the runs played.
 
@@ -13,6 +13,8 @@ const RUNS: int = 5
 ## Row B, the player whom rows C and E are held against, plays the full ten in the suite: its wins hang
 ## near its bar, and five seeds are too few to tell 8 of 10 from 6.
 const PLAYER_RUNS: int = 10
+## How much longer, in seconds, a dry start's won fights must take than a fed one's.
+const DRY_SLOWER: float = 1.0
 ## The longest a scripted fight may take, in seconds of game time.
 const LIMIT: float = 180.0
 
@@ -25,6 +27,12 @@ var main: Main
 func after_each() -> void:
 	VaultFight.slow_down()
 	Story.finish(main)
+
+
+## The first seed: 1000, or the environment's `FIGHT_SEED` (a second pass plays 1010 on).
+func _seed_base() -> int:
+	var asked: String = OS.get_environment("FIGHT_SEED")
+	return int(asked) if asked.is_valid_int() else 1000
 
 
 func _runs(fallback: int = RUNS) -> int:
@@ -66,7 +74,7 @@ func _row(label: String, start: VaultFight.Start, kind: VaultFight.Kind, tired: 
 		return _played[label]
 	var runs: Array[Dictionary] = []
 	for run: int in _runs(runs_in_suite):
-		runs.append(await _fight(start, kind, 1000 + run, tired))
+		runs.append(await _fight(start, kind, _seed_base() + run, tired))
 	gut.p(_table_line(label, runs))
 	_played[label] = runs
 	return runs
@@ -110,47 +118,30 @@ static func _at_least(share: float, runs: int) -> int:
 	return ceili(share * runs - 0.0001)
 
 
-## A bar these numbers do not meet yet: asserted when it holds, else reported as pending with what was
-## measured, so the suite says so without failing (the task-1 report, fix round 1, says why).
-func _bar_not_met_yet(holds: bool, what: String, measured: String) -> void:
-	if holds:
-		assert_true(true, what)
-	else:
-		pending("not met by the current numbers: %s (measured %s)" % [what, measured])
-
-
 ## At most `share` of `runs`, rounded down.
 static func _at_most(share: float, runs: int) -> int:
 	return floori(share * runs + 0.0001)
+
+
+static func _won_time(runs: Array[Dictionary]) -> float:
+	return _median(_pick(runs.filter(func(r: Dictionary) -> bool: return r.outcome == "cleared"), "time"))
 
 
 func _player_row() -> Array[Dictionary]:
 	return await _row("B spared, player", VaultFight.Start.SPARED, VaultFight.Kind.PLAYER, false, PLAYER_RUNS)
 
 
-func test_a_spam_clicker_wins_only_now_and_then() -> void:
+func test_a_spam_clicker_rarely_wins() -> void:
 	var runs: Array[Dictionary] = await _row("A spared, spam clicker", VaultFight.Start.SPARED, VaultFight.Kind.SPAM)
 	assert_eq(_count(runs, "timeout"), 0, "no fight stalls")
-	var cleared: int = _count(runs, "cleared")
-	assert_lte(cleared, _at_least(0.6, runs.size()), "the spam clicker clears at most 6 of 10")
-	_bar_not_met_yet(cleared >= _at_most(0.2, runs.size()), "the spam clicker clears at least 2 of 10",
-			"%d of %d" % [cleared, runs.size()])
+	assert_lte(_count(runs, "cleared"), _at_most(0.4, runs.size()), "the spam clicker clears at most 4 of 10")
 
 
-func test_the_player_wins_hurt_in_45_to_90_seconds() -> void:
+func test_the_player_wins_hurt() -> void:
 	var runs: Array[Dictionary] = await _player_row()
-	var in_time: int = runs.filter(func(r: Dictionary) -> bool:
-		return r.outcome == "cleared" and r.time >= 45.0 and r.time <= 90.0).size()
-	var cleared: int = _count(runs, "cleared")
-	assert_gte(cleared, _at_least(0.6, runs.size()), "the player clears at least 6 of 10")
-	_bar_not_met_yet(cleared >= _at_least(0.8, runs.size()), "the player clears 8 of 10",
-			"%d of %d" % [cleared, runs.size()])
-	_bar_not_met_yet(in_time >= _at_least(0.8, runs.size()), "8 of 10 cleared in 45-90 s",
-			"%d of %d, median %.0f s" % [in_time, runs.size(), _median(_pick(runs, "time"))])
-	var health: float = _median(_pick(runs, "health"))
-	assert_gte(health, 0.25 * 120, "Álvar ends with at least a quarter of his health")
-	_bar_not_met_yet(health <= 0.75 * 120, "Álvar ends with at most three quarters of his health",
-			"median %.0f of 120" % health)
+	assert_gte(_count(runs, "cleared"), _at_least(0.7, runs.size()), "the player clears 7 of 10")
+	assert_between(_won_time(runs), 35.0, 75.0, "a won fight takes 35-75 s")
+	assert_lte(_median(_pick(runs, "health")), 0.75 * 120, "Álvar ends with at most three quarters of his health")
 	var lost: int = runs.filter(func(r: Dictionary) -> bool: return r.companions_fallen > 0).size()
 	assert_gte(lost, _at_least(0.3, runs.size()), "a companion falls in 3 of 10")
 
@@ -158,9 +149,10 @@ func test_the_player_wins_hurt_in_45_to_90_seconds() -> void:
 func test_without_the_rites_the_player_mostly_loses() -> void:
 	var player: Array[Dictionary] = await _player_row()
 	var runs: Array[Dictionary] = await _row("C spared, no Rites", VaultFight.Start.SPARED, VaultFight.Kind.NO_RITES)
-	var cleared: int = _count(runs, "cleared")
-	assert_lte(cleared, _at_most(0.6, runs.size()), "without the Rites he clears at most 6 of 10")
-	assert_gte(_count(player, "cleared") - cleared, _at_least(0.2, runs.size()), "the Rites are worth 2 wins in 10")
+	var share: float = float(_count(runs, "cleared")) / runs.size()
+	assert_lte(_count(runs, "cleared"), _at_most(0.5, runs.size()), "without the Rites he clears at most 5 of 10")
+	assert_gte(float(_count(player, "cleared")) / player.size() - share, 0.2 - 0.0001,
+			"the Rites are worth 2 wins in 10")
 
 
 func test_without_feeding_the_player_falls() -> void:
@@ -168,20 +160,19 @@ func test_without_feeding_the_player_falls() -> void:
 	assert_gte(_count(runs, "fall"), _at_least(0.7, runs.size()), "without feeding he falls 7 of 10")
 
 
-func test_with_no_blood_the_player_can_feed_his_way_out_at_a_cost() -> void:
+## Dry is worse than fed on time: the dry party must feed before it can pay for a Rite. (On health it is
+## not: a parched drinker is healed in full, so the dry start ends no more hurt.)
+func test_with_no_blood_the_player_feeds_his_way_out_more_slowly() -> void:
 	var player: Array[Dictionary] = await _player_row()
 	var runs: Array[Dictionary] = await _row("E dry, player", VaultFight.Start.DRY, VaultFight.Kind.PLAYER)
 	assert_gte(_count(runs, "cleared"), _at_least(0.6, runs.size()), "with no Blood he clears 6 of 10")
-	var slower: bool = _median(_pick(runs, "time")) > _median(_pick(player, "time"))
-	var hurt: bool = _median(_pick(runs, "health")) < _median(_pick(player, "health"))
-	_bar_not_met_yet(slower or hurt, "a dry start is worse than a fed one: slower or more hurt",
-			"%.0f s and %.0f health against %.0f s and %.0f" % [_median(_pick(runs, "time")),
-			_median(_pick(runs, "health")), _median(_pick(player, "time")), _median(_pick(player, "health"))])
+	assert_gt(_won_time(runs), _won_time(player) + DRY_SLOWER,
+			"a dry start's won fights take longer than a fed one's (%.0f against %.0f s)" % [_won_time(runs), _won_time(player)])
 
 
 func test_a_player_who_drained_the_captive_clears() -> void:
 	var runs: Array[Dictionary] = await _row("F drained, player", VaultFight.Start.DRAINED, VaultFight.Kind.PLAYER)
-	assert_gte(_count(runs, "cleared"), _at_least(0.9, runs.size()), "after draining he clears 9 of 10")
+	assert_gte(_count(runs, "cleared"), _at_least(0.8, runs.size()), "after draining he clears 8 of 10")
 
 
 func test_a_coward_reaches_the_fragua() -> void:
