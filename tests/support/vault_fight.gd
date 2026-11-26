@@ -98,10 +98,14 @@ static func jitter(on: Main, rng: RandomNumberGenerator) -> void:
 ## Waits until the room's navigation map has synced, which happens once a drawn frame, not once a
 ## physics tick: a fight begun before it would wait for its first paths a number of ticks that depends
 ## on the machine's load, and the same seed would give another fight.
+## The world is held (the pause) meanwhile, so the units' brains and walks do not run on through a
+## number of ticks that depends on the load either.
 static func settle(test: GutTest, on: Main) -> void:
+	on.set_paused(true)
 	var map: RID = on.get_world_3d().navigation_map
 	await test.wait_until(func() -> bool: return NavigationServer3D.map_get_iteration_id(map) > 0, 5.0)
 	await test.wait_process_frames(2)
+	on.set_paused(false)
 
 
 ## Runs the engine `SPEED` times faster than the clock, each physics tick still 1/60 s of game time.
@@ -287,7 +291,7 @@ func _sergeant_to_stare_down(alvar: Unit, gift: Gift) -> Unit:
 func _click_unit(target: Unit) -> bool:
 	if target == null or not target.is_alive():
 		return false
-	var camera: Camera3D = main.rig.camera()
+	var camera: Camera3D = _settled_camera()
 	for up: float in AIM:
 		var point: Vector3 = target.global_position + Vector3.UP * up
 		if camera.is_position_behind(point):
@@ -301,7 +305,7 @@ func _click_unit(target: Unit) -> bool:
 
 func _click_door() -> void:
 	var door := main.room.find_child("WestDoor") as Door
-	var camera: Camera3D = main.rig.camera()
+	var camera: Camera3D = _settled_camera()
 	for up: float in [1.0, 1.6, 0.4]:
 		var at: Vector2 = camera.unproject_position(door.global_position + Vector3.UP * up)
 		if Picker.interactable_at(camera, at) == door:
@@ -309,6 +313,14 @@ func _click_door() -> void:
 			return
 	# Not in view: a click on the floor towards it, as a person walks towards a door off screen.
 	main.input.click_at(camera.unproject_position(door.global_position))
+
+
+## The camera, settled on whom it follows. The rig follows in drawn frames, whose count per physics tick
+## depends on the machine's load; settled first, a click lands where it would on any machine, and the
+## same seed plays the same fight.
+func _settled_camera() -> Camera3D:
+	main.rig.snap_to_target()
+	return main.rig.camera()
 
 
 ## Whether someone other than `who` has a feed order on `enemy`.
