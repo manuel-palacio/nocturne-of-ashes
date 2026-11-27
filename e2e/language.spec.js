@@ -5,7 +5,7 @@
 // (build/shots/es-<frame>.png): the title and its question, the controls card, the waking, Íñigo, the
 // captive's choices, Zahra's longest line, Malakor's letter, the vault's hints, the closing card, and
 // the longest line, the title, the controls and the closing card again at 800 × 500; then, in a fight
-// played badly, the hints a good one does not bring.
+// played badly, the Rites and door hints a good one does not bring.
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const { state, open, until, talkThrough, use, fightAsThePlayer } = require('./helpers');
@@ -201,19 +201,20 @@ test.describe('the frames in Spanish', () => {
     expect(errors).toEqual([]);
   });
 
-  test('the hints the first fight did not bring: the Rites, the door, the Fury', async ({ page }) => {
+  test('the hints the first fight did not bring: the Rites and the door', async ({ page }) => {
     test.skip(test.info().project.name !== 'chromium', 'the frames come from Chromium');
     test.setTimeout(240000);
     fs.mkdirSync('build/shots', { recursive: true });
     // The guard fights back; Álvar strikes without the Rites until their hint has shown, then spends
-    // his Blood on Iron Sinew whenever it is off and never feeds, so he runs dry and the Fury comes.
+    // his Blood on Iron Sinew whenever it is off and never feeds. The Fury hint is not looked for here:
+    // it rarely comes before Álvar falls; tests/story/test_hints.gd checks that it fits, in Spanish too.
     const errors = await open(page, 'probe=1&fresh=1&at=vault&lang=es');
     const box = await page.locator('canvas').boundingBox();
     const seen = new Set();
-    for (let round = 0; round < 120 && seen.size < 3; round++) {
+    for (let round = 0; round < 120 && seen.size < 2; round++) {
       const s = await state(page);
       const hint = HINTS[s.notice];
-      if (['rites', 'door', 'fury'].includes(hint) && !seen.has(hint)) {
+      if (['rites', 'door'].includes(hint) && !seen.has(hint)) {
         seen.add(hint);
         await page.screenshot({ path: `build/shots/es-hint-${hint}.png` });
       }

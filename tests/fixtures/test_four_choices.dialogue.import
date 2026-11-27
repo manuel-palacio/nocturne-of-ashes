@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://bqwt84jn7ehen"
+path="res://.godot/imported/test_four_choices.dialogue-7f620dd1e670f33af8085b0cd3a8b923.tres"
+
+[deps]
+
+source_file="res://tests/fixtures/test_four_choices.dialogue"
+dest_files=["res://.godot/imported/test_four_choices.dialogue-7f620dd1e670f33af8085b0cd3a8b923.tres"]
+
+[params]
+
+defaults=true

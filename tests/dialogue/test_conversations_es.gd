@@ -6,6 +6,8 @@ extends GutTest
 
 const HAVEN := preload("res://dialogue/haven.dialogue")
 const DIALOGUE := "res://assets/i18n/es-dialogue.po"
+## A line and four choices as long as Spanish makes them, written in Spanish.
+const FOUR := preload("res://tests/fixtures/test_four_choices.dialogue")
 
 ## The first and the last line of each conversation, as the box shows them in Spanish, on the run that
 ## drinks a little from the captive and hands the letter over.
@@ -187,3 +189,34 @@ func test_a_line_without_its_spanish_is_shown_in_english() -> void:
 	main.dialogue.advance()
 	await wait_physics_frames(2)
 	assert_eq(_shown()[1], "Elena. ¿Dónde está?")
+
+
+## The box with four long Spanish choices fits the screen wide and small: every choice whole, the
+## box inside the view and clear of the party panels' column.
+func test_four_long_spanish_choices_fit_wide_and_small() -> void:
+	Language.apply("es")
+	main = Story.boot(self)
+	await wait_physics_frames(3)
+	var window_size: Vector2i = get_tree().root.size
+	main.talk(FOUR, "start")
+	await wait_physics_frames(2)
+	var box: DialogueBox = _box()
+	var buttons: Array[Node] = box.find_child("Choices").get_children()
+	assert_eq(buttons.size(), 4)
+	for size: Vector2i in [Vector2i(1280, 720), Vector2i(800, 500)]:
+		get_tree().root.size = size
+		await wait_physics_frames(3)
+		var what: String = str(size)
+		var view: Vector2 = box.get_viewport_rect().size
+		var drawn: Rect2 = box.get_global_rect()
+		assert_gte(drawn.position.y, 0.0, what)
+		assert_lte(drawn.end.y, view.y, what)
+		assert_gte(drawn.position.x, 0.0, what)
+		assert_lte(drawn.end.x, view.x, what)
+		for button: Node in buttons:
+			var choice := button as Button
+			assert_lte(choice.get_minimum_size().x, choice.size.x + 0.5, what + ": " + choice.text)
+			assert_true(drawn.encloses(choice.get_global_rect().grow(-0.5)), what + ": " + choice.text)
+		assert_eq((box.find_child("HintLabel") as Label).text, "1–4 o clic")
+	get_tree().root.size = window_size
+	await wait_physics_frames(2)
