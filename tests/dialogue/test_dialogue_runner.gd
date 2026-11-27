@@ -3,6 +3,7 @@ extends GutTest
 
 const TALK := preload("res://tests/fixtures/test_talk.dialogue")
 const SLOW := preload("res://tests/fixtures/test_slow_talk.dialogue")
+const MARKED := preload("res://tests/fixtures/test_marked_talk.dialogue")
 
 var runner: DialogueRunner
 var state: GameState
@@ -144,3 +145,26 @@ func test_it_tells_the_line_on_show_and_its_choices() -> void:
 	assert_eq(runner.choice_texts(), ["Spare him", "Drain him"] as Array[String])
 	runner.stop()
 	assert_eq([runner.speaker(), runner.line_text(), runner.choice_texts()], ["", "", [] as Array[String]])
+
+## A line with a marker ([wait=…]) told again on a language change has its marker resolved, as when it
+## was first found, both in the new language and where it has no translation.
+func test_a_line_told_again_has_its_markup_resolved() -> void:
+	var spanish := Translation.new()
+	spanish.locale = "es"
+	spanish.add_message("Hold still[wait=0.1] and listen.", "Quieto[wait=0.1] y escucha.", "test_marked_line")
+	runner.start(MARKED, "start", hooks)
+	await wait_physics_frames(2)
+	assert_eq(runner.line_text(), "Hold still and listen.")
+	var retold: Array = []
+	runner.line_retold.connect(func(_speaker: String, text: String, _choices: Array[String]) -> void:
+		retold.append(text))
+	TranslationServer.set_locale("es")
+	await wait_physics_frames(2)
+	TranslationServer.add_translation(spanish)
+	TranslationServer.set_locale("en")
+	TranslationServer.set_locale("es")
+	await wait_physics_frames(2)
+	TranslationServer.remove_translation(spanish)
+	TranslationServer.set_locale("en")
+	await wait_physics_frames(2)
+	assert_eq(retold, ["Hold still and listen.", "Hold still and listen.", "Quieto y escucha.", "Hold still and listen."])

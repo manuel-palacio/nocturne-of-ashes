@@ -201,7 +201,8 @@ func _retell() -> void:
 
 
 ## The add-on's translation, in the current language, of the line or choice `id` of the conversation
-## running; `shown` for one whose text is made as it is found (from variables, inline conditions or a
+## running, its markers (`[wait=…]`, `[speed=…]`, `[next=…]`…) taken out as the add-on does for a line
+## it finds; `shown` for one whose text is made as it is found (from variables, inline conditions or a
 ## random pick), which is not found again, so it changes language from the next line on.
 func _translated(id: String, shown: String) -> String:
 	var data: Dictionary = _resource.lines.get(id.get_slice("@", id.get_slice_count("@") - 1), {})
@@ -209,7 +210,7 @@ func _translated(id: String, shown: String) -> String:
 	if text.is_empty() or not (data.get("text_replacements", []) as Array).is_empty() \
 			or "[[" in text or "[if " in text:
 		return shown
-	return _manager().translate(data)
+	return DMResolvedLineData.new(_manager().translate(data)).text
 
 
 ## Narrows what conversations can reach to the hooks passed with each line request.

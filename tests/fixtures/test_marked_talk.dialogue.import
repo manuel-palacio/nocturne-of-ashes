@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://cjvmvu6n7yyr8"
+path="res://.godot/imported/test_marked_talk.dialogue-9115ecf14bf5c58f1f582ed4cd8ec89b.tres"
+
+[deps]
+
+source_file="res://tests/fixtures/test_marked_talk.dialogue"
+dest_files=["res://.godot/imported/test_marked_talk.dialogue-9115ecf14bf5c58f1f582ed4cd8ec89b.tres"]
+
+[params]
+
+defaults=true
