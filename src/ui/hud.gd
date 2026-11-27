@@ -1,7 +1,8 @@
 class_name Hud
 extends CanvasLayer
 ## Shows a panel per party member, the selected member's Gifts, Conscience in a story, the conversation on show (in its
-## `DialogueBox`), the prompts for a pause, a cleared room and Álvar's fall, and a passing notice.
+## `DialogueBox`), the prompts for a pause, a cleared room and Álvar's fall, and a passing notice: a
+## game notice mid-screen, or a hint (`show_hint()`) in its band in the lower third, above the Gift bar.
 ## Clicks on panels and Gift buttons go out through its signals. Its `?` button in the lower right
 ## corner opens the `ControlsCard`; whoever owns the HUD holds the world while the card is open
 ## (`controls_toggled`), and the dialogue box reads no keys meanwhile. Its `ClosingCard`, opened by
@@ -49,6 +50,8 @@ var _notice: String = ""
 var _notice_args: Array = []
 ## Seconds until the notice goes.
 var _notice_left: float = 0.0
+## The label the notice on show is drawn in: the notices' or the hints' band.
+var _notice_place: Label
 ## Seconds the cleared line has been on show.
 var _cleared_for: float = 0.0
 
@@ -59,6 +62,7 @@ var _cleared_for: float = 0.0
 @onready var _cleared_label: Label = %ClearedLabel
 @onready var _conscience_label: Label = %ConscienceLabel
 @onready var _notice_label: Label = %NoticeLabel
+@onready var _hint_label: Label = %HintLabel
 @onready var _dialogue_box: DialogueBox = %DialogueBox
 @onready var _controls_button: Button = %ControlsButton
 @onready var _controls_card: ControlsCard = %ControlsCard
@@ -208,19 +212,31 @@ func is_closing_open() -> bool:
 ## `notice_time`), in place of any notice on show, with its `%s` places filled by `args`, source texts
 ## translated in turn. An empty text hides the notice.
 func show_notice(text: String, args: Array = [], seconds: float = -1.0) -> void:
-	if text.is_empty():
-		hide_notice()
-		return
-	_notice = text
-	_notice_args = args.duplicate()
-	_notice_left = seconds if seconds > 0.0 else notice_time
-	_notice_label.text = _notice_text()
-	_notice_label.visible = true
+	_show_in(_notice_label, text, args, seconds)
+
+
+## Shows `text` as `show_notice()` does, as the notice on show, but drawn in the hints' band in the
+## lower third, above the Gift bar, clear of the fighters and of the notices' place.
+func show_hint(text: String, args: Array = [], seconds: float = -1.0) -> void:
+	_show_in(_hint_label, text, args, seconds)
 
 
 func hide_notice() -> void:
 	_notice = ""
 	_notice_label.visible = false
+	_hint_label.visible = false
+
+
+func _show_in(place: Label, text: String, args: Array, seconds: float) -> void:
+	hide_notice()
+	if text.is_empty():
+		return
+	_notice = text
+	_notice_args = args.duplicate()
+	_notice_left = seconds if seconds > 0.0 else notice_time
+	_notice_place = place
+	place.text = _notice_text()
+	place.visible = true
 
 
 ## The notice on show, as the source text it was given; empty when none.
@@ -240,7 +256,8 @@ func _show_texts() -> void:
 	_paused_label.text = tr("Paused — give your orders")
 	_cleared_label.text = tr("The vault is quiet")
 	# Never `tr("")`, which gives the translation's header.
-	_notice_label.text = _notice_text() if not _notice.is_empty() else ""
+	if not _notice.is_empty() and _notice_place != null:
+		_notice_place.text = _notice_text()
 	_show_conscience()
 
 

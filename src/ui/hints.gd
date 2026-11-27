@@ -1,7 +1,7 @@
 class_name Hints
 extends Node
-## The fight's rules, taught once each at the moment they first apply: a hint is the HUD's notice,
-## on show for `SHOW_TIME`, at most one every `GAP` seconds, the most urgent first (`ORDER`). A hint
+## The fight's rules, taught once each at the moment they first apply: a hint is the HUD's notice, drawn
+## in the hints' band (`Hud.show_hint()`), on show for `SHOW_TIME`, at most one every `GAP` seconds, the most urgent first (`ORDER`). A hint
 ## applies while its moment lasts (an enemy is marked, Álvar's Blood is under a third, ...): one that
 ## falls due while the world is held by a conversation, the controls or closing card, the fall prompt
 ## or the title, or while another notice is up, waits; if its moment passes meanwhile it is dropped,
@@ -22,8 +22,8 @@ extends Node
 signal shown(id: StringName)
 
 ## Seconds a hint stays on show, unless a notice or a card takes its place.
-const SHOW_TIME: float = 6.0
-## The fewest seconds between one hint shown and the next.
+const SHOW_TIME: float = 5.0
+## The fewest seconds from one hint's start to the next's.
 const GAP: float = 6.0
 ## Seconds into a fight, from its first blow, before the Rites hint is due.
 const RITE_DELAY: float = 4.0
@@ -127,7 +127,7 @@ func _show(id: StringName) -> void:
 	_remember(id)
 	_on_show = id
 	_since_last = 0.0
-	_hud.show_notice(TEXTS[id], args, SHOW_TIME)
+	_hud.show_hint(TEXTS[id], args, SHOW_TIME)
 	shown.emit(id)
 
 

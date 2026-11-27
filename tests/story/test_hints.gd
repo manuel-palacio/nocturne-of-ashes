@@ -33,9 +33,9 @@ func _hints() -> Hints:
 	return main.find_child("Hints") as Hints
 
 
-## The notice on show as the player reads it.
+## The hint on show as the player reads it.
 func _shown_text() -> String:
-	var label := main.hud.find_child("NoticeLabel") as Label
+	var label := main.hud.find_child("HintLabel") as Label
 	return label.text if label.visible else ""
 
 
@@ -331,7 +331,7 @@ func test_a_game_notice_replaces_a_hint_and_the_hint_does_not_come_back() -> voi
 	assert_eq(main.hud.notice(), "")
 
 
-func test_a_hint_stays_six_seconds_and_the_next_waits_its_turn_by_urgency() -> void:
+func test_a_hint_stays_its_time_and_the_next_waits_its_turn_by_urgency() -> void:
 	await _vault([&"dry", &"door"])
 	_set_blood(main.player, 20)
 	main.player.take_hit(main.player.stats.health - main.player.stats.max_health / 3 + 5)
@@ -389,6 +389,49 @@ func test_a_fight_played_through_shows_each_hint_at_most_once_and_one_at_a_time(
 		for i: int in range(1, at.size()):
 			assert_gte(at[i] - at[i - 1], roundi(Hints.GAP * VaultFight.BASE_TICKS) - 1,
 					"no two hints within %s s: %s" % [Hints.GAP, seen])
+
+
+# --- In their own band ---
+
+## A hint is drawn in the lower third, above the Rite bar, not where the door notices and the cleared
+## line show; every hint fits on two lines there, in English and Spanish, wide and small.
+func test_a_hint_is_drawn_in_its_band_on_two_lines_at_most() -> void:
+	await _vault([])
+	var window_size: Vector2i = get_tree().root.size
+	var band := main.hud.find_child("HintLabel") as Label
+	var notice := main.hud.find_child("NoticeLabel") as Label
+	var bar := main.hud.find_child("GiftBar") as Control
+	for size: Vector2i in [Vector2i(1280, 720), Vector2i(800, 500)]:
+		get_tree().root.size = size
+		for language: String in ["en", "es"]:
+			Language.apply(language)
+			for id: StringName in Hints.ORDER:
+				var args: Array = ["Brother Álvar"] if Hints.TEXTS[id].contains("%s") else []
+				main.hud.show_hint(Hints.TEXTS[id], args, Hints.SHOW_TIME)
+				await wait_physics_frames(2)
+				var what: String = "%s %s %s" % [id, language, size]
+				assert_eq(main.hud.notice(), Hints.TEXTS[id], what)
+				assert_true(band.visible, what)
+				assert_false(notice.visible, "not in the notices' place: " + what)
+				assert_lte(band.get_line_count(), 2, "two lines at most: %s: %s" % [what, band.text])
+				var view: Vector2 = band.get_viewport_rect().size
+				var drawn: Rect2 = band.get_global_rect()
+				var text_top: float = drawn.end.y - band.get_line_count() * band.get_line_height()
+				assert_gte(text_top, view.y * 2.0 / 3.0, "in the lower third: " + what)
+				assert_lte(drawn.end.y, bar.get_global_rect().position.y, "above the Rite bar: " + what)
+				assert_gte(drawn.position.x, 0.0, what)
+				assert_lte(drawn.end.x, view.x, what)
+	main.hud.show_notice(Main.TIRING_NOTICE)
+	assert_true(notice.visible, "a game notice in its own place")
+	assert_false(band.visible)
+	TranslationServer.set_locale("en")
+	get_tree().root.size = window_size
+	await wait_physics_frames(2)
+
+
+func test_a_hint_shows_for_five_seconds() -> void:
+	assert_eq(Hints.SHOW_TIME, 5.0)
+	assert_eq(Hints.GAP, 6.0)
 
 
 # --- In Spanish ---
