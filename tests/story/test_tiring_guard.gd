@@ -2,8 +2,8 @@
 extends GutTest
 ## Nobody is walled in by the vault: from the second fall in the same room on, each fall leaves the guard
 ## there with 15% less of its tuned health than the last, down to `Main.TIRING_FLOOR`, and the re-entry
-## says the guard is tiring. The count lives in `Main` for the session: a fall's reload keeps it, clearing the
-## room or leaving it forgets it, and nothing of it goes into the save.
+## says the guard is tiring. The count lives in `Main` for the session: a fall's reload and leaving by a
+## door keep it, clearing the room or a new game forgets it, and nothing of it goes into the save.
 
 var main: Main
 
@@ -89,7 +89,9 @@ func test_clearing_the_room_forgets_the_falls() -> void:
 	assert_eq(main.guard_health(), 1.0, "a cleared room starts its count again")
 
 
-func test_leaving_the_room_forgets_the_falls() -> void:
+## Leaving by the west door, as the door hint says, does not undo the falls: the guard is back whole,
+## at its tired strength, and says so; the next fall tires it further.
+func test_leaving_the_room_keeps_the_falls() -> void:
 	await _boot()
 	for fall: int in 2:
 		await _fall_and_get_up()
@@ -98,13 +100,45 @@ func test_leaving_the_room_forgets_the_falls() -> void:
 	(main.room.find_child("WestDoor") as Door).use(main.player)
 	await wait_physics_frames(3)
 	assert_eq(main.room.room_id, &"haven")
+	assert_eq(main.guard_health(), 1.0, "the haven has no tired guard")
 	(main.room.find_child("StairDoor") as Door).use(main.player)
 	await wait_physics_frames(3)
 	assert_eq(main.room.room_id, &"vault")
-	assert_eq(_guard_shares(), _all(100), "the guard whole again")
-	assert_ne(main.hud.notice(), "The guard is tiring.")
+	assert_eq(_guard_shares(), _all(85), "the guard as tired as it was")
+	for enemy: Unit in main.enemies:
+		assert_eq(enemy.stats.health, enemy.stats.max_health, "whole at its tired strength")
+	assert_eq(main.hud.notice(), "The guard is tiring.")
 	await _fall_and_get_up()
-	assert_eq(_guard_shares(), _all(100), "the count began again: this is the first fall")
+	assert_eq(_guard_shares(), _all(70), "the third fall")
+
+
+## A guard left mid-fight closes ranks on the way back; tired, the line says it is tiring instead.
+func test_leaving_a_tired_guard_mid_fight_says_it_is_tiring() -> void:
+	await _boot()
+	for fall: int in 2:
+		await _fall_and_get_up()
+	main.enemies[0].take_hit(1)
+	await wait_physics_frames(2)
+	(main.room.find_child("WestDoor") as Door).use(main.player)
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"haven")
+	(main.room.find_child("StairDoor") as Door).use(main.player)
+	await wait_physics_frames(3)
+	assert_eq(_guard_shares(), _all(85))
+	assert_eq(main.hud.notice(), "The guard is tiring.")
+
+
+func test_a_new_game_forgets_the_falls() -> void:
+	await _boot()
+	for fall: int in 2:
+		await _fall_and_get_up()
+	assert_eq(_guard_shares(), _all(85))
+	main.new_game()
+	await wait_physics_frames(3)
+	main.enter_room(&"vault")
+	await wait_physics_frames(3)
+	assert_eq(main.room.room_id, &"vault")
+	assert_eq(_guard_shares(), _all(100), "a new game's guard is whole")
 
 
 func test_the_count_is_not_saved() -> void:

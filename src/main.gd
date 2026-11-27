@@ -44,7 +44,8 @@ const REST_SHOWN_FLAG: StringName = &"rest_shown"
 const REST_NOTICE: String = "The vault is quiet. The story rests here, for now."
 ## Shown on coming back to a room left with its fight begun and enemies standing: they are restored.
 const REGROUPED_NOTICE: String = "The vault's guard has closed ranks again."
-## Shown on coming back to a room after a fall that has tired its guard (`guard_health()`).
+## Shown on coming back to a room after falls that have tired its guard (`guard_health()`), after a
+## fall or through a door, in place of `REGROUPED_NOTICE`.
 const TIRING_NOTICE: String = "The guard is tiring."
 ## From this fall of Álvar's in the same room on, its guard comes back tired.
 const TIRING_FROM_FALL: int = 2
@@ -106,11 +107,10 @@ var _visibility_callback: JavaScriptObject
 ## The rooms left in this play through a door with their fight begun (an enemy hurt or fallen) and
 ## enemies standing, whose enemies are whole again on the way back. Forgotten on a reload or a new game.
 var _left_mid_fight: Dictionary = {}  # StringName -> true
-## Álvar's falls in the room `_falls_room` since it was entered by a door, cleared, or a game begun. Kept
-## in this play only, outside the state: a fall's reload of the checkpoint keeps it, nothing saves it,
-## so a page reload forgets it.
-var _falls: int = 0
-var _falls_room: StringName = &""
+## Álvar's falls in each room since it was last cleared or a game begun, by `Room.room_id`. Kept in this
+## play only, outside the state: a fall's reload of the checkpoint and leaving by a door keep it,
+## nothing saves it, so a page reload forgets it.
+var _falls: Dictionary = {}  # StringName -> int
 
 @onready var input: PlayerInput = $PlayerInput
 @onready var rig: CameraRig = $CameraRig
@@ -223,7 +223,6 @@ func enter_room(room_id: StringName, entry: StringName = Room.START) -> void:
 	_party.record(state)
 	if room != null and not _encounter.is_cleared() and _encounter.is_disturbed():
 		_left_mid_fight[room.room_id] = true
-	_forget_falls()
 	_enter(room_id, entry)
 	checkpoint()
 
@@ -274,7 +273,7 @@ func new_game() -> void:
 	if store != null:
 		store.clear()
 	_last_checkpoint = {}
-	_forget_falls()
+	_falls.clear()
 	_play(GameState.new_game())
 
 
@@ -347,9 +346,10 @@ func enemies_alive() -> int:
 ## there: whole for the first `TIRING_FROM_FALL` − 1 falls, then `TIRING_STEP` of it less for each,
 ## never below `TIRING_FLOOR`.
 func guard_health() -> float:
-	if _falls < TIRING_FROM_FALL:
+	var falls: int = _falls.get(room.room_id, 0) if room != null else 0
+	if falls < TIRING_FROM_FALL:
 		return 1.0
-	return maxf(1.0 - TIRING_STEP * (_falls - TIRING_FROM_FALL + 1), TIRING_FLOOR)
+	return maxf(1.0 - TIRING_STEP * (falls - TIRING_FROM_FALL + 1), TIRING_FLOOR)
 
 
 ## Off the web, the window losing focus hides the game. On the web the engine sends no application
@@ -415,8 +415,6 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	_clear_units()
 	_load_room(room_id)
 	var arrived_at: StringName = _spawn_party(entry_name)
-	if room_id != _falls_room:
-		_forget_falls()
 	_encounter.guard_health = guard_health()
 	_encounter.begin(room, state, _units)
 	_party.arrive(_encounter.is_cleared())
@@ -431,12 +429,13 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	rig.far_fraction = room.camera_far_fraction
 	rig.set_bounds(room.floor_bounds())
 	_hand_control_to_alvar()
-	if _left_mid_fight.has(room_id):
-		_left_mid_fight.erase(room_id)
-		if not _encounter.is_cleared():
+	var regrouped: bool = _left_mid_fight.has(room_id)
+	_left_mid_fight.erase(room_id)
+	if not _encounter.is_cleared():
+		if guard_health() < 1.0:
+			hud.show_notice(TIRING_NOTICE)
+		elif regrouped:
 			hud.show_notice(REGROUPED_NOTICE)
-	if guard_health() < 1.0 and not _encounter.is_cleared():
-		hud.show_notice(TIRING_NOTICE)
 	if _is_story_rest():
 		if state.has_flag(REST_SHOWN_FLAG):
 			hud.show_notice(REST_NOTICE)
@@ -548,7 +547,7 @@ func _is_story_rest() -> bool:
 
 
 func _on_room_cleared() -> void:
-	_forget_falls()
+	_falls.erase(room.room_id)
 	if _is_story_rest():
 		_closing_due = true
 		_open_closing_when_free()
@@ -610,16 +609,7 @@ func _on_gifts_changed(unit: Unit) -> void:
 		hud.show_selected(unit)
 
 
-## Counts a fall of Álvar's in the current room, starting the count again in a room other than the last.
+## Counts a fall of Álvar's in the current room.
 func _count_fall() -> void:
-	if room == null:
-		return
-	if room.room_id != _falls_room:
-		_forget_falls()
-		_falls_room = room.room_id
-	_falls += 1
-
-
-func _forget_falls() -> void:
-	_falls = 0
-	_falls_room = &""
+	if room != null:
+		_falls[room.room_id] = _falls.get(room.room_id, 0) + 1
