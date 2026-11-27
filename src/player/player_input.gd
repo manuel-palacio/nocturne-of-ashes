@@ -21,6 +21,11 @@ signal notice_requested(text: String, args: Array)
 ## instead.
 const FULL_BLOOD_TEXT: String = "%s's Blood is full"
 
+## The keys' actions taken in the order they arrive among clicks (and polled, for presses that send no
+## event). The pause and Enter on the fall prompt stay with `Main`: their order against a click does
+## not change what the click does.
+const KEY_ACTIONS: Array[StringName] = [&"select_next", &"gift_1", &"gift_2", &"cancel"]
+
 ## A usable interactable this near the leader, flat, in metres, shows its ring when the mouse is on
 ## nothing usable.
 const NEAR_USE: float = 4.0
@@ -52,6 +57,8 @@ var suspended: bool = false
 
 ## The index of the Gift waiting for a click on its target, or −1.
 var _targeting: int = -1
+## The process frame each of `KEY_ACTIONS` was last taken from its event in, so polling skips it.
+var _taken_in_frame: Dictionary = {}  # StringName -> int
 ## Where the mouse is over the world, while it is.
 var _pointer: Vector2 = Vector2.ZERO
 var _pointing: bool = false
@@ -71,6 +78,32 @@ func _notification(what: int) -> void:
 		_pointing = false
 
 
+## Takes a key's press of one of `KEY_ACTIONS` as it arrives, in its order among the frame's clicks:
+## the Rite's key then a click on an enemy casts the Rite on it. Returns whether the event was one.
+func _take_key_action(event: InputEvent) -> bool:
+	for action: StringName in KEY_ACTIONS:
+		if event.is_action_pressed(action):
+			_taken_in_frame[action] = Engine.get_process_frames()
+			_act(action)
+			get_viewport().set_input_as_handled()
+			return true
+	return false
+
+
+## What a press of `action` does, by event or by polling.
+func _act(action: StringName) -> void:
+	match action:
+		&"select_next":
+			if enabled:
+				select_next_requested.emit()
+		&"gift_1":
+			press_gift(0)
+		&"gift_2":
+			press_gift(1)
+		&"cancel":
+			cancel_targeting()
+
+
 # Every motion first counts as off the world; it comes back in `_unhandled_input` unless the HUD took it.
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
@@ -79,6 +112,8 @@ func _input(event: InputEvent) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if suspended:
+		return
+	if not event is InputEventMouse and _take_key_action(event):
 		return
 	var motion := event as InputEventMouseMotion
 	if motion != null:
@@ -101,15 +136,11 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if suspended:
 		return
-	# Polled rather than read from events, so presses made with Input.action_press count too.
-	if enabled and Input.is_action_just_pressed(&"select_next"):
-		select_next_requested.emit()
-	if Input.is_action_just_pressed(&"gift_1"):
-		press_gift(0)
-	if Input.is_action_just_pressed(&"gift_2"):
-		press_gift(1)
-	if Input.is_action_just_pressed(&"cancel"):
-		cancel_targeting()
+	# Also polled, so presses made with Input.action_press, which send no event, count too; a press
+	# whose event was already taken in this frame is not taken again.
+	for action: StringName in KEY_ACTIONS:
+		if Input.is_action_just_pressed(action) and _taken_in_frame.get(action, -1) != Engine.get_process_frames():
+			_act(action)
 	_close_stale_targeting()
 	_show_use_marks()
 	if rig == null:
