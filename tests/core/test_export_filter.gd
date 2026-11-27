@@ -39,11 +39,14 @@ func _named_in_code(folder: String) -> Array[String]:
 	return named
 
 
-## Every resource the game's scenes and code load, directly or through others.
+## Every resource the game's scenes and code load, directly or through others, and the translation
+## catalogues the project settings list (`internationalization/locale/translations`), which the engine
+## loads at start.
 func _loaded() -> Dictionary:
 	var found: Dictionary = {}
 	var queue: Array[String] = GAME_SCENES.duplicate()
 	queue.append_array(_named_in_code(CODE))
+	queue.append_array(Array(ProjectSettings.get_setting("internationalization/locale/translations", PackedStringArray())))
 	while not queue.is_empty():
 		var path: String = queue.pop_back()
 		if found.has(path):
@@ -62,6 +65,17 @@ func test_nothing_the_game_loads_is_left_out() -> void:
 	var patterns: PackedStringArray = _excluded()
 	for path: String in _loaded():
 		assert_false(_is_excluded(path, patterns), "%s is loaded but left out of the export" % path)
+
+
+func test_the_translation_catalogues_ship() -> void:
+	var catalogues: PackedStringArray = ProjectSettings.get_setting("internationalization/locale/translations", PackedStringArray())
+	assert_true(catalogues.has("res://assets/i18n/es.po"))
+	assert_true(catalogues.has("res://assets/i18n/es-dialogue.po"))
+	var loaded: Dictionary = _loaded()
+	var patterns: PackedStringArray = _excluded()
+	for path: String in catalogues:
+		assert_true(loaded.has(path), path)
+		assert_false(_is_excluded(path, patterns), "%s is a catalogue but left out of the export" % path)
 
 
 func test_a_kit_piece_ships_only_if_a_room_uses_it() -> void:

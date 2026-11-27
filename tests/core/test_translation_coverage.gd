@@ -6,8 +6,9 @@ extends GutTest
 ## `dialogue/*.dialogue` (as the add-on compiles them); in `src/`, every literal given to `tr()` and
 ## every string constant (the notices, hints, cards, prompts and controls are constants handed to
 ## `tr()` later), apart from the few in `NOT_TEXT`; in `scenes/` and `resources/`, the names, the doors'
-## texts and the text of every node whose automatic translation is on. A string with no letter in it
-## ("?") is not counted.
+## texts and the `text`, `tooltip_text` and `placeholder_text` of every node whose automatic translation
+## is on. A string with no letter in it ("?") is not counted. Static text on a node whose automatic
+## translation is off is never translated, so only the game's name may be there.
 
 const INTERFACE: String = "res://assets/i18n/es.po"
 const DIALOGUE: String = "res://assets/i18n/es-dialogue.po"
@@ -22,6 +23,11 @@ const NOT_TEXT: Array[String] = ["ENTRY_PREFIX", "ENEMY_PREFIX", "OPENING_CUE", 
 const SAME_IN_BOTH: Array[String] = ["Alma", "No", "Malakor", "Zahra", "Gonzalo", "Íñigo", "Álvar"]
 ## Exported properties of scenes and resources whose text reaches `tr()` in code.
 const TEXT_PROPERTIES: Array[String] = ["display_name", "locked_text", "later_text"]
+## Node properties the engine translates by itself while the node's automatic translation is on.
+const NODE_TEXT_PROPERTIES: Array[String] = ["text", "tooltip_text", "placeholder_text"]
+## Static text set in a scene on a node whose automatic translation is off, shown as written: the
+## game's name. Any other such text would never be translated (code that sets it replaces it).
+const SHOWN_AS_WRITTEN: Array[String] = ["Nocturne of Ashes"]
 
 
 ## The entries of the catalogue at `path`, by key ("context" + U+0004 + "msgid", or the msgid alone
@@ -41,13 +47,9 @@ static func _key(message: String, context: String = "") -> String:
 	return message if context.is_empty() else context + char(4) + message
 
 
-## Every game conversation file.
+## Every game conversation file, at any depth under `DIALOGUE_FOLDER`.
 func _dialogue_files() -> Array[String]:
-	var files: Array[String] = []
-	for file: String in DirAccess.get_files_at(DIALOGUE_FOLDER):
-		if file.get_extension() == "dialogue":
-			files.append(DIALOGUE_FOLDER.path_join(file))
-	return files
+	return _scripts(DIALOGUE_FOLDER, ["dialogue"])
 
 
 ## The texts of the conversations, by catalogue key: each spoken line and choice under its static id,
@@ -65,7 +67,7 @@ func _dialogue_texts() -> Dictionary:
 	return texts
 
 
-## Every `.gd` file under `folder`, at any depth.
+## Every file under `folder` with one of `extensions`, at any depth.
 func _scripts(folder: String, extensions: Array[String] = ["gd"]) -> Array[String]:
 	var found: Array[String] = []
 	for file: String in DirAccess.get_files_at(folder):
@@ -134,9 +136,26 @@ func _interface_texts() -> Dictionary:
 					continue
 				var text: String = found.get_string(2).c_unescape()
 				var name: String = found.get_string(1)
-				if (name in TEXT_PROPERTIES or (name == "text" and translated)) and _has_letter(text):
+				if (name in TEXT_PROPERTIES or (name in NODE_TEXT_PROPERTIES and translated)) and _has_letter(text):
 					texts[text] = "%s (%s)" % [path, name]
 	return texts
+
+
+## Static texts in scenes on nodes whose automatic translation is off, each with where it is.
+func _untranslated_scene_texts() -> Array[String]:
+	var found: Array[String] = []
+	var property := RegEx.create_from_string("^(\\w+) = \"((?:[^\"\\\\]|\\\\.)*)\"$")
+	for path: String in _scripts("res://scenes", ["tscn"]):
+		for block: String in ("\n" + FileAccess.get_file_as_string(path)).split("\n["):
+			if not "\nauto_translate_mode = 2" in block:
+				continue
+			for line: String in block.split("\n"):
+				var found_line: RegExMatch = property.search(line)
+				if found_line != null and found_line.get_string(1) in NODE_TEXT_PROPERTIES and _has_letter(found_line.get_string(2)):
+					var text: String = found_line.get_string(2).c_unescape()
+					if not text in SHOWN_AS_WRITTEN:
+						found.append("%s: %s" % [path, text])
+	return found
 
 
 func _missing(texts: Dictionary, catalogue: Dictionary) -> Array[String]:
@@ -155,6 +174,11 @@ func test_every_line_choice_and_speaker_has_spanish() -> void:
 func test_every_interface_text_has_spanish() -> void:
 	var missing: Array[String] = _missing(_interface_texts(), _catalogue(INTERFACE))
 	assert_eq(missing, [] as Array[String], "interface texts without Spanish:\n" + "\n".join(missing))
+
+
+func test_no_scene_text_is_kept_from_translation_but_the_games_name() -> void:
+	var found: Array[String] = _untranslated_scene_texts()
+	assert_eq(found, [] as Array[String], "text on a node with translation off:\n" + "\n".join(found))
 
 
 func test_the_catalogues_hold_nothing_the_game_does_not_use() -> void:
