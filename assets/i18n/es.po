@@ -178,7 +178,7 @@ msgid "Left click someone"
 msgstr "Clic en alguien"
 
 msgid "Walk up and talk; Enter or a click goes on, 1–4 choose"
-msgstr "Acercarse y hablar; Intro o clic para seguir, 1–4 para elegir"
+msgstr "Acercarse y hablar; Intro o clic avanza, 1–4 eligen"
 
 msgid "Left click a door"
 msgstr "Clic en una puerta"
