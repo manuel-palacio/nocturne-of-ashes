@@ -113,3 +113,32 @@ func test_a_reload_from_the_title_over_an_unusable_save_warns_once_and_starts_a_
 	assert_eq(main.room.room_id, &"haven")
 	assert_eq(main.state.conscience, 7)
 	assert_true(main.store.has_save())
+
+## The saves line in Spanish, the longest of the title's texts, wraps inside the screen at 1280 × 720
+## and at 800 × 500, clear of the preparing line below it and of the buttons above.
+func test_the_saves_line_fits_in_spanish_wide_and_small() -> void:
+	await _boot_with_title(null)
+	var window_size: Vector2i = get_tree().root.size
+	Language.apply("es")
+	var title: TitleScreen = _title()
+	title.show_storage_warning(true)
+	var line := title.find_child("StorageLabel") as Label
+	var preparing := title.find_child("PreparingLabel") as Label
+	var controls := title.find_child("ControlsButton") as Control
+	for size: Vector2i in [Vector2i(1280, 720), Vector2i(800, 500)]:
+		get_tree().root.size = size
+		await wait_physics_frames(2)
+		var what: String = str(size)
+		assert_eq(line.text, "Este navegador no guarda las partidas: el progreso dura hasta que se cierre la página.")
+		assert_eq(line.autowrap_mode, TextServer.AUTOWRAP_WORD_SMART)
+		assert_lte(line.get_line_count(), 2, what)
+		var view: Vector2 = line.get_viewport_rect().size
+		var drawn: Rect2 = line.get_global_rect()
+		assert_gte(drawn.position.x, 0.0, what)
+		assert_lte(drawn.end.x, view.x, what)
+		assert_lte(drawn.end.y, preparing.get_global_rect().position.y + 0.5, what)
+		var text_top: float = drawn.end.y - line.get_line_count() * line.get_line_height()
+		assert_gte(text_top, controls.get_global_rect().end.y, what)
+	TranslationServer.set_locale("en")
+	get_tree().root.size = window_size
+	await wait_physics_frames(2)
