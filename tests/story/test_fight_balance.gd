@@ -7,24 +7,27 @@ extends GutTest
 ##
 ## Bars and measurements. The design targets are fixed; each bar is one win looser than the worse of two
 ## measured 10-run passes (a ceiling one looser than the higher), and never looser than the target's
-## limit. Measured with the numbers of fix round 3, the file's own row order, seeds 1000-1009 / 1010-1019:
+## limit. Measured with the numbers of fix round 4, the file's own row order, seeds 1000-1009 / 1010-1019:
 ##
 ##   row  bar (of 10)                      measured            limit
 ##   A    clears <= 1                      0 / 0               <= 4
-##   B    clears >= 6                      7 / 6               >= 6
-##        median end health <= 90 of 120   58 / 60             <= 90
-##        median won time 35-75 s          40.0 / 41.0 s       35-75 s
-##        a companion fallen in >= 3 runs  3 / 3               >= 3
-##   C    clears <= 6; B - C >= 4 of 20    4 / 5; 13 - 9 = 4   <= 6; >= 4
+##   B    clears >= 6                      7 / 8               >= 6
+##        median end health <= 90 of 120   80 / 73             <= 90
+##        median won time 35-75 s          39.0 / 40.0 s       35-75 s
+##        a companion fallen in >= 3 runs  3 / 2 (below)       >= 3
+##   C    clears <= 6; B - C >= 4 of 20    4 / 5; 15 - 9 = 6   <= 6; >= 4
 ##   D    falls >= 9                       10 / 10             >= 7
-##   E    clears >= 7                      10 / 8              >= 4
-##   F    clears >= 6                      10 / 5 (below)      >= 6
+##   E    clears >= 8                      10 / 9              >= 4
+##   F    clears >= 5                      10 / 6              >= 4 (*)
 ##   G    reaches the Fragua >= 8, turned  10 / 9              >= 7
 ##   H    clears >= 8                      10 / 9              >= 8
 ##
-## Not bars, measured: the dry start's won fights take 43.7 / 42.0 s against the player's 40.0 / 41.0 s;
-## no Fury in any row. Row run-to-run spread is about two wins in ten. F's second pass falls one under
-## its limit: it is reported, not chased.
+## (*) F's limit is 4: by the owner's ruling the drained start is equal to the spared one within noise
+## while Blood is plentiful (a feed gives 80); a review measured 15 of 20 against 13 of 20.
+##
+## Not bars, measured: the dry start's won fights take 43.7 / 42.0 s against the player's 39.0 / 40.0 s;
+## no Fury in any row. Row run-to-run spread is about two wins in ten. B's companions fell in only 2 runs
+## of the second pass, under its limit of 3: reported, not chased.
 
 ## Fights per row in the suite; the full table is played with FIGHT_RUNS=10.
 const RUNS: int = 5
@@ -179,13 +182,13 @@ func test_without_feeding_the_player_falls() -> void:
 func test_with_no_blood_the_player_feeds_his_way_out() -> void:
 	var player: Array[Dictionary] = await _player_row()
 	var runs: Array[Dictionary] = await _row("E dry, player", VaultFight.Start.DRY, VaultFight.Kind.PLAYER)
-	assert_gte(_count(runs, "cleared"), _at_least(0.7, runs.size()), "with no Blood he clears 7 of 10")
+	assert_gte(_count(runs, "cleared"), _at_least(0.8, runs.size()), "with no Blood he clears 8 of 10")
 	gut.p("BALANCE | dry won fights %.1f s against the player's %.1f s" % [_won_time(runs), _won_time(player)])
 
 
 func test_a_player_who_drained_the_captive_clears() -> void:
 	var runs: Array[Dictionary] = await _row("F drained, player", VaultFight.Start.DRAINED, VaultFight.Kind.PLAYER)
-	assert_gte(_count(runs, "cleared"), _at_least(0.6, runs.size()), "after draining he clears 6 of 10")
+	assert_gte(_count(runs, "cleared"), _at_least(0.5, runs.size()), "after draining he clears 5 of 10")
 
 
 func test_a_coward_reaches_the_fragua() -> void:
