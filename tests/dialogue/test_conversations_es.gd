@@ -10,25 +10,25 @@ const DIALOGUE := "res://assets/i18n/es-dialogue.po"
 ## The first and the last line of each conversation, as the box shows them in Spanish, on the run that
 ## drinks a little from the captive and hands the letter over.
 const FIRST_AND_LAST: Dictionary = {
-	"waking": ["Despiertas. Bien. No todos lo hacen.", "Íñigo te contará el resto. Yo no digo las cosas dos veces."],
+	"waking": ["Despiertas. Bien. No todos despiertan.", "Íñigo te contará el resto. Yo no digo las cosas dos veces."],
 	"smith": ["Quédate ahí, lejos de las chispas. Él me mandó que te contara cómo están las cosas, y tengo hierro enfriándose.",
 		"Y el Silencio: los vivos de arriba no deben saber nunca lo que camina bajo sus pies. Eso es todo. Al salir, pásame las tenazas."],
 	"malakor_early": ["No bajarás solo. Zahra y Gonzalo irán contigo. Búscalos.", "Y ocúpate del prisionero. Es tuyo."],
-	"zahra": ["Así que tú eres el fraile de la puerta. ¿Cómo te sienta la Sangre? ¿Todavía pesa?",
+	"zahra": ["Así que tú eres el fraile de la puerta. ¿Cómo te sienta la Sangre? ¿Todavía te pesa?",
 		"Cuesta Sangre, como todo aquí. ¿Quién crees que lo paga al final?"],
-	"gonzalo": ["Tú eres el nuevo.", "Lleva la hoja baja. Camina."],
-	"captive": ["Atrás. Tomé la cruz en Montpellier. No me arrodillo ante ti.", "Te has detenido. ¿Por qué te has detenido?"],
-	"smith_again": ["Ya lo dije una vez. Cuando la Sangre escasea, bebes.",
-		"Si dejas que se agote, la Furia elige por ti. Y ahora, cuidado con las chispas."],
+	"gonzalo": ["Tú eres el nuevo.", "Mantén la hoja baja. Andando."],
+	"captive": ["Atrás. Tomé la cruz en Montpellier. Ante ti no me arrodillo.", "Has parado. ¿Por qué has parado?"],
+	"smith_again": ["Ya te lo dije una vez. Cuando la Sangre escasea, bebes.",
+		"Si dejas que se agote, la Furia elige por ti. Y ahora, ojo con las chispas."],
 	"malakor_order": ["Bajo esta ciudad hay criptas más antiguas que sus iglesias.", "La escalera está abierta. Ve."],
 	"malakor_after": ["La escalera está abierta. Baja.", "La escalera está abierta. Baja."],
-	"malakor_vault": ["Así que la primera sala calla. El cerrojo que hay debajo ha sobrevivido a reyes. Aguardará hasta que yo lo diga.",
-		"Así que la primera sala calla. El cerrojo que hay debajo ha sobrevivido a reyes. Aguardará hasta que yo lo diga."],
+	"malakor_vault": ["Así que la primera sala está en silencio. El cerrojo que hay debajo ha sobrevivido a reyes. Aguardará hasta que yo lo diga.",
+		"Así que la primera sala está en silencio. El cerrojo que hay debajo ha sobrevivido a reyes. Aguardará hasta que yo lo diga."],
 }
-const CAPTIVE_CHOICES: Array[String] = ["Beber un poco", "Apurarlo hasta el final", "Dejarlo en paz"]
+const CAPTIVE_CHOICES: Array[String] = ["Beber un poco", "Desangrarlo", "Dejarlo en paz"]
 const LETTER_CHOICES: Array[String] = ["Entregársela", "Decir que ardió en el barrio"]
 ## The captive's last line for each choice.
-const CAPTIVE_LAST: Array[String] = ["Te has detenido. ¿Por qué te has detenido?", "La Sangre está caliente. Él no.",
+const CAPTIVE_LAST: Array[String] = ["Has parado. ¿Por qué has parado?", "La Sangre está caliente. Él no.",
 	"Vete, pues. Seas lo que seas, rezaré por ti. No sé a quién."]
 ## The speakers' names as the box shows them in Spanish, by the name the conversation gives.
 const SPEAKERS_ES: Dictionary = {"Malakor": "Malakor", "Álvar": "Álvar", "Íñigo": "Íñigo",
@@ -147,8 +147,8 @@ func test_a_language_change_mid_conversation_shows_the_line_on_show_in_the_new_l
 	assert_eq(_shown()[1], "You wake. Good. Not all of them do.")
 	Language.apply("es")
 	await wait_physics_frames(2)
-	assert_eq(_shown(), ["Malakor", "Despiertas. Bien. No todos lo hacen.", [] as Array[String]])
-	assert_eq(main.dialogue.line_text(), "Despiertas. Bien. No todos lo hacen.")
+	assert_eq(_shown(), ["Malakor", "Despiertas. Bien. No todos despiertan.", [] as Array[String]])
+	assert_eq(main.dialogue.line_text(), "Despiertas. Bien. No todos despiertan.")
 	await _play()
 	main.talk(HAVEN, "captive")
 	await wait_physics_frames(2)
@@ -176,7 +176,7 @@ func test_a_line_without_its_spanish_is_shown_in_english() -> void:
 		return line.get("text", "") == "You wake. Good. Not all of them do.")[0]
 	var english: String = first.text
 	var spanish: String = catalogue.get_message(english, first.static_id)
-	assert_eq(spanish, "Despiertas. Bien. No todos lo hacen.")
+	assert_eq(spanish, "Despiertas. Bien. No todos despiertan.")
 	catalogue.erase_message(english, first.static_id)
 	Language.apply("es")
 	main = Story.boot(self, null, true)

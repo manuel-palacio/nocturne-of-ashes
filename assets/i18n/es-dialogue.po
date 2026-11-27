@@ -40,7 +40,7 @@ msgstr "Gonzalo"
 #. Malakor
 msgctxt "bck0morkntt2n_bd3fca"
 msgid "You wake. Good. Not all of them do."
-msgstr "Despiertas. Bien. No todos lo hacen."
+msgstr "Despiertas. Bien. No todos despiertan."
 
 #. Álvar
 msgctxt "bck0morkntt2n_b02d6f"
@@ -76,7 +76,7 @@ msgstr "Íñigo te contará el resto. Yo no digo las cosas dos veces."
 #. Malakor
 msgctxt "bck0morkntt2n_15bf17"
 msgid "The first hall is quiet, then. The lock beneath it has outlasted kings. It will keep until I say."
-msgstr "Así que la primera sala calla. El cerrojo que hay debajo ha sobrevivido a reyes. Aguardará hasta que yo lo diga."
+msgstr "Así que la primera sala está en silencio. El cerrojo que hay debajo ha sobrevivido a reyes. Aguardará hasta que yo lo diga."
 
 #. Malakor
 msgctxt "bck0morkntt2n_097122"
@@ -91,7 +91,7 @@ msgstr "Te estás convirtiendo en lo que hice de ti. Bien."
 #. Malakor
 msgctxt "bck0morkntt2n_486722"
 msgid "You still pray at night, friar. I hear it through the stone. Pray below, if you must."
-msgstr "Aún rezas de noche, fraile. Te oigo a través de la piedra. Reza abajo, si es preciso."
+msgstr "Aún rezas de noche, fraile. Te oigo a través de la piedra. Reza allí abajo, si no puedes evitarlo."
 
 #. Malakor
 msgctxt "bck0morkntt2n_b5c558"
@@ -101,12 +101,12 @@ msgstr "Bajo esta ciudad hay criptas más antiguas que sus iglesias."
 #. Malakor
 msgctxt "bck0morkntt2n_0e85f9"
 msgid "Every king who held Toledo hung a lock on them. I want those locks broken. You will go down and break them."
-msgstr "Cada rey que tuvo Toledo les echó un cerrojo. Quiero esos cerrojos rotos. Bajarás y los romperás."
+msgstr "Cada rey que gobernó Toledo les echó un cerrojo. Quiero verlos rotos. Bajarás y los romperás."
 
 #. Malakor
 msgctxt "bck0morkntt2n_a4e6aa"
 msgid "Gonzalo knows the first stair. Zahra knows what bleeds. You go first."
-msgstr "Gonzalo conoce la primera escalera. Zahra sabe lo que sangra. Tú vas delante."
+msgstr "Gonzalo conoce la primera escalera. Zahra entiende de heridas. Tú irás delante."
 
 #. Malakor
 msgctxt "bck0morkntt2n_f677b5"
@@ -131,7 +131,7 @@ msgstr "Decir que ardió en el barrio"
 #. Malakor
 msgctxt "bck0morkntt2n_21b71f"
 msgid "Burned. Much burned that night. Remember that you told me so."
-msgstr "Ardió. Mucho ardió aquella noche. Acuérdate de que me lo dijiste."
+msgstr "Ardió. Mucho ardió aquella noche. Recuerda que fuiste tú quien me lo dijo."
 
 #. Malakor
 msgctxt "bck0morkntt2n_563a93"
@@ -167,17 +167,17 @@ msgstr "Y ocúpate del prisionero. Es tuyo."
 #. Íñigo
 msgctxt "bck0morkntt2n_f4ee70"
 msgid "I said it once. When the Blood runs low, you drink."
-msgstr "Ya lo dije una vez. Cuando la Sangre escasea, bebes."
+msgstr "Ya te lo dije una vez. Cuando la Sangre escasea, bebes."
 
 #. Íñigo
 msgctxt "bck0morkntt2n_13acb0"
 msgid "Let it run dry and the Fury chooses for you. Now mind the sparks."
-msgstr "Si dejas que se agote, la Furia elige por ti. Y ahora, cuidado con las chispas."
+msgstr "Si dejas que se agote, la Furia elige por ti. Y ahora, ojo con las chispas."
 
 #. Íñigo
 msgctxt "bck0morkntt2n_ccc626"
 msgid "Stand clear of the quench. You have been to the alcove, I can see it on you. He told me to tell you how things are."
-msgstr "Apártate del agua del temple. Has estado en la celda, se te nota. Él me mandó que te contara cómo están las cosas."
+msgstr "Apártate de la pila del temple. Has estado en la celda, se te nota. Él me mandó que te contara cómo son aquí las cosas."
 
 #. Íñigo
 msgctxt "bck0morkntt2n_3adb7c"
@@ -198,7 +198,7 @@ msgstr "Y el Silencio: los vivos de arriba no deben saber nunca lo que camina ba
 #. The captive
 msgctxt "bck0morkntt2n_7934ba"
 msgid "Stay back. I took the cross at Montpellier. I do not kneel to you."
-msgstr "Atrás. Tomé la cruz en Montpellier. No me arrodillo ante ti."
+msgstr "Atrás. Tomé la cruz en Montpellier. Ante ti no me arrodillo."
 
 #. The captive
 msgctxt "bck0morkntt2n_efd635"
@@ -208,7 +208,7 @@ msgstr "Tú eres el fraile. Te vi caer en la puerta. Vi cómo te abrían la garg
 #. The captive
 msgctxt "bck0morkntt2n_cd80b8"
 msgid "My leg is broken, and I am thirsty, and I am not afraid of you. Do what you came for."
-msgstr "Tengo la pierna rota, y tengo sed, y no te tengo miedo. Haz aquello a lo que has venido."
+msgstr "Tengo la pierna rota, y tengo sed, y no te tengo miedo. Haz lo que has venido a hacer."
 
 #. choice
 msgctxt "bck0morkntt2n_24e725"
@@ -218,12 +218,12 @@ msgstr "Beber un poco"
 #. The captive
 msgctxt "bck0morkntt2n_dfb00d"
 msgid "You stopped. Why did you stop?"
-msgstr "Te has detenido. ¿Por qué te has detenido?"
+msgstr "Has parado. ¿Por qué has parado?"
 
 #. choice
 msgctxt "bck0morkntt2n_a8df0b"
 msgid "Drain him"
-msgstr "Apurarlo hasta el final"
+msgstr "Desangrarlo"
 
 #. Álvar
 msgctxt "bck0morkntt2n_afacd5"
@@ -254,7 +254,7 @@ msgstr "Aún me arde el brazo donde bebiste. No te acerques más."
 #. Zahra
 msgctxt "bck0morkntt2n_2c4e22"
 msgid "So you are the friar from the gate. How does the Blood sit in you? Heavy, still?"
-msgstr "Así que tú eres el fraile de la puerta. ¿Cómo te sienta la Sangre? ¿Todavía pesa?"
+msgstr "Así que tú eres el fraile de la puerta. ¿Cómo te sienta la Sangre? ¿Todavía te pesa?"
 
 #. Zahra
 msgctxt "bck0morkntt2n_8505c0"
@@ -264,17 +264,17 @@ msgstr "Era médica en Córdoba antes de mi Conversión. Todavía miro la herida
 #. Zahra
 msgctxt "bck0morkntt2n_1b8d8a"
 msgid "The crusader in the alcove has gone quiet. Was that you? Was it hunger, or obedience?"
-msgstr "El cruzado de la celda se ha quedado callado. ¿Fuiste tú? ¿Fue hambre, u obediencia?"
+msgstr "El cruzado de la celda se ha quedado callado. ¿Fuiste tú? ¿Fue hambre u obediencia?"
 
 #. Zahra
 msgctxt "bck0morkntt2n_8f8c4f"
 msgid "You left the crusader breathing. Was that mercy, or did you not know how?"
-msgstr "Dejaste respirar al cruzado. ¿Fue piedad, o no supiste cómo?"
+msgstr "Dejaste con vida al cruzado. ¿Fue piedad, o es que no sabías cómo?"
 
 #. Zahra
 msgctxt "bck0morkntt2n_7b5359"
 msgid "Malakor wants you below. Has he told you what is down there? No. He never does."
-msgstr "Malakor te quiere abajo. ¿Te ha dicho qué hay allí? No. Nunca lo dice."
+msgstr "Malakor te quiere abajo. ¿Te ha dicho qué hay allí abajo? No. Nunca lo dice."
 
 #. Zahra
 msgctxt "bck0morkntt2n_01605a"
@@ -315,4 +315,4 @@ msgstr "Malakor dice que bajo contigo. Así que bajo."
 #. Gonzalo
 msgctxt "bck0morkntt2n_e91e97"
 msgid "Keep your blade low. Walk."
-msgstr "Lleva la hoja baja. Camina."
+msgstr "Mantén la hoja baja. Andando."

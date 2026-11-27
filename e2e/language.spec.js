@@ -41,25 +41,25 @@ test('the waking, a choice at the captive and Íñigo, in Spanish on request', a
   const errors = await open(page, 'probe=1&fresh=1&calm=1&lang=es');
   await until(page, talking, null, 30000);
   let s = await state(page);
-  expect([s.speaker_name, s.line]).toEqual(['Malakor', 'Despiertas. Bien. No todos lo hacen.']);
+  expect([s.speaker_name, s.line]).toEqual(['Malakor', 'Despiertas. Bien. No todos despiertan.']);
   await enterUntil(page, 'Elena. ¿Dónde está?');
   await talkThrough(page, '1');
 
   await use(page, 'The captive', (t) => t.talking);
-  s = await enterUntil(page, 'Tengo la pierna rota, y tengo sed, y no te tengo miedo. Haz aquello a lo que has venido.');
+  s = await enterUntil(page, 'Tengo la pierna rota, y tengo sed, y no te tengo miedo. Haz lo que has venido a hacer.');
   expect(s.speaker).toBe('The captive');
   expect(s.speaker_name).toBe('El cautivo');
-  expect(s.choices).toEqual(['Beber un poco', 'Apurarlo hasta el final', 'Dejarlo en paz']);
+  expect(s.choices).toEqual(['Beber un poco', 'Desangrarlo', 'Dejarlo en paz']);
   await page.keyboard.press('1');
   await page.waitForTimeout(250);
-  expect((await state(page)).line).toBe('Te has detenido. ¿Por qué te has detenido?');
+  expect((await state(page)).line).toBe('Has parado. ¿Por qué has parado?');
   await talkThrough(page, '1');
   expect((await state(page)).flags).toEqual(expect.arrayContaining(['captive_done']));
 
   await use(page, 'Íñigo', (t) => t.talking);
   s = await state(page);
   expect([s.speaker_name, s.line]).toEqual(['Íñigo',
-    'Apártate del agua del temple. Has estado en la celda, se te nota. Él me mandó que te contara cómo están las cosas.']);
+    'Apártate de la pila del temple. Has estado en la celda, se te nota. Él me mandó que te contara cómo son aquí las cosas.']);
   await enterUntil(page, 'Y el Silencio: los vivos de arriba no deben saber nunca lo que camina bajo sus pies. Eso es todo. Al salir, pásame las tenazas.');
   await talkThrough(page, '1');
   expect((await state(page)).flags).toEqual(expect.arrayContaining(['smith_heard']));
@@ -73,7 +73,7 @@ test.describe('a browser set to Spanish', () => {
     test.setTimeout(120000);
     let errors = await open(page, 'probe=1&fresh=1');
     await until(page, talking, null, 30000);
-    expect((await state(page)).line).toBe('Despiertas. Bien. No todos lo hacen.');
+    expect((await state(page)).line).toBe('Despiertas. Bien. No todos despiertan.');
     expect(errors).toEqual([]);
     errors = await open(page, 'probe=1&fresh=1&lang=en');
     await until(page, talking, null, 30000);
@@ -134,7 +134,7 @@ test.describe('the frames in Spanish', () => {
     await talkThrough(page, '1');
 
     await use(page, 'The captive', (t) => t.talking);
-    await enterUntil(page, 'Tengo la pierna rota, y tengo sed, y no te tengo miedo. Haz aquello a lo que has venido.');
+    await enterUntil(page, 'Tengo la pierna rota, y tengo sed, y no te tengo miedo. Haz lo que has venido a hacer.');
     await shot('captive-choices');
     await size(800, 500);
     await shot('captive-choices-800x500');
