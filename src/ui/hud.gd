@@ -204,16 +204,16 @@ func is_closing_open() -> bool:
 	return _closing_card.is_open()
 
 
-## Shows `text`, an English source text, in the middle of the screen for `notice_time` seconds, in
-## place of any notice on show, with its `%s` places filled by `args`, source texts translated in turn.
-## An empty text hides the notice.
-func show_notice(text: String, args: Array = []) -> void:
+## Shows `text`, an English source text, in the middle of the screen for `seconds` (by default
+## `notice_time`), in place of any notice on show, with its `%s` places filled by `args`, source texts
+## translated in turn. An empty text hides the notice.
+func show_notice(text: String, args: Array = [], seconds: float = -1.0) -> void:
 	if text.is_empty():
 		hide_notice()
 		return
 	_notice = text
 	_notice_args = args.duplicate()
-	_notice_left = notice_time
+	_notice_left = seconds if seconds > 0.0 else notice_time
 	_notice_label.text = _notice_text()
 	_notice_label.visible = true
 

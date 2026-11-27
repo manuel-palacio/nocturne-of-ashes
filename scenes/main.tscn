@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://src/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/player/camera_rig.gd" id="3_rig"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://src/core/world_hold.gd" id="10_world_hold"]
 [ext_resource type="Script" path="res://src/rooms/travel.gd" id="11_travel"]
 [ext_resource type="Script" path="res://src/core/shader_warmup.gd" id="12_warmup"]
+[ext_resource type="Script" path="res://src/ui/hints.gd" id="13_hints"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -34,6 +35,9 @@ script = ExtResource("10_world_hold")
 
 [node name="Travel" type="Node" parent="."]
 script = ExtResource("11_travel")
+
+[node name="Hints" type="Node" parent="."]
+script = ExtResource("13_hints")
 
 [node name="ShaderWarmup" type="Node" parent="."]
 script = ExtResource("12_warmup")

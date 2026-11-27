@@ -2,8 +2,9 @@ class_name Main
 extends Node3D
 ## The game's shell: boots from a `GameState`, loads rooms, has the `Party` spawn the members who have
 ## joined and the `Encounter` run the room's fight, wires camera, input and HUD, hands control to the
-## party's selected member, pauses the world, has the `Conversation` node run conversations and, in a
-## story, the `Travel` node answer the doors.
+## party's selected member, pauses the world, has the `Conversation` node run conversations, the
+## `Hints` node teach the fight's rules as they first apply and, in a story, the `Travel` node answer
+## the doors.
 ##
 ## The skirmish (`main.tscn`) always plays the vault with the whole party at full strength and restarts
 ## it after Álvar's fall. The story (`game.tscn`) plays from a `GameState`, saves it at checkpoints and
@@ -122,6 +123,7 @@ var _falls_room: StringName = &""
 @onready var _conversation: Conversation = $Conversation
 @onready var _world_hold: WorldHold = $WorldHold
 @onready var _travel: Travel = $Travel
+@onready var _hints: Hints = $Hints
 @onready var _warmup: ShaderWarmup = $ShaderWarmup
 ## Only the story scene has one.
 @onready var _title: TitleScreen = get_node_or_null(^"TitleLayer/TitleScreen")
@@ -169,6 +171,9 @@ func _ready() -> void:
 	_conversation.failed.connect(reload_checkpoint, CONNECT_DEFERRED)
 	room_started.connect(func() -> void: _conversation.play_opening(opening_enabled))
 	_travel.setup(input, _party, _encounter, hud, enter_room)
+	_hints.setup(_party, _encounter, hud, func() -> bool:
+		return (is_title_open() or is_talking() or hud.is_controls_open() or hud.is_closing_open()
+				or hud.is_fallen_shown()), keep_flag)
 	if boot == Boot.STORY and store == null:
 		store = SaveStore.new()
 	if state == null:
@@ -235,6 +240,21 @@ func checkpoint() -> void:
 		push_warning("Could not write the save file %s" % store.path)
 		return
 	checkpoint_saved.emit()
+
+
+## Sets `flag` in the state and in the last checkpoint, and saves that checkpoint: a flag set mid-room
+## that neither a fall nor a reload may undo, such as a hint seen. Nothing else in the checkpoint
+## changes, the party's health and Blood included. Without a store or a checkpoint, only the state.
+func keep_flag(flag: StringName) -> void:
+	state.set_flag(flag)
+	if store == null or _last_checkpoint.is_empty():
+		return
+	var kept: GameState = GameState.from_dict(_last_checkpoint)
+	kept.set_flag(flag)
+	_last_checkpoint = kept.to_dict()
+	_last_write_failed = not store.save(kept)
+	if _last_write_failed:
+		push_warning("Could not write the save file %s" % store.path)
 
 
 ## Plays on from the last checkpoint kept in memory, at its room and entry: within a session it is
@@ -403,6 +423,7 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	_conversation.begin_room(room, state)
 	if boot == Boot.STORY:
 		_travel.begin_room(room, state)
+	_hints.begin_room(state, boot == Boot.STORY)
 	hud.bind_state(state if boot == Boot.STORY else null)
 	state.room = room_id
 	state.entry = arrived_at

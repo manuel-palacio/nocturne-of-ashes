@@ -36,7 +36,8 @@ var _cleared: bool = false
 var _calm_for: float = 0.0
 ## Whether the room's enemies have all been alerted.
 var _alerted: bool = false
-## Seconds since the first blow landed on an enemy or a party member; negative before it.
+## Seconds of fight since the first blow landed on an enemy or a party member, until the room is
+## cleared; negative before it.
 var _since_first_blow: float = -1.0
 
 
@@ -88,6 +89,18 @@ func is_cleared() -> bool:
 ## Whether every enemy of the room has been alerted, as `Encounter` describes.
 func is_alerted() -> bool:
 	return _alerted
+
+
+## Seconds of fight since the first blow of this round landed, on an enemy or a party member; it does
+## not advance while the fight is held, while Álvar is down or once the room is cleared. Negative
+## before the first blow.
+func fight_time() -> float:
+	return _since_first_blow
+
+
+## Whether `enemy` is one of the guard's sergeants.
+static func is_sergeant(enemy: Unit) -> bool:
+	return enemy.scene_file_path == SERGEANT.resource_path
 
 
 ## Whether the fight has left a mark: an enemy is hurt or has fallen.
@@ -142,9 +155,9 @@ func _physics_process(delta: float) -> void:
 func _advance(delta: float) -> void:
 	if not _leader_alive():
 		return
+	if not _cleared and _since_first_blow >= 0.0:
+		_since_first_blow += delta
 	if not _cleared and not _alerted:
-		if _since_first_blow >= 0.0:
-			_since_first_blow += delta
 		if enemies_alive() < enemies.size() or _since_first_blow >= ALERT_TIME:
 			_alert()
 	if not _cleared and enemies_alive() == 0:

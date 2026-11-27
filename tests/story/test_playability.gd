@@ -422,7 +422,10 @@ func test_a_spam_clickers_fight_ends() -> void:
 # --- 3. Leaving a fight is said aloud ---
 
 func test_coming_back_to_a_vault_whose_guard_was_restored_says_so() -> void:
-	await _boot(PageBoot.haven_finished())
+	var state := PageBoot.haven_finished()
+	# The pause hint seen already: this test is about the game's own notices.
+	state.set_flag(Hints.flag(&"pause"))
+	await _boot(state)
 	assert_eq(main.hud.notice(), "", "nothing on a first entry")
 	main.enemies[0].take_hit(30)
 	_door("WestDoor").use(main.player)

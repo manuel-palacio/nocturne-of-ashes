@@ -140,6 +140,8 @@ func test_every_door_stands_within_reach_of_the_navmesh() -> void:
 func test_doors_do_nothing_in_the_skirmish() -> void:
 	main = add_child_autofree(load("res://scenes/main.tscn").instantiate())
 	await wait_physics_frames(3)
+	# The first hint, shown on entering; the door must add nothing of its own.
+	main.hud.hide_notice()
 	(main.room.find_child("WestDoor") as Door).use(main.player)
 	await wait_physics_frames(2)
 	assert_eq(main.room.room_id, &"vault")
