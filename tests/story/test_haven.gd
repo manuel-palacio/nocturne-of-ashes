@@ -211,3 +211,27 @@ func test_lines_fit_what_has_happened_so_far() -> void:
 	var gonzalo_missing: String = " ".join(await _lines_of("malakor"))
 	assert_true(gonzalo_missing.contains("Gonzalo"))
 	assert_false(gonzalo_missing.contains("Zahra"))
+
+const SMITH_RULES: Array[String] = [
+	"The Blood in you is not your own now. Every Rite spends it. When it runs low you drink; let it run dry, and the Fury drinks for you.",
+	"And the Silence: the living above must never learn what walks beneath them. That is all. Hand me the tongs on your way out.",
+]
+
+func test_the_smith_says_how_things_are_in_three_lines() -> void:
+	await _boot(_after_waking())
+	var lines: Array[String] = await _lines_of("smith")
+	var expected: Array[String] = ["Stand there, out of the sparks. He told me to tell you how things are, and I have iron cooling."]
+	expected.append_array(SMITH_RULES)
+	assert_eq(lines, expected)
+	assert_true(main.state.has_flag(&"smith_heard"))
+
+func test_once_the_captive_is_seen_to_the_smith_opens_otherwise_in_three_lines() -> void:
+	var state := _after_waking()
+	state.set_flag(&"captive_done")
+	await _boot(state)
+	var lines: Array[String] = await _lines_of("smith")
+	assert_eq(lines.size(), 3)
+	assert_eq(lines.slice(1), SMITH_RULES)
+	assert_string_contains(lines[0], "alcove")
+	assert_string_contains(lines[0], "how things are")
+	assert_true(main.state.has_flag(&"smith_heard"))

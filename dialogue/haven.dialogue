@@ -55,14 +55,11 @@ if has_flag("smith_heard")
 	Íñigo: Let it run dry and the Fury chooses for you. Now mind the sparks.
 	=> END
 if has_flag("captive_done")
-	Íñigo: Stand clear of the quench. You have been to the alcove, I can see it on you. Listen while I work.
+	Íñigo: Stand clear of the quench. You have been to the alcove, I can see it on you. He told me to tell you how things are.
 else
-	Íñigo: Stand there, out of the sparks. He told me to tell you how things are.
-Íñigo: The Blood in you is not your own now. Every Rite you call on spends some of it, the way this fire spends charcoal.
-Íñigo: When it runs low you drink. The weak, the hurt, the ones who cannot fight you off. A sleeping man, a wounded one.
-Íñigo: Let it run dry and the Fury takes you. Then you do not choose whom you drink from. You drink from whoever is near.
-Íñigo: And the Silence. The living up there must never learn what walks beneath them. Not one of them, not ever.
-Íñigo: That is all. Hand me the tongs on your way out.
+	Íñigo: Stand there, out of the sparks. He told me to tell you how things are, and I have iron cooling.
+Íñigo: The Blood in you is not your own now. Every Rite spends it. When it runs low you drink; let it run dry, and the Fury drinks for you.
+Íñigo: And the Silence: the living above must never learn what walks beneath them. That is all. Hand me the tongs on your way out.
 do set_flag("smith_heard")
 => END
 

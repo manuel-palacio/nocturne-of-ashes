@@ -609,7 +609,7 @@ func test_hiding_the_page_does_not_pause_the_title() -> void:
 func test_inigo_says_it_all_once_then_reminds_in_two_lines() -> void:
 	await _boot(_haven_after_the_order())
 	var first: Array[String] = await _lines_of("smith")
-	assert_gt(first.size(), 4)
+	assert_eq(first.size(), 3, "the rules in three lines; the fight teaches the rest")
 	var second: Array[String] = await _lines_of("smith")
 	assert_between(second.size(), 1, 2)
 	var said: String = " ".join(second)
