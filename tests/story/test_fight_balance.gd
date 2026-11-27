@@ -20,10 +20,19 @@ extends GutTest
 ##   E    clears >= 8                      10 / 9              >= 4
 ##   F    clears >= 5                      10 / 6              >= 4 (*)
 ##   G    reaches the Fragua >= 8, turned  10 / 9              >= 7
-##   H    clears >= 8                      10 / 9              >= 8
+##   H    clears >= 8                      10 / 10 (*3)        >= 8
+##   I    clears >= 6                      10 / 10 (*3)        >= 6
 ##
 ## (*) F's limit is 4: by the owner's ruling the drained start is equal to the spared one within noise
 ## while Blood is plentiful (a feed gives 80); a review measured 15 of 20 against 13 of 20.
+##
+## (*3) Rows H and I play at the tiring floor, `Main.TIRING_FLOOR`; measured at 0.15. Row I, the spam
+## clicker with every member at 0 Blood, is the floor under "nobody gets stuck" for the weakest start;
+## its bar, 6 of 10, is the owner's, and the floor was lowered until H and I both held it with a win to
+## spare. Row I at ten runs, seeds 1000-1009 / 1010-1019: floor 0.5, 0 / 0 (falls in 12-16 s); 0.3, 2;
+## 0.2, 3; 0.17, 8 / 8; 0.15, 10 / 10; 0.1, 10. H at 0.5 was 10 / 9. The tiring guard loses health, not
+## damage, so a dry party with no Rites wins only once the guard dies in a blow or two: a steep step
+## between 0.2 and 0.15. At 0.15 the floor is reached at the seventh fall (was the fifth).
 ##
 ## (**) B's fallen-companion limit is 2 runs in 10, by the controller's ruling: wins still cost something,
 ## as Álvar ends at 73-80 of 120.
@@ -208,3 +217,10 @@ func test_at_the_tiring_floor_even_the_spam_clicker_wins() -> void:
 	var runs: Array[Dictionary] = await _row("H spam clicker, guard at the floor", VaultFight.Start.SPARED,
 			VaultFight.Kind.SPAM, true)
 	assert_gte(_count(runs, "cleared"), _at_least(0.8, runs.size()), "at the floor the spam clicker clears 8 of 10")
+
+
+func test_at_the_tiring_floor_even_a_dry_spam_clicker_wins() -> void:
+	var runs: Array[Dictionary] = await _row("I dry spam clicker, guard at the floor", VaultFight.Start.DRY,
+			VaultFight.Kind.SPAM, true)
+	assert_gte(_count(runs, "cleared"), _at_least(0.6, runs.size()),
+			"at the floor the dry spam clicker clears 6 of 10")

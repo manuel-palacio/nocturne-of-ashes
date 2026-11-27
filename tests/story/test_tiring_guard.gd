@@ -53,10 +53,12 @@ func test_the_first_fall_leaves_the_guard_whole() -> void:
 	assert_ne(main.hud.notice(), "The guard is tiring.")
 
 
-func test_from_the_second_fall_the_guard_tires_by_fifteen_in_a_hundred_down_to_half() -> void:
-	assert_eq(Main.TIRING_FLOOR, 0.5)
+## The floor is low enough for the weakest start, a spam clicker with no Blood in the party
+## (`test_fight_balance.gd`, row I).
+func test_from_the_second_fall_the_guard_tires_by_fifteen_in_a_hundred_down_to_its_floor() -> void:
+	assert_eq(Main.TIRING_FLOOR, 0.15)
 	await _boot()
-	var expected: Array[int] = [100, 85, 70, 55, 50, 50]
+	var expected: Array[int] = [100, 85, 70, 55, 40, 25, 15, 15]
 	for fall: int in expected.size():
 		await _fall_and_get_up()
 		assert_eq(_guard_shares(), _all(expected[fall]), "after fall %d" % (fall + 1))
