@@ -227,6 +227,10 @@ test.describe('the frames for the owner', () => {
         continue;
       }
       await page.mouse.click(box.x + target[0], box.y + target[1]);
+      // On the web a click is taken at the end of its frame (so a key pressed with it goes first): the
+      // order shows a frame later.
+      await until(page, () => { window.nocturneProbe(); return window.nocturneState.party[0].feeding; }, null, 1000)
+        .catch(() => {});
       // The paused frame of the order itself: often the meal is the enemy he is already striking, and
       // the drinking begins within the first step.
       const ordered = await page.evaluate(look);
