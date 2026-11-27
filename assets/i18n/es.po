@@ -1,4 +1,5 @@
-# Spanish texts for Nocturne of Ashes. The message ids are the English source texts, byte for byte.
+# Spanish for the interface of Nocturne of Ashes (the conversations are in es-dialogue.po). The message
+# ids are the English source texts, byte for byte. Maintained by hand: see the README, "Languages".
 msgid ""
 msgstr ""
 "Project-Id-Version: Nocturne of Ashes\n"
@@ -49,6 +50,12 @@ msgstr "Cruzado"
 
 msgid "Sergeant"
 msgstr "Sargento"
+
+msgid "Zahra"
+msgstr "Zahra"
+
+msgid "Gonzalo"
+msgstr "Gonzalo"
 
 # Rite names
 msgid "Iron Sinew"
@@ -116,10 +123,6 @@ msgstr "El último cerrojo no cede. Aquí se detiene la historia, por ahora."
 # Feeding
 msgid "%s's Blood is full"
 msgstr "%s tiene la Sangre llena"
-
-# People
-msgid "The captive"
-msgstr "El cautivo"
 
 # Dialogue box
 msgid "Enter or click"
