@@ -109,13 +109,14 @@ func test_leaving_the_room_keeps_the_falls() -> void:
 	assert_eq(_guard_shares(), _all(85), "the guard as tired as it was")
 	for enemy: Unit in main.enemies:
 		assert_eq(enemy.stats.health, enemy.stats.max_health, "whole at its tired strength")
-	assert_eq(main.hud.notice(), "The guard is tiring.")
+	assert_eq(main.hud.notice(), "The guard has closed ranks, and tires.", "as the door hint said")
 	await _fall_and_get_up()
+	assert_eq(main.hud.notice(), "The guard is tiring.", "after a fall, as before")
 	assert_eq(_guard_shares(), _all(70), "the third fall")
 
 
-## A guard left mid-fight closes ranks on the way back; tired, the line says it is tiring instead.
-func test_leaving_a_tired_guard_mid_fight_says_it_is_tiring() -> void:
+## A guard left mid-fight closes ranks on the way back; tired, one line says both.
+func test_leaving_a_tired_guard_mid_fight_says_it_closed_ranks_and_tires() -> void:
 	await _boot()
 	for fall: int in 2:
 		await _fall_and_get_up()
@@ -127,7 +128,12 @@ func test_leaving_a_tired_guard_mid_fight_says_it_is_tiring() -> void:
 	(main.room.find_child("StairDoor") as Door).use(main.player)
 	await wait_physics_frames(3)
 	assert_eq(_guard_shares(), _all(85))
-	assert_eq(main.hud.notice(), "The guard is tiring.")
+	assert_eq(main.hud.notice(), "The guard has closed ranks, and tires.")
+	Language.apply("es")
+	await wait_physics_frames(2)
+	assert_eq((main.hud.find_child("NoticeLabel") as Label).text, "La guardia ha cerrado filas, y se cansa.")
+	TranslationServer.set_locale("en")
+	await wait_physics_frames(2)
 
 
 func test_a_new_game_forgets_the_falls() -> void:

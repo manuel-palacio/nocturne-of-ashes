@@ -15,7 +15,7 @@ const HINTS = {
   'Space pauses the fight: give your orders, then let it run.': 'pause',
   '1: Iron Sinew, to strike harder. 2: Baleful Eye, then click a foe to still him.': 'rites',
   'The helmed sergeants hit hardest. Still one with Baleful Eye, and drink when he weakens.': 'sergeant',
-  'A weakened foe is marked. Click him to feed: it restores Blood and mends wounds.': 'feed',
+  'Click a weakened foe to feed: it restores Blood and mends wounds.': 'feed',
   '%s is running dry. Feed, or the Fury will choose for you.': 'dry',
   'The Fury has %s. It ends when the hunger is fed or burns out.': 'fury',
   'The west door is a way out. The guard will close ranks again.': 'door',

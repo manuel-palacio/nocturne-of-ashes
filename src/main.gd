@@ -44,10 +44,12 @@ const REST_SHOWN_FLAG: StringName = &"rest_shown"
 const REST_NOTICE: String = "The vault is quiet. The story rests here, for now."
 ## Shown on coming back to a room left with its fight begun and enemies standing: they are restored.
 const REGROUPED_NOTICE: String = "The vault's guard has closed ranks again."
-## Shown on coming back to a room after falls that have tired its guard (`guard_health()`), after a
-## fall or through a door, in place of `REGROUPED_NOTICE`.
+## Shown on coming back to a room after a fall, once falls have tired its guard (`guard_health()`).
 const TIRING_NOTICE: String = "The guard is tiring."
-## Seconds `TIRING_NOTICE` stays on show: long enough to be read after the fall prompt.
+## Shown on coming back through a door to a room whose guard falls have tired, in place of
+## `REGROUPED_NOTICE` and `TIRING_NOTICE`: the guard is whole again, as the door hint said, but tired.
+const TIRED_REGROUPED_NOTICE: String = "The guard has closed ranks, and tires."
+## Seconds `TIRING_NOTICE` and `TIRED_REGROUPED_NOTICE` stay on show: long enough to be read after the fall prompt.
 const TIRING_NOTICE_TIME: float = 4.0
 ## From this fall of Álvar's in the same room on, its guard comes back tired.
 const TIRING_FROM_FALL: int = 2
@@ -225,7 +227,7 @@ func enter_room(room_id: StringName, entry: StringName = Room.START) -> void:
 	_party.record(state)
 	if room != null and not _encounter.is_cleared() and _encounter.is_disturbed():
 		_left_mid_fight[room.room_id] = true
-	_enter(room_id, entry)
+	_enter(room_id, entry, true)
 	checkpoint()
 
 
@@ -408,8 +410,9 @@ func _play(from: GameState) -> void:
 
 ## Stops any conversation, clears the last room's units, loads `room_id`, spawns the party at
 ## `entry_name`, rested when the room has no living enemies, and starts the room's fight and
-## characters, with Álvar selected and nothing paused or targeted.
-func _enter(room_id: StringName, entry_name: StringName) -> void:
+## characters, with Álvar selected and nothing paused or targeted. `through_door`: the party came by
+## `enter_room()`, not by a reload or a restart, which picks the tired guard's line.
+func _enter(room_id: StringName, entry_name: StringName, through_door: bool = false) -> void:
 	_conversation.stop()
 	_put_closing_away()
 	set_paused(false)
@@ -434,7 +437,9 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	var regrouped: bool = _left_mid_fight.has(room_id)
 	_left_mid_fight.erase(room_id)
 	if not _encounter.is_cleared():
-		if guard_health() < 1.0:
+		if guard_health() < 1.0 and through_door:
+			hud.show_notice(TIRED_REGROUPED_NOTICE, [], TIRING_NOTICE_TIME)
+		elif guard_health() < 1.0:
 			hud.show_notice(TIRING_NOTICE, [], TIRING_NOTICE_TIME)
 		elif regrouped:
 			hud.show_notice(REGROUPED_NOTICE)

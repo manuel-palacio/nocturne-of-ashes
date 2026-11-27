@@ -136,7 +136,8 @@ let it run dry and the Fury takes the member and chooses whom they drink from. W
 the west door is a way out once no enemy is upon Álvar; the guard is whole again on the party's
 return. From Álvar's second fall in the vault the guard comes back tired, weaker each time, down to
 a floor low enough for a party with no Blood; leaving by the door does not undo the falls (only
-clearing the room or a new game does), and nothing of it is saved.
+clearing the room or a new game does), and nothing of it is saved. Back after a fall, a notice says
+the guard is tiring; back through the door, that it has closed ranks and tires.
 Íñigo, in the Fragua, says what the Blood, the Rites, the Fury and the Silence are; the fight teaches
 the rest with hints, shown once each, at the moment they first apply (entering a fight, a sergeant
 closing in, a marked enemy or a first feed, the Rites, Álvar running dry once feeding has been taught,

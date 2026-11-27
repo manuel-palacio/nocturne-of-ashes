@@ -28,6 +28,9 @@ msgstr "La guardia de la cripta ha vuelto a cerrar filas."
 msgid "The guard is tiring."
 msgstr "La guardia se cansa."
 
+msgid "The guard has closed ranks, and tires."
+msgstr "La guardia ha cerrado filas, y se cansa."
+
 msgid "Alma"
 msgstr "Alma"
 
@@ -215,8 +218,8 @@ msgstr "1: Tendón de Hierro, para golpear más fuerte. 2: Ojo Funesto y clic en
 msgid "The helmed sergeants hit hardest. Still one with Baleful Eye, and drink when he weakens."
 msgstr "Los sargentos con yelmo golpean más fuerte. Paraliza a uno con el Ojo Funesto y bebe de él cuando flaquee."
 
-msgid "A weakened foe is marked. Click him to feed: it restores Blood and mends wounds."
-msgstr "Un enemigo debilitado queda marcado. Haz clic en él para alimentarte: devuelve Sangre y cierra heridas."
+msgid "Click a weakened foe to feed: it restores Blood and mends wounds."
+msgstr "Haz clic en un enemigo debilitado para beber: devuelve Sangre y cura heridas."
 
 msgid "%s is running dry. Feed, or the Fury will choose for you."
 msgstr "%s se queda sin Sangre. Aliméntate, o la Furia elegirá por ti."

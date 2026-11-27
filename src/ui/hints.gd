@@ -36,7 +36,7 @@ const TEXTS: Dictionary = {
 	&"pause": "Space pauses the fight: give your orders, then let it run.",
 	&"rites": "1: Iron Sinew, to strike harder. 2: Baleful Eye, then click a foe to still him.",
 	&"sergeant": "The helmed sergeants hit hardest. Still one with Baleful Eye, and drink when he weakens.",
-	&"feed": "A weakened foe is marked. Click him to feed: it restores Blood and mends wounds.",
+	&"feed": "Click a weakened foe to feed: it restores Blood and mends wounds.",
 	&"dry": "%s is running dry. Feed, or the Fury will choose for you.",
 	&"fury": "The Fury has %s. It ends when the hunger is fed or burns out.",
 	&"door": "The west door is a way out. The guard will close ranks again.",
