@@ -2,7 +2,8 @@
 extends GutTest
 ## Nobody gets stuck, nothing drags: the end of the story says it is the end, the vault is one fight,
 ## leaving a fight and the silent refusals are said aloud, saves that will not keep are owned up to,
-## a hidden page pauses, Íñigo does not repeat himself and the title shows its preparing advance.
+## a hidden page pauses, Íñigo does not repeat himself, the title shows its preparing advance, and the
+## fall prompt and the tiring guard's line are on show long enough to be read.
 
 const HAVEN := preload("res://dialogue/haven.dialogue")
 const GAME := preload("res://scenes/game.tscn")
@@ -633,3 +634,50 @@ func test_the_preparing_line_counts_its_steps() -> void:
 	assert_gt(seen.size(), 3, "it changes between steps: %s" % [seen.keys()])
 	assert_true(seen.keys().any(func(text: String) -> bool: return text.ends_with("of 12")), "%s" % [seen.keys()])
 	assert_true(seen.has("Preparing the cellars… 12 of 12"), "it counts to the end: %s" % [seen.keys()])
+
+
+# --- 9. The fall prompt and the tiring line are read ---
+
+## Clicks and Enter kept up through Álvar's fall do not answer the prompt unread: for 1.5 s after it
+## shows neither does; then either does.
+func test_the_fall_prompt_ignores_clicks_and_keys_for_its_first_moments() -> void:
+	await _boot(PageBoot.haven_finished())
+	main.player.take_hit(Arena.LETHAL)
+	var shown_at: int = Time.get_ticks_msec()
+	await wait_physics_frames(2)
+	assert_true(main.hud.is_fallen_shown())
+	assert_false(main.hud.is_fallen_answerable())
+	for at: float in [0.1, 0.8, 1.3]:
+		await wait_seconds(maxf(0.0, at - (Time.get_ticks_msec() - shown_at) / 1000.0))
+		_click(Vector2(640, 360))
+		await _tap(&"confirm")
+		assert_true(main.hud.is_fallen_shown(), "still down at %.1f s" % at)
+		assert_false(main.player.is_alive())
+	await wait_until(func() -> bool: return main.hud.is_fallen_answerable(), 1.0)
+	assert_gte(Time.get_ticks_msec() - shown_at, roundi(Hud.FALLEN_DELAY * 1000.0) - 20)
+	_click(Vector2(640, 360))
+	await wait_physics_frames(3)
+	assert_false(main.hud.is_fallen_shown(), "a click answers it after its delay")
+	assert_true(main.player.is_alive())
+
+
+func test_enter_answers_the_fall_prompt_after_its_delay() -> void:
+	await _boot(PageBoot.haven_finished())
+	main.player.take_hit(Arena.LETHAL)
+	await wait_until(func() -> bool: return main.hud.is_fallen_answerable(), Hud.FALLEN_DELAY + 1.0)
+	await _tap(&"confirm")
+	await wait_physics_frames(3)
+	assert_true(main.player.is_alive())
+
+
+## The tired guard's line stays at least 4 s, long enough to be read after the fall prompt.
+func test_the_tiring_line_stays_long_enough_to_read() -> void:
+	await _boot(PageBoot.haven_finished())
+	for fall: int in 2:
+		main.player.take_hit(Arena.LETHAL)
+		await wait_physics_frames(2)
+		main.reload_checkpoint()
+		await wait_physics_frames(3)
+	assert_eq(main.hud.notice(), Main.TIRING_NOTICE)
+	await wait_seconds(3.8)
+	assert_eq(main.hud.notice(), Main.TIRING_NOTICE, "on show for 4 s at least")

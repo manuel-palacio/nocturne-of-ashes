@@ -126,6 +126,8 @@ test('a fall in the vault reloads the checkpoint', async ({ page }) => {
     await page.waitForTimeout(2000);
   }
   expect((await state(page)).fallen).toBe(true);
+  // The fall prompt answers only once its delay is over.
+  await until(page, () => { window.nocturneProbe(); return window.nocturneState.fallen_ready; });
   await page.keyboard.press('Enter');
   await until(page, () => { window.nocturneProbe(); const s = window.nocturneState; return !s.fallen && s.room === 'vault' && s.enemies === 6; });
   expect((await state(page)).party.length).toBe(3);

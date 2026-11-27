@@ -30,6 +30,9 @@ const GIFT_BUTTON: PackedScene = preload("res://scenes/ui/gift_button.tscn")
 
 ## Seconds the cleared line takes to fade out, once its time is up.
 const CLEARED_FADE: float = 1.0
+## Seconds after the fall prompt shows before a click or Enter answers it, so clicks and keys kept up
+## through the fall do not answer it unread.
+const FALLEN_DELAY: float = 1.5
 
 ## Seconds a notice stays on show, in real time: neither the pause nor a conversation holds the HUD.
 @export var notice_time: float = 2.5
@@ -54,6 +57,9 @@ var _notice_left: float = 0.0
 var _notice_place: Label
 ## Seconds the cleared line has been on show.
 var _cleared_for: float = 0.0
+## When the fall prompt showed, in milliseconds of `Time.get_ticks_msec()`: timed by the clock, as the
+## closing card's delay is.
+var _fallen_at: int = 0
 
 @onready var _party_column: VBoxContainer = %PartyColumn
 @onready var _gift_bar: HBoxContainer = %GiftBar
@@ -157,7 +163,11 @@ func gift_buttons() -> Array[GiftButton]:
 	return _gift_buttons
 
 
+## Shows the fall prompt; it answers a click or Enter only `FALLEN_DELAY` seconds on
+## (`is_fallen_answerable()`).
 func show_fallen() -> void:
+	if not _fallen_label.visible:
+		_fallen_at = Time.get_ticks_msec()
 	_fallen_label.visible = true
 
 
@@ -167,6 +177,11 @@ func hide_fallen() -> void:
 
 func is_fallen_shown() -> bool:
 	return _fallen_label.visible
+
+
+## Whether the fall prompt shows and a click or Enter would now answer it.
+func is_fallen_answerable() -> bool:
+	return _fallen_label.visible and Time.get_ticks_msec() - _fallen_at >= roundi(FALLEN_DELAY * 1000.0)
 
 
 func set_paused(on: bool) -> void:
@@ -273,10 +288,12 @@ func _show_conscience() -> void:
 		_conscience_label.text = "%s %d/%d" % [tr("Alma"), _state.conscience, GameState.CONSCIENCE_MAX]
 
 
-## The prompt covers the screen while it shows and takes every mouse button; a left press is a click.
+## The prompt covers the screen while it shows and takes every mouse button; a left press once it
+## answers is a click.
 func _on_fallen_label_input(event: InputEvent) -> void:
 	var button := event as InputEventMouseButton
-	if button != null and button.pressed and button.button_index == MOUSE_BUTTON_LEFT:
+	if (button != null and button.pressed and button.button_index == MOUSE_BUTTON_LEFT
+			and is_fallen_answerable()):
 		fallen_pressed.emit()
 
 

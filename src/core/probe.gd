@@ -89,6 +89,7 @@ func _write_state(_args: Array) -> void:
 		"notice": _main.hud.notice(),
 		"closing": _main.is_closing_open(),
 		"closing_ready": _main.hud.is_closing_answerable(),
+		"fallen_ready": _main.hud.is_fallen_answerable(),
 		"title": title,
 		"saved": _main.store != null and _main.store.has_save(),
 		"asking": _title() != null and _title().is_asking(),

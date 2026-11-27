@@ -47,6 +47,8 @@ const REGROUPED_NOTICE: String = "The vault's guard has closed ranks again."
 ## Shown on coming back to a room after falls that have tired its guard (`guard_health()`), after a
 ## fall or through a door, in place of `REGROUPED_NOTICE`.
 const TIRING_NOTICE: String = "The guard is tiring."
+## Seconds `TIRING_NOTICE` stays on show: long enough to be read after the fall prompt.
+const TIRING_NOTICE_TIME: float = 4.0
 ## From this fall of Álvar's in the same room on, its guard comes back tired.
 const TIRING_FROM_FALL: int = 2
 ## Each such fall takes this share of the guard's tuned health, down to `TIRING_FLOOR`.
@@ -193,7 +195,7 @@ func _process(_delta: float) -> void:
 	if is_title_open() or is_talking() or hud.is_controls_open() or hud.is_closing_open():
 		return
 	# Polled rather than read from events, so presses made with Input.action_press count too.
-	if not player.is_alive() and Input.is_action_just_pressed(&"confirm"):
+	if not player.is_alive() and hud.is_fallen_answerable() and Input.is_action_just_pressed(&"confirm"):
 		reload_checkpoint()
 	if Input.is_action_just_pressed(&"pause"):
 		set_paused(not _paused)
@@ -433,7 +435,7 @@ func _enter(room_id: StringName, entry_name: StringName) -> void:
 	_left_mid_fight.erase(room_id)
 	if not _encounter.is_cleared():
 		if guard_health() < 1.0:
-			hud.show_notice(TIRING_NOTICE)
+			hud.show_notice(TIRING_NOTICE, [], TIRING_NOTICE_TIME)
 		elif regrouped:
 			hud.show_notice(REGROUPED_NOTICE)
 	if _is_story_rest():

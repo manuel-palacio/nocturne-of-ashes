@@ -109,6 +109,9 @@ test('a full fight runs to an end, and a fall can be restarted', async ({ page }
   expect(end.fallen || end.cleared).toBe(true);
   expect(end.fps).toBeGreaterThanOrEqual(30);
   if (end.fallen) {
+    // The fall prompt answers only once its delay is over.
+    await page.waitForFunction(() => { window.nocturneProbe(); return window.nocturneState.fallen_ready; },
+      null, { timeout: 15000 });
     await page.keyboard.press('Enter');
     await page.waitForFunction(() => {
       window.nocturneProbe();
