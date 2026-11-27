@@ -51,13 +51,23 @@ var enabled: bool = true:
 			cancel_targeting()
 			_pointing = false
 
+## When true a left click in the world waits for the end of its frame before it is taken, so a key
+## pressed with it is taken first, whichever the engine handed over first. On the web the engine hands
+## a frame's key events over after its clicks (it buffers keys and passes them on later in the frame),
+## so a Rite's key and a click on an enemy, pressed together, would otherwise attack and then open
+## targeting; there it is on. Elsewhere events come in the order they were made.
+var clicks_wait_for_keys: bool = OS.has_feature("web")
+
 ## While true no key or click gives an order or changes targeting, and targeting stays as it is: a
 ## card covers the game (the controls card). Unlike `enabled` it leaves the use ring as it was.
 var suspended: bool = false
 
 ## The index of the Gift waiting for a click on its target, or −1.
 var _targeting: int = -1
-## The process frame each of `KEY_ACTIONS` was last taken from its event in, so polling skips it.
+## Clicks held to the end of their frame (`clicks_wait_for_keys`), in the order they came.
+var _held_clicks: Array[Vector2] = []
+## The process frame each of `KEY_ACTIONS` was last taken from its event in, so polling skips it then
+## and in the next frame.
 var _taken_in_frame: Dictionary = {}  # StringName -> int
 ## Where the mouse is over the world, while it is.
 var _pointer: Vector2 = Vector2.ZERO
@@ -88,6 +98,22 @@ func _take_key_action(event: InputEvent) -> bool:
 			get_viewport().set_input_as_handled()
 			return true
 	return false
+
+
+## Keeps the click at `screen_position` until the end of this frame, for a key pressed with it to be
+## taken first (`clicks_wait_for_keys`).
+func _hold_click(screen_position: Vector2) -> void:
+	if _held_clicks.is_empty():
+		_release_held_clicks.call_deferred()
+	_held_clicks.append(screen_position)
+
+
+func _release_held_clicks() -> void:
+	var held: Array[Vector2] = _held_clicks.duplicate()
+	_held_clicks.clear()
+	for screen_position: Vector2 in held:
+		if not suspended:
+			click_at(screen_position)
 
 
 ## What a press of `action` does, by event or by polling.
@@ -124,7 +150,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	match button.button_index:
 		MOUSE_BUTTON_LEFT:
-			click_at(button.position)
+			if clicks_wait_for_keys:
+				_hold_click(button.position)
+			else:
+				click_at(button.position)
 		MOUSE_BUTTON_RIGHT:
 			cancel_targeting()
 		MOUSE_BUTTON_WHEEL_UP:
@@ -137,9 +166,10 @@ func _process(delta: float) -> void:
 	if suspended:
 		return
 	# Also polled, so presses made with Input.action_press, which send no event, count too; a press
-	# whose event was already taken in this frame is not taken again.
+	# whose event was already taken is not taken again. On the web events arrive between frames, so the
+	# event may have been taken in the frame before the one whose polling sees the press.
 	for action: StringName in KEY_ACTIONS:
-		if Input.is_action_just_pressed(action) and _taken_in_frame.get(action, -1) != Engine.get_process_frames():
+		if Input.is_action_just_pressed(action) and Engine.get_process_frames() - _taken_in_frame.get(action, -10) > 1:
 			_act(action)
 	_close_stale_targeting()
 	_show_use_marks()

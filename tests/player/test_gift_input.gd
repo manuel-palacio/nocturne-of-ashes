@@ -237,3 +237,23 @@ func test_rite_key_events_are_ignored_while_input_is_suspended() -> void:
 	_arrive([_key_event(KEY_2)] as Array[InputEvent])
 	assert_eq(main.input.targeting_gift(), -1)
 	main.input.suspended = false
+
+
+## On the web the engine hands a frame's keys over after its clicks, so there a world click waits for
+## the end of its frame: a Rite's key pressed with it, though it arrives second, is taken first.
+func test_where_keys_arrive_after_clicks_a_click_waits_for_the_frames_keys() -> void:
+	main.input.clicks_wait_for_keys = true
+	_arrive([_click_event(foe), _key_event(KEY_2)] as Array[InputEvent])
+	assert_eq(main.input.targeting_gift(), 1, "nothing taken from the click yet")
+	await wait_process_frames(1)
+	assert_true(foe.is_stunned(), "the held click cast the Rite on the enemy")
+	assert_eq(main.input.targeting_gift(), -1)
+	main.input.clicks_wait_for_keys = false
+
+
+func test_a_held_click_alone_still_attacks_at_the_end_of_its_frame() -> void:
+	main.input.clicks_wait_for_keys = true
+	_arrive([_click_event(foe)] as Array[InputEvent])
+	await wait_process_frames(1)
+	assert_eq(main.player.attack_target(), foe)
+	main.input.clicks_wait_for_keys = false
