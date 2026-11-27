@@ -82,7 +82,7 @@ func test_a_companion_does_not_spoil_a_friends_meal() -> void:
 	Arena.weaken(foe, 0.15)
 	while not Feeder.is_held(foe):
 		await wait_physics_frames(1)
-	zahra_brain.enabled = true  # her lance reaches him; his health is 15 of 60
+	zahra_brain.enabled = true  # her lance reaches his meal, held at 15% of its health
 	await wait_for_signal(gonzalo.fed, 6.0)
 	assert_eq(gonzalo.stats.blood, mini(25 + gonzalo.feed_gain, gonzalo.stats.max_blood))
 
