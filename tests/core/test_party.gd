@@ -84,6 +84,7 @@ func test_alvar_falling_ends_the_round_and_restart_rebuilds_the_party() -> void:
 	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	assert_true(main.hud.is_fallen_shown())
+	await wait_until(func() -> bool: return main.hud.is_fallen_answerable(), Hud.FALLEN_DELAY + 1.0)
 	Input.action_press("confirm")
 	await wait_physics_frames(2)
 	Input.action_release("confirm")

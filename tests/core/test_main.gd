@@ -23,6 +23,7 @@ func test_falling_holds_input_and_shows_the_prompt() -> void:
 func test_confirm_after_falling_restarts_the_room() -> void:
 	main.player.stats.take_damage(999)
 	await wait_physics_frames(2)
+	await wait_until(func() -> bool: return main.hud.is_fallen_answerable(), Hud.FALLEN_DELAY + 1.0)
 	Input.action_press("confirm")
 	await wait_physics_frames(2)
 	Input.action_release("confirm")

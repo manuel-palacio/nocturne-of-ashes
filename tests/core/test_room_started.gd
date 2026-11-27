@@ -20,6 +20,7 @@ func test_room_started_is_emitted_when_the_room_starts() -> void:
 func test_room_started_is_emitted_again_on_restart() -> void:
 	main.player.stats.take_damage(999)
 	await wait_physics_frames(2)
+	await wait_until(func() -> bool: return main.hud.is_fallen_answerable(), Hud.FALLEN_DELAY + 1.0)
 	Input.action_press("confirm")
 	await wait_physics_frames(2)
 	Input.action_release("confirm")

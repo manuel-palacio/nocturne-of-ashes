@@ -41,6 +41,7 @@ func test_a_fall_reloads_the_last_checkpoint() -> void:
 	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	assert_true(main.hud.is_fallen_shown())
+	await wait_until(func() -> bool: return main.hud.is_fallen_answerable(), Hud.FALLEN_DELAY + 1.0)
 	Input.action_press("confirm")
 	await wait_physics_frames(2)
 	Input.action_release("confirm")
@@ -115,6 +116,7 @@ func test_a_fall_reloads_the_checkpoint_kept_in_memory_when_the_store_cannot_wri
 	main.state.change_conscience(-3)  # after the checkpoint: must be undone
 	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
+	await wait_until(func() -> bool: return main.hud.is_fallen_answerable(), Hud.FALLEN_DELAY + 1.0)
 	Input.action_press("confirm")
 	await wait_physics_frames(2)
 	Input.action_release("confirm")
