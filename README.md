@@ -115,7 +115,7 @@ is cleared, a card says so, once, and that the game and its Alma are kept for wh
 ## Controls
 
 - Left click on the floor to move the selected party member, on an enemy to attack it.
-- Left click on a weakened enemy to feed on it; a red mark shows an enemy weak enough to feed on. Each group of crusaders has a tougher sergeant.
+- Left click on a weakened enemy to feed on it, when short of Blood or of health; a pale drop over an enemy shows one weak enough to feed on. Each group of crusaders has a tougher sergeant.
 - Left click on a companion, or press Tab, to select another party member.
 - 1 and 2 use the selected member's Rites; a Rite that needs a target waits for a click on one.
 - Escape (or a right click) cancels a Rite's targeting.
@@ -123,9 +123,23 @@ is cleared, a card says so, once, and that the game and its Alma are kept for wh
   itself when the page is hidden (another tab, a minimised window), and waits for Space.
 - Q and E turn the camera; the mouse wheel zooms.
 - Left click on someone to have Álvar walk up and talk with them, whoever is selected; Enter, Space or a click on the box goes on, and 1–4 (or a click) take a choice.
-- Left click on a door to have Álvar take the party through it, whoever is selected; a door stays shut while a fight is on or until the story opens it.
+- Left click on a door to have Álvar take the party through it, whoever is selected; a door stays shut while an enemy is upon Álvar (within 3 m), while he feeds or is in the Fury, or until the story opens it.
 - Entering a room with no enemies left, such as the Fragua, restores the party's health; Blood is not restored.
 - Enter, after Álvar falls, plays on from the last checkpoint.
+
+The vault's fight is not won by clicking alone. The crusaders are weak and quick; the two sergeants
+(darker tabard, a helmet over a mail coif) have far more health and hit hardest. Call Iron Sinew (1) to
+strike harder and faster, still a sergeant with Baleful Eye (2, then a click on him) while the party
+works on him, and drink from each sergeant once he is weakened: Álvar may feed on an enemy at half
+health or less, a companion at a fifth, and a feed restores Blood and mends wounds. Rites spend Blood;
+let it run dry and the Fury takes the member and chooses whom they drink from. When the fight turns,
+the west door is a way out once no enemy is upon Álvar; the guard is whole again on the party's
+return. From Álvar's second fall in the vault the guard comes back tired, weaker each time.
+Íñigo, in the Fragua, says what the Blood, the Rites, the Fury and the Silence are; the fight teaches
+the rest with hints, shown once each, at the moment they first apply (entering a fight, the Rites, a
+sergeant closing in, a marked enemy, someone running dry, the Fury, Álvar near falling), one at a time
+and never over a conversation or a card. A save remembers which hints were seen; a new game shows them
+again.
 
 Progress is saved in the browser: on entering a room, at the end of each conversation and when a room
 is cleared. The title offers Continue when there is a save, and New game. When the browser will not keep

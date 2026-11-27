@@ -101,3 +101,127 @@ Each run varies (start positions jittered within a metre, the random seed set pe
 ### After the last task: put it online
 
 Once the final review's fixes are in and the suites are green, the controller runs `ops/deploy-fly.sh`, checks the live site (a new game reaches the Fragua; Íñigo speaks three lines), and reports with the balance table and the frames.
+
+---
+
+## Amendments made while building
+
+Each ruling taken while the plan was built: what changed, and why.
+
+- **The way out.** The west door refuses only while an enemy is within 3 m of Álvar (and while he feeds
+  or is in the Fury). Leaving is a voluntary reset, as the guard is whole again on return, so it cannot
+  be farmed, and a player can always walk away from a fight.
+- **The tiring guard.** Planned from the third fall at 10% a fall down to 70%; built from the second
+  fall at 15% a fall down to 50% (85%, 70%, 55%, then 50%). The owner's standing demand that nobody
+  gets stuck outranks a fixed difficulty, and six falls before any relief were too many; a weak player
+  sees the fight soften.
+- **The target table was replaced.** The first table rewarded an execute loop (feeds deleting most of an
+  enemy's health) and measured a clicker no player is. It became eight rows played at a person's pace
+  through the same click a player makes, with ceilings as well as floors, so that feeding and the Rites
+  matter through danger and choice rather than as a required ritual.
+- **Feeding drinks from the weakened.** Feeding is allowed at most at half an enemy's health (a fifth for
+  companions), and enemies got far less health and more damage. A door used by Álvar calls companions
+  off their brain-ordered feeds.
+- **Three small rules adopted:** a feed mends in proportion to the Blood it restores; a click on the
+  enemy already being struck keeps the strike; the guard tires from the second fall. The fed player had
+  to end a won fight hurt, and the dry start had to be worse than a fed one.
+- **Not adopted:** a feed mark above half health (feeding stays "at most half"), and the second group of
+  enemies on a timer (the alert rule stays).
+- **Bars restated** without a floor for the spam clicker (at most 4 of 10; the tiring guard is his way
+  through), the player at least 7 of 10, won fights in 35–75 s, end health at most three quarters; no
+  bar may stay pending. A plain clicker loses until the guard tires.
+- **A hurt drinker may feed with full Blood**, for half the heal: with 80 Blood a feed, Álvar was often
+  full, and a click on a marked enemy attacked instead, so he could not mend. The "Blood is full" line
+  shows only when health is full too.
+- **Each row's assertion sits one win looser than the worse of two fresh passes**, within fixed limits
+  (B ≥ 6, C ≤ 6, D falls ≥ 7, E ≥ 4, F ≥ 6, G ≥ 7, H ≥ 8, A ≤ 4). Run-to-run spread is about two wins
+  in ten; a bar on its measured value would fail by chance. The suite proves "roughly this"; the
+  measurements are recorded here.
+- **The heal floor:** a feed mends by the full heal × the larger of the share of Blood restored and one
+  half. It closes a cliff where a drinker one point short of full Blood was mended by almost nothing.
+- **Row F's lower limit is 4 of 10:** draining the captive equals sparing him within noise while Blood is
+  plentiful (15 against 13 wins of 20); the darkest choice buys no edge in this fight.
+- **Rite keys are taken as events in the order they arrive**, with clicks: a quick player pressing 2 and
+  clicking lost the Rite, and the Eye is what wins. On the web a world click waits for the end of its
+  frame, as the web platform hands a frame's clicks over before its keys.
+- **Left open and carried forward, not tuned further:** the sergeant-feed execute, the scarcity of Blood
+  and the Fury, and how readable the crush is. Three tuning rounds were spent; these are design
+  questions for the next content.
+- **Row B's "a companion falls" limit is 2 runs in 10** (measured 3 and 2): the point, that wins cost
+  something, holds with Álvar ending at 73–80 of 120.
+- **Íñigo's after-the-captive opening** keeps "He told me to tell you how things are" so that his first
+  line still introduces the two that follow.
+- **The hints** (Task 2), each one line, as built: the Rites hint names what each does ("1: Iron Sinew,
+  to strike harder. 2: Baleful Eye, then click a foe to still him."), since the fight turns on the Eye;
+  a seventh hint, the first time a sergeant is within 6 m of the party in a fight ("The helmed
+  sergeants hit hardest. Still one with Baleful Eye, and drink when he weakens."), because the sergeants
+  decide the fight; the feeding hint says a feed mends as well as restoring Blood. The Rites and
+  sergeant hints were not merged: one says what the keys do, the other whom to use the Eye on, and the
+  Rites hint is skipped for a player who has already called a Rite. At most one hint every 6 s, the most
+  urgent first (the door, the Fury, running dry, feeding, the sergeant, the Rites, the pause). A hint
+  waits while another notice is up, under a conversation, a card, the fall prompt or the title, and is
+  dropped if its moment passes meanwhile; a game notice shown over a hint replaces it. A hint seen is a
+  flag written into the last checkpoint at once, so neither a fall nor a reload brings it back; the
+  skirmish, with no save, shows each once per page load.
+
+### Final numbers
+
+| unit or Rite | numbers |
+|---|---|
+| Brother Álvar | 120 health; 15 a blow every 0.9 s (melee reach 1.6 m); 4.0 m/s; starts with 60 Blood; feeds from 50% of an enemy's health |
+| Zahra | 80 health; 8 every 1.0 s; 4.0 m/s; 60 Blood; feeds from 20% |
+| Gonzalo | 160 health; 18 every 1.3 s; 3.4 m/s; 60 Blood; feeds from 20% |
+| Crusader | 120 health; 3 every 1.4 s; 2.4 m/s |
+| Sergeant | 1200 health; 16 every 3.0 s; 2.0 m/s |
+| Feeding (all) | 2.0 s; +80 Blood; +65 health × the larger of (Blood restored ÷ 80) and 0.5; a click feeds when short of Blood or of health; companions' brains feed below 30 Blood |
+| The Fury | starts when Blood is spent from 10 or more to under 10; 5 s; damage × 1.5 |
+| Iron Sinew (Álvar) | 20 Blood; 12 s cooldown; 8 s; damage × 1.5, speed × 1.4 |
+| Baleful Eye (Álvar) | 10 Blood; 10 s cooldown; 5 s stun; 8 m |
+| Mend Flesh (Zahra) | 20 Blood; 6 s; +40 health; 8 m |
+| Blood Lance (Zahra) | 15 Blood; 4 s; 30 damage; 10 m |
+| Stone Hide (Gonzalo) | 30 Blood; 15 s; 6 s; damage taken × 0.4; taunt 2 m |
+| Hammerfall (Gonzalo) | 25 Blood; 12 s; 15 damage and 2.5 s stun within 3.5 m |
+| The west door | refuses while an enemy is within 3 m of Álvar, or Álvar is in the Fury or feeding; calls companions off a feed |
+| The tiring guard | from the second fall in a room: 85%, 70%, 55%, then 50% of its health |
+
+### The eight rows (10 runs each, two passes: seeds 1000–1009 and 1010–1019)
+
+| row | first pass | second pass | bar in the suite | limit |
+|---|---|---|---|---|
+| A spam clicker | 0 cleared (median 17.2 s) | 0 (20.2 s) | ≤ 1 | ≤ 4 |
+| B player | 7; won in 39.0 s; end health 80; a companion fell in 3 runs | 8; 40.0 s; 73; 2 runs | ≥ 6; 35–75 s; ≤ 90; a companion falls in ≥ 2 runs | ≥ 6 |
+| C no Rites | 4 | 5 | ≤ 6; B − C ≥ 4 of 20 | ≤ 6; ≥ 4 |
+| D never feeds | falls 10 | falls 10 | falls ≥ 9 | ≥ 7 |
+| E dry start | 10 (won in 43.7 s) | 9 (42.0 s) | ≥ 8 | ≥ 4 |
+| F drained captive | 10 | 6 | ≥ 5 | ≥ 4 |
+| G coward | reaches the Fragua 10 | 9 | ≥ 8 | ≥ 7 |
+| H spam clicker at the tiring floor | 10 | 9 | ≥ 8 | ≥ 8 |
+
+Also measured: Álvar's median end Blood 100 in rows B, E and F; party feeds per fight B 4/4, E 6/6,
+F 3.5/3; Álvar's Rites 8 a fight in every player row; no Fury in any row. In the browser, at a person's
+pace (one action a second, a Rite's key and its click back to back), 12 of 12 fights cleared in 45.8–50.5 s,
+Álvar ending at 49–120 health (median 65).
+
+## Carried forward
+
+- Feeds on the two sergeants still decide each win: about a third to two fifths of the guard's health
+  is removed by feeds.
+- Blood is never scarce at 80 a feed, so the Fury is met only by a player who spends Rites and never
+  feeds, and draining the captive buys no edge in the fight. The Fury hint and the "running dry" hint
+  therefore show less often than the others.
+- In the crush a player cannot easily see who is a sergeant, who is marked, or which companion is in
+  trouble: there is no health over heads.
+- The browser player's 12 of 12 comes from one unjittered start; the headless 6–8 of 10 from varied
+  starts is the number to believe.
+- A spam clicker gets through around his fourth or fifth fall (55% and 50% of the guard's health).
+- Kiting (leading enemies round the room) is untested.
+- The "running dry" hint falls due about 6 s into most first fights, often for a companion whose brain
+  spends its own Blood on Rites (Gonzalo's Stone Hide takes him from 60 to 30); companions' brains feed
+  on their own below 30, so for a companion the hint asks little of the player, and it takes the slot
+  the feeding hint might have had.
+- What a first fight shows, measured with the scripted players: the player who uses his Rites and feeds
+  meets three or four hints (the pause, running dry, the sergeant, and the door when he is near
+  falling); a spam clicker three to six. The scripted player never sees the Rites or feeding hints,
+  because he calls a Rite and feeds before they fall due.
+- A hint seen rewrites the last checkpoint's save mid-fight, with only its flag changed; the party's
+  vitals in it stay as they were at the checkpoint.
