@@ -37,8 +37,9 @@ const PLAYER_RUNS: int = 10
 ## The longest a scripted fight may take, in seconds of game time.
 const LIMIT: float = 180.0
 
-## Rows already played in this run of the file, by label: row C is held against row B.
-static var _played: Dictionary = {}
+## Rows already played in this run of the file, by label: row C is held against row B. A member, not a
+## static: GUT runs every test of the file on one instance, and a static left the instance orphaned.
+var _played: Dictionary = {}
 
 var main: Main
 
