@@ -1,116 +1,116 @@
 ~ waking
-Malakor: You wake. Good. Not all of them do.
-Álvar: Elena. Where is she?
-Malakor: The woman you guarded got away through the Tagus gate, and what she carried went with her.
-Malakor: You did not. My people cut you down in the burning quarter. You died there, in the smoke, and I gave you my blood. That is the Turning.
-Malakor: You belong to the Blood-Forged now. This forge is your house, and I am its master.
-Malakor: Take this. Iron in the sinew, when you call on the Blood. The first of your Rites.
+Malakor: You wake. Good. Not all of them do. [ID:bck0morkntt2n_bd3fca]
+Álvar: Elena. Where is she? [ID:bck0morkntt2n_b02d6f]
+Malakor: The woman you guarded got away through the Tagus gate, and what she carried went with her. [ID:bck0morkntt2n_bb27fa]
+Malakor: You did not. My people cut you down in the burning quarter. You died there, in the smoke, and I gave you my blood. That is the Turning. [ID:bck0morkntt2n_d18ac0]
+Malakor: You belong to the Blood-Forged now. This forge is your house, and I am its master. [ID:bck0morkntt2n_61e814]
+Malakor: Take this. Iron in the sinew, when you call on the Blood. The first of your Rites. [ID:bck0morkntt2n_d47144]
 do learn("alvar", "iron_sinew")
 do set_flag("met_malakor")
-Malakor: Íñigo will tell you the rest. I do not say a thing twice.
+Malakor: Íñigo will tell you the rest. I do not say a thing twice. [ID:bck0morkntt2n_384a3f]
 => END
 
 ~ malakor
 if has_flag("vault_cleared")
-	Malakor: The first hall is quiet, then. The lock beneath it has outlasted kings. It will keep until I say.
+	Malakor: The first hall is quiet, then. The lock beneath it has outlasted kings. It will keep until I say. [ID:bck0morkntt2n_15bf17]
 elif has_flag("order_given")
-	Malakor: The stair is open. Go down.
+	Malakor: The stair is open. Go down. [ID:bck0morkntt2n_097122]
 	if conscience() <= 4
-		Malakor: You are becoming what I made you. Good.
+		Malakor: You are becoming what I made you. Good. [ID:bck0morkntt2n_42d932]
 	elif conscience() >= 8
-		Malakor: You still pray at night, friar. I hear it through the stone. Pray below, if you must.
+		Malakor: You still pray at night, friar. I hear it through the stone. Pray below, if you must. [ID:bck0morkntt2n_486722]
 elif has_flag("zahra_joined") and has_flag("gonzalo_joined") and has_flag("captive_done")
-	Malakor: Under this city there are vaults older than its churches.
-	Malakor: Every king who held Toledo hung a lock on them. I want those locks broken. You will go down and break them.
-	Malakor: Gonzalo knows the first stair. Zahra knows what bleeds. You go first.
-	Malakor: One thing more. You carried a letter for the translator. Give it to me.
-	- Hand it over
+	Malakor: Under this city there are vaults older than its churches. [ID:bck0morkntt2n_b5c558]
+	Malakor: Every king who held Toledo hung a lock on them. I want those locks broken. You will go down and break them. [ID:bck0morkntt2n_0e85f9]
+	Malakor: Gonzalo knows the first stair. Zahra knows what bleeds. You go first. [ID:bck0morkntt2n_a4e6aa]
+	Malakor: One thing more. You carried a letter for the translator. Give it to me. [ID:bck0morkntt2n_f677b5]
+	- Hand it over [ID:bck0morkntt2n_9b76f1]
 		do change_conscience(-1)
 		do set_flag("gave_letter")
 		do set_flag("order_given")
-		Malakor: Good. She will not get far.
-	- Say it burned in the quarter
+		Malakor: Good. She will not get far. [ID:bck0morkntt2n_b7bf92]
+	- Say it burned in the quarter [ID:bck0morkntt2n_0ce0a8]
 		do change_conscience(1)
 		do set_flag("kept_letter")
 		do set_flag("order_given")
-		Malakor: Burned. Much burned that night. Remember that you told me so.
-	Malakor: The stair is open. Go.
+		Malakor: Burned. Much burned that night. Remember that you told me so. [ID:bck0morkntt2n_21b71f]
+	Malakor: The stair is open. Go. [ID:bck0morkntt2n_563a93]
 else
 	if not has_flag("zahra_joined") and not has_flag("gonzalo_joined")
-		Malakor: You do not go below alone. Zahra and Gonzalo go with you. Find them.
+		Malakor: You do not go below alone. Zahra and Gonzalo go with you. Find them. [ID:bck0morkntt2n_d95009]
 	elif not has_flag("zahra_joined")
-		Malakor: You do not go below without Zahra. Find her.
+		Malakor: You do not go below without Zahra. Find her. [ID:bck0morkntt2n_665d76]
 	elif not has_flag("gonzalo_joined")
-		Malakor: You do not go below without Gonzalo. Find him.
+		Malakor: You do not go below without Gonzalo. Find him. [ID:bck0morkntt2n_749bd7]
 	if not has_flag("captive_done")
 		if has_flag("zahra_joined") and has_flag("gonzalo_joined")
-			Malakor: The prisoner is still yours. See to him before you go below.
+			Malakor: The prisoner is still yours. See to him before you go below. [ID:bck0morkntt2n_7feeb7]
 		else
-			Malakor: And see to the prisoner. He is yours.
+			Malakor: And see to the prisoner. He is yours. [ID:bck0morkntt2n_08f966]
 => END
 
 ~ smith
 if has_flag("smith_heard")
-	Íñigo: I said it once. When the Blood runs low, you drink.
-	Íñigo: Let it run dry and the Fury chooses for you. Now mind the sparks.
+	Íñigo: I said it once. When the Blood runs low, you drink. [ID:bck0morkntt2n_f4ee70]
+	Íñigo: Let it run dry and the Fury chooses for you. Now mind the sparks. [ID:bck0morkntt2n_13acb0]
 	=> END
 if has_flag("captive_done")
-	Íñigo: Stand clear of the quench. You have been to the alcove, I can see it on you. He told me to tell you how things are.
+	Íñigo: Stand clear of the quench. You have been to the alcove, I can see it on you. He told me to tell you how things are. [ID:bck0morkntt2n_ccc626]
 else
-	Íñigo: Stand there, out of the sparks. He told me to tell you how things are, and I have iron cooling.
-Íñigo: The Blood in you is not your own now. Every Rite spends it. When it runs low you drink; let it run dry, and the Fury drinks for you.
-Íñigo: And the Silence: the living above must never learn what walks beneath them. That is all. Hand me the tongs on your way out.
+	Íñigo: Stand there, out of the sparks. He told me to tell you how things are, and I have iron cooling. [ID:bck0morkntt2n_3adb7c]
+Íñigo: The Blood in you is not your own now. Every Rite spends it. When it runs low you drink; let it run dry, and the Fury drinks for you. [ID:bck0morkntt2n_0f4adf]
+Íñigo: And the Silence: the living above must never learn what walks beneath them. That is all. Hand me the tongs on your way out. [ID:bck0morkntt2n_868bec]
 do set_flag("smith_heard")
 => END
 
 ~ captive
 if not has_flag("captive_done")
-	The captive: Stay back. I took the cross at Montpellier. I do not kneel to you.
-	The captive: You are the friar. I saw you fall at the gate. I saw them open your throat.
-	The captive: My leg is broken, and I am thirsty, and I am not afraid of you. Do what you came for.
-	- Drink a little
+	The captive: Stay back. I took the cross at Montpellier. I do not kneel to you. [ID:bck0morkntt2n_7934ba]
+	The captive: You are the friar. I saw you fall at the gate. I saw them open your throat. [ID:bck0morkntt2n_efd635]
+	The captive: My leg is broken, and I am thirsty, and I am not afraid of you. Do what you came for. [ID:bck0morkntt2n_cd80b8]
+	- Drink a little [ID:bck0morkntt2n_24e725]
 		do give_blood(30)
 		do set_flag("captive_done")
-		The captive: You stopped. Why did you stop?
-	- Drain him
+		The captive: You stopped. Why did you stop? [ID:bck0morkntt2n_dfb00d]
+	- Drain him [ID:bck0morkntt2n_a8df0b]
 		do give_blood(100)
 		do change_conscience(-2)
 		do set_flag("captive_dead")
 		do set_flag("captive_done")
-		Álvar: The Blood is warm. He is not.
-	- Leave him be
+		Álvar: The Blood is warm. He is not. [ID:bck0morkntt2n_afacd5]
+	- Leave him be [ID:bck0morkntt2n_51df10]
 		do change_conscience(1)
 		do set_flag("captive_done")
 		do set_flag("captive_spared")
-		The captive: Go, then. Whatever you are, I will pray for you. I do not know to whom.
+		The captive: Go, then. Whatever you are, I will pray for you. I do not know to whom. [ID:bck0morkntt2n_4047ed]
 elif has_flag("captive_spared")
-	The captive: You again. You could have, and you did not. I think about that more than the leg.
+	The captive: You again. You could have, and you did not. I think about that more than the leg. [ID:bck0morkntt2n_c58f81]
 elif not has_flag("captive_dead")
-	The captive: My arm still burns where you drank. Come no closer.
+	The captive: My arm still burns where you drank. Come no closer. [ID:bck0morkntt2n_ee06a9]
 => END
 
 ~ zahra
-Zahra: So you are the friar from the gate. How does the Blood sit in you? Heavy, still?
-Zahra: I was a physician in Córdoba before my Turning. I still look at the wound before the face.
+Zahra: So you are the friar from the gate. How does the Blood sit in you? Heavy, still? [ID:bck0morkntt2n_2c4e22]
+Zahra: I was a physician in Córdoba before my Turning. I still look at the wound before the face. [ID:bck0morkntt2n_8505c0]
 if has_flag("captive_dead")
-	Zahra: The crusader in the alcove has gone quiet. Was that you? Was it hunger, or obedience?
+	Zahra: The crusader in the alcove has gone quiet. Was that you? Was it hunger, or obedience? [ID:bck0morkntt2n_1b8d8a]
 elif has_flag("captive_spared")
-	Zahra: You left the crusader breathing. Was that mercy, or did you not know how?
-Zahra: Malakor wants you below. Has he told you what is down there? No. He never does.
-Zahra: Then I will come with you and see it for myself. Look at me. Look hard.
+	Zahra: You left the crusader breathing. Was that mercy, or did you not know how? [ID:bck0morkntt2n_8f8c4f]
+Zahra: Malakor wants you below. Has he told you what is down there? No. He never does. [ID:bck0morkntt2n_7b5359]
+Zahra: Then I will come with you and see it for myself. Look at me. Look hard. [ID:bck0morkntt2n_01605a]
 do join("zahra")
 do set_flag("zahra_joined")
 do learn("alvar", "baleful_eye")
-Zahra: Do you feel it behind the eyes? Hold a man's gaze like that and he forgets how to move.
-Zahra: It costs Blood, like everything here. Who do you think pays for it in the end?
+Zahra: Do you feel it behind the eyes? Hold a man's gaze like that and he forgets how to move. [ID:bck0morkntt2n_4bb1cb]
+Zahra: It costs Blood, like everything here. Who do you think pays for it in the end? [ID:bck0morkntt2n_6b4885]
 => END
 
 ~ gonzalo
-Gonzalo: You are the new one.
-Gonzalo: I made blades in this cellar before your grandfather was born. I serve the Sangre.
-Gonzalo: Zahra asks the questions. I carry the hammer.
-Gonzalo: Malakor says I go below with you. So I go.
+Gonzalo: You are the new one. [ID:bck0morkntt2n_7f6011]
+Gonzalo: I made blades in this cellar before your grandfather was born. I serve the Sangre. [ID:bck0morkntt2n_d88f3d]
+Gonzalo: Zahra asks the questions. I carry the hammer. [ID:bck0morkntt2n_436635]
+Gonzalo: Malakor says I go below with you. So I go. [ID:bck0morkntt2n_63e08a]
 do join("gonzalo")
 do set_flag("gonzalo_joined")
-Gonzalo: Keep your blade low. Walk.
+Gonzalo: Keep your blade low. Walk. [ID:bck0morkntt2n_e91e97]
 => END
