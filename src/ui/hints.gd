@@ -163,7 +163,8 @@ func _applies(id: StringName) -> bool:
 		&"dry":
 			return is_seen(&"feed") and _about(id) != null
 		&"door":
-			return _story and fighting and leader.stats.health * 3 < leader.stats.max_health
+			# Under half, with time left to reach the door.
+			return _story and fighting and leader.stats.health * 2 < leader.stats.max_health
 	return false
 
 

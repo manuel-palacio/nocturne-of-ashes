@@ -197,12 +197,14 @@ func test_the_fury_hint_names_whom_the_fury_has() -> void:
 	assert_eq(_shown_text(), "The Fury has Zahra. It ends when the hunger is fed or burns out.")
 
 
-func test_the_door_hint_shows_when_alvar_is_near_falling_in_a_fight() -> void:
+## Under half his health, while there is still time to walk to the door.
+func test_the_door_hint_shows_when_alvar_is_down_to_half_in_a_fight() -> void:
 	await _vault([&"door"])
 	main.player.take_hit(main.player.stats.max_health / 2)
 	await wait_physics_frames(5)
-	assert_eq(main.hud.notice(), "", "half is not under a third")
-	main.player.take_hit(main.player.stats.health - main.player.stats.max_health / 3 + 5)
+	assert_eq(main.player.stats.health * 2, main.player.stats.max_health)
+	assert_eq(main.hud.notice(), "", "half is not under half")
+	main.player.take_hit(1)
 	await wait_physics_frames(3)
 	assert_eq(main.hud.notice(), Hints.TEXTS[&"door"])
 
