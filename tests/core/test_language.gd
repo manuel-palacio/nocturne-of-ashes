@@ -38,7 +38,7 @@ func test_the_hud_follows_a_language_change() -> void:
 	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
 	assert_eq(main.hud.find_child("FallenLabel").text, "Has caído — pulsa Intro o haz clic")
-	assert_eq(main.hud.panels()[0].find_child("StateLabel").text, "Caído")
+	assert_eq(main.hud.panels()[0].find_child("StateLabel").text, "Fuera de combate")
 
 func test_controls_built_after_the_switch_are_spanish_too() -> void:
 	Language.apply("es")
@@ -75,3 +75,21 @@ func test_texts_put_together_read_in_spanish() -> void:
 	Story.finish(main)
 	TranslationServer.set_locale("en")
 	await wait_physics_frames(2)  # the HUD rebuilt in English frees what it built in Spanish
+
+## The longest state, "Fuera de combate", on a companion's panel: the panel keeps its width and the
+## label holds the whole text. The HUD scales as a whole (`canvas_items`), so this holds at 800 × 500.
+func test_the_fallen_state_fits_a_panel_in_spanish() -> void:
+	var main: Main = add_child_autoqfree(MAIN.instantiate())
+	await wait_physics_frames(3)
+	var width: float = main.hud.panels()[1].size.x
+	Language.apply("es")
+	await wait_physics_frames(2)
+	main.party[1].take_hit(Arena.LETHAL)
+	await wait_physics_frames(2)
+	var panel: PartyMemberPanel = main.hud.panels()[1]
+	var label := panel.find_child("StateLabel") as Label
+	assert_eq(label.text, "Fuera de combate")
+	assert_eq(panel.size.x, width)
+	assert_lte(label.get_minimum_size().x, label.size.x)
+	TranslationServer.set_locale("en")
+	await wait_physics_frames(2)

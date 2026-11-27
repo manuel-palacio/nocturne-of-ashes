@@ -33,7 +33,7 @@ msgstr "Alma"
 
 # Party member states
 msgid "Fallen"
-msgstr "Caído"
+msgstr "Fuera de combate"
 
 msgid "The Fury"
 msgstr "La Furia"
@@ -96,10 +96,10 @@ msgid "No"
 msgstr "No"
 
 msgid "Preparing the cellars…"
-msgstr "Preparando las bóvedas…"
+msgstr "Preparando los sótanos…"
 
 msgid "Preparing the cellars… %d of %d"
-msgstr "Preparando las bóvedas… %d de %d"
+msgstr "Preparando los sótanos… %d de %d"
 
 msgid "This browser is not keeping saves: progress lasts until the page is closed."
 msgstr "Este navegador no guarda las partidas: el progreso dura hasta que se cierre la página."
@@ -197,17 +197,17 @@ msgid "Here the descent rests"
 msgstr "Aquí se detiene el descenso"
 
 msgid "The last lock of Toledo's vaults is still shut, and what waits behind it is not yet written. Your game is saved: when the story goes on, it goes on from here, with the Alma you carry (%d of 10)."
-msgstr "El último cerrojo bajo Toledo sigue echado, y lo que aguarda tras él aún no está escrito. Tu partida está guardada: cuando la historia continúe, lo hará desde aquí, con el Alma que llevas (%d de 10)."
+msgstr "El último cerrojo de las criptas de Toledo sigue echado, y lo que aguarda tras él aún no está escrito. Tu partida está guardada: cuando la historia continúe, lo hará desde aquí, con el Alma que llevas (%d de 10)."
 
 msgid "The last lock of Toledo's vaults is still shut, and what waits behind it is not yet written. This browser is not keeping saves: your progress, and the Alma you carry (%d of 10), last until the page is closed."
-msgstr "El último cerrojo bajo Toledo sigue echado, y lo que aguarda tras él aún no está escrito. Este navegador no guarda las partidas: tu progreso, y el Alma que llevas (%d de 10), duran hasta que se cierre la página."
+msgstr "El último cerrojo de las criptas de Toledo sigue echado, y lo que aguarda tras él aún no está escrito. Este navegador no guarda las partidas: tu progreso, y el Alma que llevas (%d de 10), duran hasta que se cierre la página."
 
 msgid "Enter or click to stay in the vault"
 msgstr "Intro o clic para quedarte en la cripta"
 
 # Hints, shown once each as the fight's rules first apply
 msgid "Space pauses the fight: give your orders, then let it run."
-msgstr "Espacio detiene el combate: da tus órdenes y luego déjalo seguir."
+msgstr "Espacio pone el combate en pausa: da tus órdenes y luego déjalo seguir."
 
 msgid "1: Iron Sinew, to strike harder. 2: Baleful Eye, then click a foe to still him."
 msgstr "1: Tendón de Hierro, para golpear más fuerte. 2: Ojo Funesto y clic en un enemigo para paralizarlo."
@@ -222,7 +222,7 @@ msgid "%s is running dry. Feed, or the Fury will choose for you."
 msgstr "%s se queda sin Sangre. Aliméntate, o la Furia elegirá por ti."
 
 msgid "The Fury has %s. It ends when the hunger is fed or burns out."
-msgstr "La Furia domina a %s. Termina cuando el hambre se sacia o se consume."
+msgstr "La Furia se ha apoderado de %s. Acaba cuando el hambre se sacia o se apaga."
 
 msgid "The west door is a way out. The guard will close ranks again."
 msgstr "La puerta oeste es una salida. La guardia volverá a cerrar filas."
