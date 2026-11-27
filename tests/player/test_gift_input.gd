@@ -124,7 +124,7 @@ func test_a_hurt_drinker_with_full_blood_feeds_and_is_healed_half() -> void:
 	assert_ne(main.hud.notice(), "%s's Blood is full")
 	await wait_for_signal(main.player.fed, 6.0)
 	assert_eq(main.player.stats.blood, 100)
-	assert_eq(main.player.stats.health, 40 + roundi(main.player.feed_heal * 0.5))
+	assert_eq(main.player.stats.health, 40 + roundi(main.player.feed_heal * Feeder.MIN_HEAL_SHARE))
 
 func test_targeting_closes_when_the_unit_is_stunned() -> void:
 	main.input.press_gift(1)

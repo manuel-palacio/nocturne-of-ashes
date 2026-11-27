@@ -35,7 +35,7 @@ func test_a_full_feed_kills_the_target_and_gives_blood() -> void:
 	assert_eq(alvar.current_order(), Unit.Order.FEED)
 	await wait_seconds(2.0)
 	assert_false(foe.is_alive())
-	assert_eq(alvar.stats.blood, 100)  # 60 + 40
+	assert_eq(alvar.stats.blood, 100)  # 60 and a feed's Blood, up to the maximum
 	assert_signal_emitted_with_parameters(alvar, "fed", [foe])
 	assert_eq(alvar.current_order(), Unit.Order.NONE)
 
@@ -55,21 +55,41 @@ func _feed_with(blood: int) -> void:
 	await wait_for_signal(alvar.fed, 5.0)
 
 
+## The heal a feed gives a drinker who had `blood` Blood: the share of `feed_heal` the Blood taken back
+## makes of a whole feed's, never less than `Feeder.MIN_HEAL_SHARE`.
+func _heal_at(blood: int) -> int:
+	var restored: int = mini(alvar.feed_gain, alvar.stats.max_blood - blood)
+	return roundi(alvar.feed_heal * maxf(float(restored) / alvar.feed_gain, Feeder.MIN_HEAL_SHARE))
+
+
 func test_a_parched_drinker_is_healed_in_full() -> void:
 	await _feed_with(0)
 	assert_eq(alvar.stats.blood, alvar.feed_gain)
 	assert_eq(alvar.stats.health, 40 + alvar.feed_heal)
 
 
-func test_a_drinker_nearly_full_of_blood_is_healed_by_what_he_takes_back() -> void:
+func test_a_drinker_at_half_his_blood_is_healed_by_what_he_takes_back() -> void:
+	await _feed_with(50)
+	assert_eq(alvar.stats.blood, 100)
+	assert_eq(_heal_at(50), roundi(alvar.feed_heal * 50.0 / alvar.feed_gain), "50 of 80 taken back")
+	assert_eq(alvar.stats.health, 40 + _heal_at(50))
+
+
+## Nearly full or full, the heal does not fall off a cliff: it is never less than half a feed's.
+func test_a_drinker_nearly_full_of_blood_is_still_healed_half() -> void:
 	await _feed_with(90)
-	assert_eq(alvar.stats.blood, 100, "10 Blood taken back")
-	assert_eq(alvar.stats.health, 40 + roundi(alvar.feed_heal * 10.0 / alvar.feed_gain))
+	assert_eq(alvar.stats.health, 40 + roundi(alvar.feed_heal * Feeder.MIN_HEAL_SHARE))
+
+
+func test_a_drinker_one_short_of_full_is_healed_half() -> void:
+	await _feed_with(99)
+	assert_eq(alvar.stats.health, 40 + roundi(alvar.feed_heal * Feeder.MIN_HEAL_SHARE))
 
 
 func test_a_drinker_full_of_blood_is_healed_half() -> void:
 	await _feed_with(100)
-	assert_eq(alvar.stats.health, 40 + roundi(alvar.feed_heal * Feeder.FULL_BLOOD_HEAL))
+	assert_eq(alvar.stats.blood, 100)
+	assert_eq(alvar.stats.health, 40 + roundi(alvar.feed_heal * Feeder.MIN_HEAL_SHARE))
 
 
 func test_the_feeder_walks_to_a_distant_target_first() -> void:

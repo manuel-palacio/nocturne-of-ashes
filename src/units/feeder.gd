@@ -6,15 +6,16 @@ extends Node
 ## it on any new order. A target held by one feed cannot be drunk from by another.
 
 ## The feed completed: `target` died of it and the unit gained its Blood, and health in proportion to
-## the Blood it took back (half the full heal when its Blood was already full).
+## the Blood it took back, never less than half the full heal.
 signal finished(target: Unit)
 ## A feed in progress was given up, with no Blood gained.
 signal broken
 
 ## The stunning effect the target carries while it is drunk from.
 const FED_ON: StringName = &"fed_on"
-## The share of `Unit.feed_heal` a drinker gets who fed with his Blood already full.
-const FULL_BLOOD_HEAL: float = 0.5
+## The least share of `Unit.feed_heal` a feed gives, however little Blood it restores: drinking past
+## need still mends, by half.
+const MIN_HEAL_SHARE: float = 0.5
 ## The hold outlasts the drinking time by this much, so the two timers can never end it early.
 const _HOLD_MARGIN: float = 0.5
 
@@ -92,15 +93,13 @@ func cancel() -> void:
 func _complete() -> void:
 	var target: Unit = _target
 	_release()
-	# The heal follows the Blood taken back: a parched drinker is healed in full, a sated one little;
-	# one who drank with his Blood already full, past need, is mended by half.
+	# The heal follows the Blood taken back, from half a feed's heal for a sated drinker (his Blood
+	# full, or nearly) to the whole of it for a parched one.
 	var blood_before: int = _unit.stats.blood
 	_unit.stats.gain_blood(_unit.feed_gain)
 	var restored: int = _unit.stats.blood - blood_before
-	if blood_before >= _unit.stats.max_blood:
-		_unit.stats.heal(roundi(_unit.feed_heal * FULL_BLOOD_HEAL))
-	elif _unit.feed_gain > 0:
-		_unit.stats.heal(roundi(_unit.feed_heal * float(restored) / _unit.feed_gain))
+	var share: float = float(restored) / _unit.feed_gain if _unit.feed_gain > 0 else 0.0
+	_unit.stats.heal(roundi(_unit.feed_heal * maxf(share, MIN_HEAL_SHARE)))
 	# Enough that the hit, scaled by the damage the target takes, removes all its remaining health.
 	var multiplier: float = maxf(target.damage_taken_multiplier(), 0.01)
 	target.take_hit(ceili(target.stats.health / multiplier), _unit)
