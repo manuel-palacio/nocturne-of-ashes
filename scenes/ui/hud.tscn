@@ -158,7 +158,6 @@ label_settings = SubResource("LabelSettings_notice")
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
-autowrap_mode = 3
 
 [node name="DialogueBox" parent="Root" instance=ExtResource("2_dialogue_box")]
 unique_name_in_owner = true
