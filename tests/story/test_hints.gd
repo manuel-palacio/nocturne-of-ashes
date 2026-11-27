@@ -115,6 +115,32 @@ func test_the_feed_hint_shows_once_an_enemy_is_marked() -> void:
 	assert_eq(main.hud.notice(), Hints.TEXTS[&"feed"])
 
 
+## A spam clicker feeds by accident before the hint could show: the feed does not count as the lesson,
+## and the hint comes as soon as it may, to explain what just happened, though no one is marked by then.
+func test_a_feed_before_the_feeding_hint_brings_the_hint() -> void:
+	await _vault([&"feed"])
+	main.hud.show_notice(Main.TIRING_NOTICE, [], 60.0)
+	var meal: Unit = _crusader()
+	meal.get_node("Brain").queue_free()
+	meal.global_position = main.player.global_position + Vector3(1.5, 0.0, 0.0)
+	meal.take_hit(meal.stats.health - meal.stats.max_health / 2 + 1)
+	_set_blood(main.player, 60)
+	main.rig.snap_to_target()
+	await wait_physics_frames(3)
+	assert_true(meal.has_feed_mark())
+	var fed: Array[Unit] = []
+	main.player.fed.connect(func(target: Unit) -> void: fed.append(target))
+	main.input.click_at(main.rig.camera().unproject_position(meal.global_position + Vector3.UP * 0.9))
+	await wait_until(func() -> bool: return not fed.is_empty(), 5.0)
+	assert_eq(fed.size(), 1, "Álvar fed")
+	assert_false(main.state.has_flag(Hints.flag(&"feed")), "a feed is not the lesson learned")
+	meal.take_hit(Arena.LETHAL)
+	assert_false(main.enemies.any(func(enemy: Unit) -> bool: return enemy.has_feed_mark()), "no one marked")
+	main.hud.hide_notice()
+	await wait_until(func() -> bool: return main.hud.notice() == Hints.TEXTS[&"feed"], 1.0)
+	assert_eq(main.hud.notice(), Hints.TEXTS[&"feed"])
+
+
 func test_the_sergeant_hint_shows_when_a_sergeant_closes_in_during_a_fight() -> void:
 	await _vault([&"sergeant"])
 	var sergeant: Unit = _sergeant()

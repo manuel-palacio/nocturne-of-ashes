@@ -6,8 +6,10 @@ extends Node
 ## falls due while the world is held by a conversation, the controls or closing card, the fall prompt
 ## or the title, or while another notice is up, waits; if its moment passes meanwhile it is dropped,
 ## and comes when it next applies. A hint on show is put away when one of those opens, and a game
-## notice shown over it replaces it. A hint whose lesson the player has already shown he knows (a Rite
-## used before its hint, a feed of his own) is counted as seen without showing.
+## notice shown over it replaces it. A Rite the player uses before its hint counts the Rites hint as
+## seen without showing. A feed does not count (a clicker feeds by chance): the player's first feed
+## before the feeding hint has shown makes that hint due as if an enemy were marked, so it comes as
+## soon as it may and explains what just happened.
 ##
 ## In a story each hint seen is a flag of the state (`flag()`), kept by `Main.keep_flag()` so that a
 ## fall or a reload does not bring it back; a new game starts them afresh. In a skirmish, which has no
@@ -51,6 +53,8 @@ var _story: bool = false
 var _seen_here: Dictionary = {}  # StringName -> true
 ## The hint on show, or empty.
 var _on_show: StringName = &""
+## Whether the player fed before the feeding hint showed, which makes it due until it shows.
+var _fed_unhinted: bool = false
 ## Seconds since the last hint was shown.
 var _since_last: float = GAP
 
@@ -72,6 +76,7 @@ func begin_room(state: GameState, story: bool) -> void:
 	_state = state
 	_story = story
 	_on_show = &""
+	_fed_unhinted = false
 	for member: Unit in _party.members:
 		_watch(member)
 
@@ -151,7 +156,8 @@ func _applies(id: StringName) -> bool:
 		&"sergeant":
 			return fighting and _sergeant_near()
 		&"feed":
-			return _encounter.enemies.any(func(enemy: Unit) -> bool: return enemy.has_feed_mark())
+			return _fed_unhinted or _encounter.enemies.any(func(enemy: Unit) -> bool:
+				return enemy.has_feed_mark())
 		&"dry":
 			return _about(id) != null
 		&"door":
@@ -202,7 +208,7 @@ func _sergeant_near() -> bool:
 	return false
 
 
-## Hears of `member`'s Rites and feeds: those the player makes count their hints as seen.
+## Hears of `member`'s Rites and feeds, those the player makes.
 func _watch(member: Unit) -> void:
 	var on_fed: Callable = _on_fed.bind(member)
 	if not member.fed.is_connected(on_fed):
@@ -219,7 +225,7 @@ func _on_gift_used(_index: int, _target: Unit, member: Unit) -> void:
 		_remember(&"rites")
 
 
-## A feed of the player's own teaches feeding.
+## A feed of the player's own before the feeding hint makes the hint due, to explain it.
 func _on_fed(_target: Unit, member: Unit) -> void:
-	if member == _party.selected and _state != null:
-		_remember(&"feed")
+	if member == _party.selected and _state != null and not is_seen(&"feed"):
+		_fed_unhinted = true
