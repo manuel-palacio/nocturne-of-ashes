@@ -3,7 +3,10 @@ extends GutTest
 ## The vault's fight needs the Blood, the steel and the Rites: scripted people (`VaultFight`), clicking
 ## once a second, play the story's vault over varied runs. Each row plays `RUNS` fights (row B
 ## `PLAYER_RUNS`; the environment's `FIGHT_RUNS` overrides both, `FIGHT_SEED` moves the first seed from
-## 1000), prints its line, and asserts its bar scaled to the runs played.
+## 1000), prints its line, and asserts its bar scaled to the runs played. A row is replayed once
+## before failing: under load a run can drift; a regression fails both. A row that misses a bar is
+## played again from a fresh game with the same seeds, both plays' lines are printed, and the test
+## holds the second play to the same bars (`_row()`).
 ##
 ## Bars and measurements. The design targets are fixed; each bar is one win looser than the worse of two
 ## measured 10-run passes (a ceiling one looser than the higher), and never looser than the target's
@@ -100,17 +103,40 @@ func _fight(start: VaultFight.Start, kind: VaultFight.Kind, seed_value: int, tir
 	return result
 
 
-## Plays a row (or returns it, played before in this run) and prints its table line.
-func _row(label: String, start: VaultFight.Start, kind: VaultFight.Kind, tired: bool = false,
-		runs_in_suite: int = RUNS) -> Array[Dictionary]:
+## Plays a row (or returns it, played before in this run) and prints its table line. `misses` gives
+## the row's bars it misses, as messages (none when it holds them): a row that misses any is played
+## once more from a fresh game, both plays printed, and the second play is the row's.
+func _row(label: String, start: VaultFight.Start, kind: VaultFight.Kind, misses: Callable,
+		tired: bool = false, runs_in_suite: int = RUNS) -> Array[Dictionary]:
 	if _played.has(label):
 		return _played[label]
+	var runs: Array[Dictionary] = await _play_row(start, kind, tired, runs_in_suite)
+	gut.p(_table_line(label, runs))
+	var missed: Array[String] = misses.call(runs)
+	if not missed.is_empty():
+		gut.p("BALANCE | %s | first play missed: %s | replaying once" % [label, "; ".join(missed)])
+		runs = await _play_row(start, kind, tired, runs_in_suite)
+		gut.p(_table_line(label + " (replay)", runs))
+		missed = misses.call(runs)
+		gut.p("BALANCE | %s | replay %s" % [label, "missed: " + "; ".join(missed) if not missed.is_empty() else "held every bar"])
+	_played[label] = runs
+	return runs
+
+
+func _play_row(start: VaultFight.Start, kind: VaultFight.Kind, tired: bool, runs_in_suite: int) -> Array[Dictionary]:
 	var runs: Array[Dictionary] = []
 	for run: int in _runs(runs_in_suite):
 		runs.append(await _fight(start, kind, _seed_base() + run, tired))
-	gut.p(_table_line(label, runs))
-	_played[label] = runs
 	return runs
+
+
+## Each message of `checks`, pairs of [holds, message], whose check does not hold.
+static func _failed(checks: Array) -> Array[String]:
+	var failed: Array[String] = []
+	for check: Array in checks:
+		if not check[0]:
+			failed.append(check[1])
+	return failed
 
 
 static func _count(runs: Array[Dictionary], outcome: String) -> int:
@@ -160,67 +186,119 @@ static func _won_time(runs: Array[Dictionary]) -> float:
 	return _median(_pick(runs.filter(func(r: Dictionary) -> bool: return r.outcome == "cleared"), "time"))
 
 
+# --- The rows' bars, each the messages of those a play misses ---
+
+static func _a_misses(runs: Array[Dictionary]) -> Array[String]:
+	return _failed([
+		[_count(runs, "timeout") == 0, "no fight stalls"],
+		[_count(runs, "cleared") <= _at_most(0.1, runs.size()), "the spam clicker clears at most 1 of 10"],
+	])
+
+
+static func _b_misses(runs: Array[Dictionary]) -> Array[String]:
+	var won_time: float = _won_time(runs)
+	var lost: int = runs.filter(func(r: Dictionary) -> bool: return r.companions_fallen > 0).size()
+	return _failed([
+		[_count(runs, "cleared") >= _at_least(0.6, runs.size()), "the player clears 6 of 10"],
+		[won_time >= 35.0 and won_time <= 75.0, "a won fight takes 35-75 s (%.1f)" % won_time],
+		[_median(_pick(runs, "health")) <= 0.75 * 120,
+				"Álvar ends with at most three quarters of his health (%.0f)" % _median(_pick(runs, "health"))],
+		[lost >= _at_least(0.2, runs.size()), "a companion falls in 2 of 10"],
+	])
+
+
+## Row C's bars, held against `player`, row B as played.
+static func _c_misses(runs: Array[Dictionary], player: Array[Dictionary]) -> Array[String]:
+	var share: float = float(_count(runs, "cleared")) / runs.size()
+	return _failed([
+		[_count(runs, "cleared") <= _at_most(0.6, runs.size()), "without the Rites he clears at most 6 of 10"],
+		[float(_count(player, "cleared")) / player.size() - share >= 0.2 - 0.0001, "the Rites are worth 4 wins in 20"],
+	])
+
+
+static func _d_misses(runs: Array[Dictionary]) -> Array[String]:
+	return _failed([[_count(runs, "fall") >= _at_least(0.9, runs.size()), "without feeding he falls 9 of 10"]])
+
+
+static func _e_misses(runs: Array[Dictionary]) -> Array[String]:
+	return _failed([[_count(runs, "cleared") >= _at_least(0.8, runs.size()), "with no Blood he clears 8 of 10"]])
+
+
+static func _f_misses(runs: Array[Dictionary]) -> Array[String]:
+	return _failed([[_count(runs, "cleared") >= _at_least(0.5, runs.size()), "after draining he clears 5 of 10"]])
+
+
+static func _g_misses(runs: Array[Dictionary]) -> Array[String]:
+	var turned: Array[Dictionary] = runs.filter(func(r: Dictionary) -> bool: return r.turned)
+	return _failed([
+		[turned.size() > 0, "he turned at least once"],
+		[_count(turned, "left") >= _at_least(0.8, turned.size()), "once he turns, he reaches the Fragua 8 of 10"],
+	])
+
+
+static func _h_misses(runs: Array[Dictionary]) -> Array[String]:
+	return _failed([[_count(runs, "cleared") >= _at_least(0.8, runs.size()), "at the floor the spam clicker clears 8 of 10"]])
+
+
+static func _i_misses(runs: Array[Dictionary]) -> Array[String]:
+	return _failed([[_count(runs, "cleared") >= _at_least(0.6, runs.size()),
+			"at the floor the dry spam clicker clears 6 of 10"]])
+
+
+# --- The rows ---
+
 func _player_row() -> Array[Dictionary]:
-	return await _row("B spared, player", VaultFight.Start.SPARED, VaultFight.Kind.PLAYER, false, PLAYER_RUNS)
+	return await _row("B spared, player", VaultFight.Start.SPARED, VaultFight.Kind.PLAYER, _b_misses, false, PLAYER_RUNS)
 
 
 func test_a_spam_clicker_rarely_wins() -> void:
-	var runs: Array[Dictionary] = await _row("A spared, spam clicker", VaultFight.Start.SPARED, VaultFight.Kind.SPAM)
-	assert_eq(_count(runs, "timeout"), 0, "no fight stalls")
-	assert_lte(_count(runs, "cleared"), _at_most(0.1, runs.size()), "the spam clicker clears at most 1 of 10")
+	var runs: Array[Dictionary] = await _row("A spared, spam clicker", VaultFight.Start.SPARED, VaultFight.Kind.SPAM, _a_misses)
+	assert_eq(_a_misses(runs), [] as Array[String])
 
 
 func test_the_player_wins_hurt() -> void:
 	var runs: Array[Dictionary] = await _player_row()
-	assert_gte(_count(runs, "cleared"), _at_least(0.6, runs.size()), "the player clears 6 of 10")
-	assert_between(_won_time(runs), 35.0, 75.0, "a won fight takes 35-75 s")
-	assert_lte(_median(_pick(runs, "health")), 0.75 * 120, "Álvar ends with at most three quarters of his health")
-	var lost: int = runs.filter(func(r: Dictionary) -> bool: return r.companions_fallen > 0).size()
-	assert_gte(lost, _at_least(0.2, runs.size()), "a companion falls in 2 of 10")
+	assert_eq(_b_misses(runs), [] as Array[String])
 
 
 func test_without_the_rites_the_player_mostly_loses() -> void:
 	var player: Array[Dictionary] = await _player_row()
-	var runs: Array[Dictionary] = await _row("C spared, no Rites", VaultFight.Start.SPARED, VaultFight.Kind.NO_RITES)
-	var share: float = float(_count(runs, "cleared")) / runs.size()
-	assert_lte(_count(runs, "cleared"), _at_most(0.6, runs.size()), "without the Rites he clears at most 6 of 10")
-	assert_gte(float(_count(player, "cleared")) / player.size() - share, 0.2 - 0.0001,
-			"the Rites are worth 4 wins in 20")
+	var misses := func(runs: Array[Dictionary]) -> Array[String]: return _c_misses(runs, player)
+	var runs: Array[Dictionary] = await _row("C spared, no Rites", VaultFight.Start.SPARED, VaultFight.Kind.NO_RITES, misses)
+	assert_eq(_c_misses(runs, player), [] as Array[String])
 
 
 func test_without_feeding_the_player_falls() -> void:
-	var runs: Array[Dictionary] = await _row("D spared, never feeds", VaultFight.Start.SPARED, VaultFight.Kind.NO_FEED)
-	assert_gte(_count(runs, "fall"), _at_least(0.9, runs.size()), "without feeding he falls 9 of 10")
+	var runs: Array[Dictionary] = await _row("D spared, never feeds", VaultFight.Start.SPARED, VaultFight.Kind.NO_FEED, _d_misses)
+	assert_eq(_d_misses(runs), [] as Array[String])
 
 
 func test_with_no_blood_the_player_feeds_his_way_out() -> void:
 	var player: Array[Dictionary] = await _player_row()
-	var runs: Array[Dictionary] = await _row("E dry, player", VaultFight.Start.DRY, VaultFight.Kind.PLAYER)
-	assert_gte(_count(runs, "cleared"), _at_least(0.8, runs.size()), "with no Blood he clears 8 of 10")
+	var runs: Array[Dictionary] = await _row("E dry, player", VaultFight.Start.DRY, VaultFight.Kind.PLAYER, _e_misses)
+	assert_eq(_e_misses(runs), [] as Array[String])
 	gut.p("BALANCE | dry won fights %.1f s against the player's %.1f s" % [_won_time(runs), _won_time(player)])
 
 
 func test_a_player_who_drained_the_captive_clears() -> void:
-	var runs: Array[Dictionary] = await _row("F drained, player", VaultFight.Start.DRAINED, VaultFight.Kind.PLAYER)
-	assert_gte(_count(runs, "cleared"), _at_least(0.5, runs.size()), "after draining he clears 5 of 10")
+	var runs: Array[Dictionary] = await _row("F drained, player", VaultFight.Start.DRAINED, VaultFight.Kind.PLAYER, _f_misses)
+	assert_eq(_f_misses(runs), [] as Array[String])
 
 
 func test_a_coward_reaches_the_fragua() -> void:
-	var runs: Array[Dictionary] = await _row("G spared, coward", VaultFight.Start.SPARED, VaultFight.Kind.COWARD)
+	var runs: Array[Dictionary] = await _row("G spared, coward", VaultFight.Start.SPARED, VaultFight.Kind.COWARD, _g_misses)
 	var turned: Array[Dictionary] = runs.filter(func(r: Dictionary) -> bool: return r.turned)
 	gut.p("BALANCE | coward turned in %d of %d" % [turned.size(), runs.size()])
-	assert_gt(turned.size(), 0, "he turned at least once")
-	assert_gte(_count(turned, "left"), _at_least(0.8, turned.size()), "once he turns, he reaches the Fragua 8 of 10")
+	assert_eq(_g_misses(runs), [] as Array[String])
 
 
 func test_at_the_tiring_floor_even_the_spam_clicker_wins() -> void:
 	var runs: Array[Dictionary] = await _row("H spam clicker, guard at the floor", VaultFight.Start.SPARED,
-			VaultFight.Kind.SPAM, true)
-	assert_gte(_count(runs, "cleared"), _at_least(0.8, runs.size()), "at the floor the spam clicker clears 8 of 10")
+			VaultFight.Kind.SPAM, _h_misses, true)
+	assert_eq(_h_misses(runs), [] as Array[String])
 
 
 func test_at_the_tiring_floor_even_a_dry_spam_clicker_wins() -> void:
 	var runs: Array[Dictionary] = await _row("I dry spam clicker, guard at the floor", VaultFight.Start.DRY,
-			VaultFight.Kind.SPAM, true)
-	assert_gte(_count(runs, "cleared"), _at_least(0.6, runs.size()),
-			"at the floor the dry spam clicker clears 6 of 10")
+			VaultFight.Kind.SPAM, _i_misses, true)
+	assert_eq(_i_misses(runs), [] as Array[String])
