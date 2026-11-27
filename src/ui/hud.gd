@@ -33,6 +33,9 @@ const CLEARED_FADE: float = 1.0
 ## Seconds after the fall prompt shows before a click or Enter answers it, so clicks and keys kept up
 ## through the fall do not answer it unread.
 const FALLEN_DELAY: float = 1.5
+## The fall prompt while it does not answer yet, and once it does.
+const FALLEN_WAITING: String = "You have fallen"
+const FALLEN_ANSWERING: String = "You have fallen — press Enter or click"
 
 ## Seconds a notice stays on show, in real time: neither the pause nor a conversation holds the HUD.
 @export var notice_time: float = 2.5
@@ -88,6 +91,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if _fallen_label.visible:
+		_show_fallen_text()
 	if _cleared_label.visible:
 		_fade_cleared(delta)
 	if _notice.is_empty():
@@ -165,10 +170,12 @@ func gift_buttons() -> Array[GiftButton]:
 
 ## Shows the fall prompt; it answers a click or Enter only `FALLEN_DELAY` seconds on
 ## (`is_fallen_answerable()`).
+## Until then it says only that Álvar has fallen; how to go on shows once it answers.
 func show_fallen() -> void:
 	if not _fallen_label.visible:
 		_fallen_at = Time.get_ticks_msec()
 	_fallen_label.visible = true
+	_show_fallen_text()
 
 
 func hide_fallen() -> void:
@@ -267,13 +274,19 @@ func _notification(what: int) -> void:
 
 
 func _show_texts() -> void:
-	_fallen_label.text = tr("You have fallen — press Enter or click")
+	_show_fallen_text()
 	_paused_label.text = tr("Paused — give your orders")
 	_cleared_label.text = tr("The vault is quiet")
 	# Never `tr("")`, which gives the translation's header.
 	if not _notice.is_empty() and _notice_place != null:
 		_notice_place.text = _notice_text()
 	_show_conscience()
+
+
+func _show_fallen_text() -> void:
+	var text: String = tr(FALLEN_ANSWERING if is_fallen_answerable() else FALLEN_WAITING)
+	if _fallen_label.text != text:
+		_fallen_label.text = text
 
 
 ## The notice on show, translated, its places filled.

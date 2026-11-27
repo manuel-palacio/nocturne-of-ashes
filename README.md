@@ -143,7 +143,8 @@ the rest with hints, shown once each, at the moment they first apply (entering a
 closing in, a marked enemy or a first feed, the Rites, Álvar running dry once feeding has been taught,
 the Fury, Álvar down to half his health), one at a time, for 5 s, in a band above the Rite bar, and
 never over a conversation or a card. A save remembers which hints were seen; a new game shows them
-again. The fall prompt answers a click or Enter only after 1.5 s, so it is read.
+again. The fall prompt answers a click or Enter only after 1.5 s, so it is read; until then it says
+only that Álvar has fallen.
 
 Progress is saved in the browser: on entering a room, at the end of each conversation and when a room
 is cleared. The title offers Continue when there is a save, and New game. When the browser will not keep

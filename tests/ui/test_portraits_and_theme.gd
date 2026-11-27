@@ -496,15 +496,23 @@ func test_the_title_controls_button_opens_the_card_and_escape_closes_it() -> voi
 
 # --- The fallen prompt and the cleared line ---
 
-func test_the_fallen_prompt_says_enter_or_click() -> void:
+## Only that Álvar has fallen while the prompt does not answer; how to go on once it does.
+func test_the_fallen_prompt_says_enter_or_click_once_it_answers() -> void:
 	await _skirmish()
 	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
-	assert_eq(main.hud.find_child("FallenLabel").text, "You have fallen — press Enter or click")
+	var label := main.hud.find_child("FallenLabel") as Label
+	assert_false(main.hud.is_fallen_answerable())
+	assert_eq(label.text, "You have fallen")
 	Language.apply("es")
 	await wait_physics_frames(2)
-	assert_eq(main.hud.find_child("FallenLabel").text, "Has caído — pulsa Intro o haz clic")
+	assert_eq(label.text, "Has caído")
+	await wait_until(func() -> bool: return main.hud.is_fallen_answerable(), Hud.FALLEN_DELAY + 1.0)
+	await wait_process_frames(2)
+	assert_eq(label.text, "Has caído — pulsa Intro o haz clic")
 	TranslationServer.set_locale("en")
+	await wait_physics_frames(2)
+	assert_eq(label.text, "You have fallen — press Enter or click")
 
 
 func test_the_cleared_line_fades_after_four_seconds() -> void:

@@ -37,7 +37,7 @@ func test_the_hud_follows_a_language_change() -> void:
 	assert_eq(main.hud.panels()[0].find_child("NameLabel").text, "Hermano Álvar")
 	main.player.take_hit(Arena.LETHAL)
 	await wait_physics_frames(2)
-	assert_eq(main.hud.find_child("FallenLabel").text, "Has caído — pulsa Intro o haz clic")
+	assert_eq(main.hud.find_child("FallenLabel").text, "Has caído")
 	assert_eq(main.hud.panels()[0].find_child("StateLabel").text, "Fuera de combate")
 
 func test_controls_built_after_the_switch_are_spanish_too() -> void:
