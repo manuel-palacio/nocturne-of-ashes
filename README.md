@@ -149,13 +149,50 @@ is cleared. The title offers Continue when there is a save, and New game. When t
 saves (its site data blocked, or a save that does not read back), the title says progress lasts only
 until the page is closed; a private window that keeps data until it closes cannot be told apart.
 
+## Languages
+
+The game is in English and Spanish. It picks the language at start: the page's `lang` parameter
+(`?lang=es` or `?lang=en`) when it names one of the two, else the browser's language, else English;
+any build reads it (`src/core/language.gd`). Saves hold no text, so a game saved in one language goes
+on in the other.
+
+English is the source text, in the code, the scenes and `dialogue/*.dialogue`. The Spanish is in two
+gettext catalogues, kept by hand and listed in the project settings (`locale/translations`):
+
+- `assets/i18n/es.po`, the interface: the HUD, the hints and notices, the cards, the title, the names
+  of the party, the Rites and the doors' texts. Each entry's `msgid` is the English text, byte for byte.
+- `assets/i18n/es-dialogue.po`, the conversations: each spoken line and choice is an entry whose
+  `msgctxt` is the line's id (`[ID:…]` at the end of the line in the `.dialogue` file) and whose `msgid`
+  is its English text; each speaker's name is an entry with the context `dialogue`. The dialogue
+  add-on looks lines up that way (`use_static_ids_as_translation_keys` is off in `project.godot`), so a
+  line whose Spanish is missing, or whose English has changed since, is shown in English, never as an
+  id. Portraits and the room's characters go by the English speaker name; the box shows the translated
+  one.
+
+To add or change a conversation line:
+
+1. Write the English line in the `.dialogue` file. A new line needs an id: in the editor, the dialogue
+   editor's "Generate line IDs" adds the add-on's ids (`<file uid>_<six hex digits>`) to every line
+   without one; by hand, any id not used elsewhere will do. Never reuse or change an existing line's
+   id when its meaning stays: the id is what ties it to its Spanish.
+2. In `es-dialogue.po`, add (or update) the entry: `msgctxt` the id, `msgid` the English as written,
+   `msgstr` the Spanish, one line for one line. A new speaker also needs an entry with
+   `msgctxt "dialogue"` and a portrait key in `src/ui/portraits.gd`.
+3. Run `ops/test.sh -gtest=res://tests/core/test_translation_coverage.gd`. It fails on any line,
+   choice, speaker or interface text without Spanish, on an entry nothing uses, on Spanish left
+   identical to the English (but for names and "Alma"), on a `%s`/`%d` lost, and on a line without an
+   id or with a duplicate one.
+
+An interface text goes the same way into `es.po`, with no `msgctxt`: text set in code passes through
+`tr()` when it is shown and again on `NOTIFICATION_TRANSLATION_CHANGED`, as the HUD does.
+
 ## Test parameters
 
 The browser tests start the game with query parameters in the page address (for example
 `/?probe=1&fresh=1`). They exist for those tests; players need none of them. They work only in the
 test flavour (`build/web`): in the public flavour, the one the site runs, `probe=1` and the
 parameters that need it do nothing, and the game starts as for any visitor (`src/core/probe_gate.gd`).
-`skirmish=1` and `lang=es` are not test parameters and work in both.
+`skirmish=1` and `lang` are not test parameters and work in both.
 
 - `probe=1` — lets the tests read the game, and skips the title: Continue when there is a save, else New game.
 - `title=1` — with `probe=1`: shows the title anyway.
@@ -164,7 +201,7 @@ parameters that need it do nothing, and the game starts as for any visitor (`src
 - `frail=1` — with `probe=1`: Álvar's health is set to 1 when a room with enemies starts.
 - `at=vault` — with `probe=1` and `fresh=1`: starts in the vault as if the Fragua were finished.
 - `skirmish=1` — plays the vault skirmish with the whole party, with no title and no save.
-- `lang=es` — shows the game in Spanish.
+- `lang=es` — shows the game in Spanish; `lang=en` in English, whatever the browser's language ([Languages](#languages)).
 
 Deploy to Fly.io (needs the fly CLI, logged in): `ops/deploy-fly.sh`. It builds the public flavour
 into `build/public`, the only directory the image is made from, and stops before deploying unless
