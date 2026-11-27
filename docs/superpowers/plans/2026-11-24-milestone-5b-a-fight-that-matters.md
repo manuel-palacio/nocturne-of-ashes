@@ -225,6 +225,24 @@ F 3.5/3; Álvar's Rites 8 a fight in every player row; no Fury in any row. In th
 pace (one action a second, a Rite's key and its click back to back), 12 of 12 fights cleared in 45.8–50.5 s,
 Álvar ending at 49–120 health (median 65).
 
+### A third task, added at the owner's request: the whole game in Spanish
+
+- **Every conversation is in Spanish as well as English.** Each spoken line and choice in
+  `dialogue/haven.dialogue` has a stable id, written by the dialogue add-on's own tooling; the Spanish
+  is in `assets/i18n/es-dialogue.po`, beside the interface's `assets/i18n/es.po`. The add-on's
+  "static ids as translation keys" setting is off, so a line's id is its gettext context and its
+  English text the key: a line with no translation shows its English, never an id.
+- **The line Malakor heads is "la Estirpe" in Spanish** ("the Sangre" in English), because "la Sangre"
+  already means the Blood there.
+- **A test fails when any text lacks its Spanish:** every line, choice and speaker's name, every
+  interface text it can find by the project's conventions, stale catalogue entries, and Spanish equal
+  to its English outside a short list of names. The catalogues must be in the export.
+- **Three interface texts changed with it:** the feeding hint no longer claims a foe is marked; a
+  tired guard met again says it has closed ranks; the fall prompt says only "You have fallen" until
+  it will take a press.
+- **A row of the fight's table is replayed once before it fails:** under load a scripted fight can
+  drift past a bar; a regression misses twice.
+
 ## Carried forward
 
 - Feeds on the two sergeants still decide each win: about a third to two fifths of the guard's health
@@ -256,3 +274,8 @@ pace (one action a second, a Rite's key and its click back to back), 12 of 12 fi
   falls due.
 - A hint seen rewrites the last checkpoint's save mid-fight, with only its flag changed; the party's
   vitals in it stay as they were at the checkpoint.
+- The page's own failure messages (no canvas, no JavaScript, a missing browser feature) are English
+  only; they are outside the engine, in `web/shell.html`.
+- The translation coverage test finds interface texts by convention (`tr()` literals, string constants,
+  named scene properties); a text built another way would not be checked.
+- In Spanish, feeding is "alimentarse" in the controls and the panel and "beber" in the feeding hint.
