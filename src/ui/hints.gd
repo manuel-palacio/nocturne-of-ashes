@@ -2,14 +2,16 @@ class_name Hints
 extends Node
 ## The fight's rules, taught once each at the moment they first apply: a hint is the HUD's notice,
 ## on show for `SHOW_TIME`, at most one every `GAP` seconds, the most urgent first (`ORDER`). A hint
-## applies while its moment lasts (an enemy is marked, someone's Blood is under a third, ...): one that
+## applies while its moment lasts (an enemy is marked, Álvar's Blood is under a third, ...): one that
 ## falls due while the world is held by a conversation, the controls or closing card, the fall prompt
 ## or the title, or while another notice is up, waits; if its moment passes meanwhile it is dropped,
 ## and comes when it next applies. A hint on show is put away when one of those opens, and a game
 ## notice shown over it replaces it. A Rite the player uses before its hint counts the Rites hint as
 ## seen without showing. A feed does not count (a clicker feeds by chance): the player's first feed
 ## before the feeding hint has shown makes that hint due as if an enemy were marked, so it comes as
-## soon as it may and explains what just happened.
+## soon as it may and explains what just happened. Running dry, Álvar's alone (the companions' brains
+## feed on their own), says "Feed" and so never comes before the feeding hint: when it falls due first,
+## the feeding hint is due instead, and running dry waits its turn.
 ##
 ## In a story each hint seen is a flag of the state (`flag()`), kept by `Main.keep_flag()` so that a
 ## fall or a reload does not bring it back; a new game starts them afresh. In a skirmish, which has no
@@ -28,7 +30,7 @@ const RITE_DELAY: float = 4.0
 ## A sergeant this near a party member, flat, in metres, in a fight, brings the sergeant hint.
 const SERGEANT_NEAR: float = 6.0
 ## Every hint, most urgent first.
-const ORDER: Array[StringName] = [&"door", &"fury", &"dry", &"feed", &"sergeant", &"rites", &"pause"]
+const ORDER: Array[StringName] = [&"door", &"sergeant", &"feed", &"rites", &"dry", &"fury", &"pause"]
 ## Each hint's text, an English source text; `%s` is the member it is about.
 const TEXTS: Dictionary = {
 	&"pause": "Space pauses the fight: give your orders, then let it run.",
@@ -156,24 +158,30 @@ func _applies(id: StringName) -> bool:
 		&"sergeant":
 			return fighting and _sergeant_near()
 		&"feed":
-			return _fed_unhinted or _encounter.enemies.any(func(enemy: Unit) -> bool:
-				return enemy.has_feed_mark())
+			return _fed_unhinted or _running_dry(leader) or _encounter.enemies.any(
+					func(enemy: Unit) -> bool: return enemy.has_feed_mark())
 		&"dry":
-			return _about(id) != null
+			return is_seen(&"feed") and _about(id) != null
 		&"door":
 			return _story and fighting and leader.stats.health * 3 < leader.stats.max_health
 	return false
 
 
-## The member the hint `id` is about (whom the Fury has, who is running dry); null for the others.
+## The member the hint `id` is about (whom the Fury has; Álvar, when he is running dry); null for the
+## others.
 func _about(id: StringName) -> Unit:
 	match id:
 		&"fury":
 			return _first_member(func(member: Unit) -> bool: return member.is_in_fury())
 		&"dry":
-			return _first_member(func(member: Unit) -> bool:
-				return member.stats.blood * 3 < member.stats.max_blood)
+			var leader: Unit = _party.leader
+			return leader if leader.is_alive() and _running_dry(leader) else null
 	return null
+
+
+## Whether `member`'s Blood is under a third.
+static func _running_dry(member: Unit) -> bool:
+	return member.stats.blood * 3 < member.stats.max_blood
 
 
 ## The first living member, Álvar first, for whom `test` holds; null when none.

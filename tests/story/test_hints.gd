@@ -165,6 +165,29 @@ func test_the_running_dry_hint_names_who_is_running_dry() -> void:
 	assert_eq(_shown_text(), "Brother Álvar is running dry. Feed, or the Fury will choose for you.")
 
 
+## The companions' brains spend their Blood and feed on their own: running dry is Álvar's alone.
+func test_running_dry_is_about_alvar_only() -> void:
+	await _vault([&"dry"])
+	var gonzalo: Unit = main.party[2]
+	assert_eq(gonzalo.member_id, &"gonzalo")
+	_set_blood(gonzalo, 30)
+	_set_blood(main.party[1], 30)
+	_set_blood(main.player, 60)
+	await wait_physics_frames(10)
+	assert_eq(main.hud.notice(), "", "nothing to say of a companion's Blood")
+	assert_false(main.state.has_flag(Hints.flag(&"dry")))
+
+
+## "Feed" is not said before the feeding hint has said how: running dry waits its turn after it.
+func test_running_dry_comes_after_the_feeding_hint() -> void:
+	await _vault([&"dry", &"feed"])
+	_set_blood(main.player, 20)
+	await wait_physics_frames(3)
+	assert_eq(main.hud.notice(), Hints.TEXTS[&"feed"], "feeding first, though no one is marked")
+	await wait_until(func() -> bool: return main.hud.notice() == Hints.TEXTS[&"dry"], Hints.GAP + 1.0)
+	assert_eq(_shown_text(), "Brother Álvar is running dry. Feed, or the Fury will choose for you.")
+
+
 func test_the_fury_hint_names_whom_the_fury_has() -> void:
 	await _vault([&"fury"])
 	var zahra: Unit = main.party[1]
@@ -358,6 +381,9 @@ func test_a_fight_played_through_shows_each_hint_at_most_once_and_one_at_a_time(
 		assert_lte(seen.size(), Hints.ORDER.size())
 		for id: StringName in Hints.ORDER:
 			assert_lte(seen.count(id), 1, "%s once at most" % id)
+		if seen.has(&"dry"):
+			assert_has(seen, &"feed", "running dry only once feeding is taught: %s" % [seen])
+			assert_lt(seen.find(&"feed"), seen.find(&"dry"), "feeding before running dry: %s" % [seen])
 		for i: int in range(1, at.size()):
 			assert_gte(at[i] - at[i - 1], roundi(Hints.GAP * VaultFight.BASE_TICKS) - 1,
 					"no two hints within %s s: %s" % [Hints.GAP, seen])
