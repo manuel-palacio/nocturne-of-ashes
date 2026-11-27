@@ -134,12 +134,15 @@ works on him, and drink from each sergeant once he is weakened: Álvar may feed 
 health or less, a companion at a fifth, and a feed restores Blood and mends wounds. Rites spend Blood;
 let it run dry and the Fury takes the member and chooses whom they drink from. When the fight turns,
 the west door is a way out once no enemy is upon Álvar; the guard is whole again on the party's
-return. From Álvar's second fall in the vault the guard comes back tired, weaker each time.
+return. From Álvar's second fall in the vault the guard comes back tired, weaker each time, down to
+a floor low enough for a party with no Blood; leaving by the door does not undo the falls (only
+clearing the room or a new game does), and nothing of it is saved.
 Íñigo, in the Fragua, says what the Blood, the Rites, the Fury and the Silence are; the fight teaches
-the rest with hints, shown once each, at the moment they first apply (entering a fight, the Rites, a
-sergeant closing in, a marked enemy, someone running dry, the Fury, Álvar near falling), one at a time
-and never over a conversation or a card. A save remembers which hints were seen; a new game shows them
-again.
+the rest with hints, shown once each, at the moment they first apply (entering a fight, a sergeant
+closing in, a marked enemy or a first feed, the Rites, Álvar running dry once feeding has been taught,
+the Fury, Álvar down to half his health), one at a time, for 5 s, in a band above the Rite bar, and
+never over a conversation or a card. A save remembers which hints were seen; a new game shows them
+again. The fall prompt answers a click or Enter only after 1.5 s, so it is read.
 
 Progress is saved in the browser: on entering a room, at the end of each conversation and when a room
 is cleared. The title offers Continue when there is a save, and New game. When the browser will not keep

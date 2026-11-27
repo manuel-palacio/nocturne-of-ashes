@@ -163,6 +163,28 @@ Each ruling taken while the plan was built: what changed, and why.
   dropped if its moment passes meanwhile; a game notice shown over a hint replaces it. A hint seen is a
   flag written into the last checkpoint at once, so neither a fall nor a reload brings it back; the
   skirmish, with no save, shows each once per page load.
+- **The final review's fixes** (one wave, after the final whole-branch review):
+  - **The tiring count survives leaving.** The count of Álvar's falls in a room is kept until that room
+    is cleared or a new game starts; leaving by a door and coming back keeps it, and the guard returns
+    whole at its tired strength, saying "The guard is tiring." in place of closing ranks. It is still
+    not saved. (This overturns the earlier ruling that leaving forgets the falls: the door hint was
+    sending weak players down the one path with no floor.)
+  - **The feeding hint's rule.** A feed no longer counts as the lesson learned (a clicker feeds by
+    chance): a first feed before the hint has shown makes it due, and it shows as soon as it may.
+  - **"Running dry" is about Álvar only** (his Blood under a third), and never shows before the
+    feeding hint; when it falls due first, the feeding hint goes first. Urgency: the door, the
+    sergeants, feeding, the Rites, running dry, the Fury, the pause.
+  - **The door hint falls due at half health** (was a third), in time to reach the door. The scripted
+    coward keeps his third.
+  - **Hints in their own band, for 5 s.** A hint is drawn in a band in the lower third, above the Rite
+    bar, not where game notices and the cleared line show; 5 s on show, still 6 s from one hint's start
+    to the next's. Every hint fits on two lines at 1280 × 720 and 800 × 500, in English and Spanish.
+  - **The fall prompt's delay.** It ignores clicks and Enter for 1.5 s after it shows, timed by the
+    clock as the closing card's delay is; the tired guard's line stays 4 s.
+  - **The dry floor row and the floor.** Row I, a spam clicker with every member at 0 Blood against the
+    guard at its floor, bar 6 of 10, is the floor under "nobody gets stuck" for the weakest start. At
+    the floor of 50% he cleared 0 of 10 in both passes (0.3: 2; 0.2: 3; 0.17: 8 and 8). The floor is
+    now 15%: row I 10 / 10, row H 10 / 10. The floor is reached at the seventh fall (was the fifth).
 
 ### Final numbers
 
@@ -182,9 +204,9 @@ Each ruling taken while the plan was built: what changed, and why.
 | Stone Hide (Gonzalo) | 30 Blood; 15 s; 6 s; damage taken × 0.4; taunt 2 m |
 | Hammerfall (Gonzalo) | 25 Blood; 12 s; 15 damage and 2.5 s stun within 3.5 m |
 | The west door | refuses while an enemy is within 3 m of Álvar, or Álvar is in the Fury or feeding; calls companions off a feed |
-| The tiring guard | from the second fall in a room: 85%, 70%, 55%, then 50% of its health |
+| The tiring guard | from the second fall in a room: 85%, 70%, 55%, 40%, 25%, then 15% of its health; kept through a door, forgotten when the room is cleared or on a new game |
 
-### The eight rows (10 runs each, two passes: seeds 1000–1009 and 1010–1019)
+### The nine rows (10 runs each, two passes: seeds 1000–1009 and 1010–1019)
 
 | row | first pass | second pass | bar in the suite | limit |
 |---|---|---|---|---|
@@ -195,7 +217,8 @@ Each ruling taken while the plan was built: what changed, and why.
 | E dry start | 10 (won in 43.7 s) | 9 (42.0 s) | ≥ 8 | ≥ 4 |
 | F drained captive | 10 | 6 | ≥ 5 | ≥ 4 |
 | G coward | reaches the Fragua 10 | 9 | ≥ 8 | ≥ 7 |
-| H spam clicker at the tiring floor | 10 | 9 | ≥ 8 | ≥ 8 |
+| H spam clicker at the tiring floor | 10 (floor 15%; 10 at 50%) | 10 (9 at 50%) | ≥ 8 | ≥ 8 |
+| I dry spam clicker at the tiring floor | 10 (floor 15%; 0 at 50%) | 10 (0 at 50%) | ≥ 6 | ≥ 6 |
 
 Also measured: Álvar's median end Blood 100 in rows B, E and F; party feeds per fight B 4/4, E 6/6,
 F 3.5/3; Álvar's Rites 8 a fight in every player row; no Fury in any row. In the browser, at a person's
@@ -209,19 +232,27 @@ pace (one action a second, a Rite's key and its click back to back), 12 of 12 fi
 - Blood is never scarce at 80 a feed, so the Fury is met only by a player who spends Rites and never
   feeds, and draining the captive buys no edge in the fight. The Fury hint and the "running dry" hint
   therefore show less often than the others.
-- In the crush a player cannot easily see who is a sergeant, who is marked, or which companion is in
-  trouble: there is no health over heads.
+- In the crush a player cannot tell the sergeants from the crusaders or see who is marked, or which
+  companion is in trouble: there is no health over heads. The final reviewer mis-clicked a feed by
+  sight. The first thing to change next: health over heads, or a clearer sergeant.
+- A second click on another enemy breaks a feed in progress.
+- A companion taken by the Fury attacks the nearest living unit, the party included, in the Fragua too.
+- The tiring guard loses health, not damage: a dry party with no Rites wins only once the guard dies
+  in a blow or two, which is why the floor had to go down to 15%.
+- An intermittent report of two orphans at the end of a single test file run alone, never reproduced on
+  demand; a rerun clears it. Players are not affected.
+- In Firefox the page starts in about 13 s against a 15 s bar.
+- The unit suite takes about 12 minutes (720 s for 724 tests), about 3 of them the balance file
+  (row I added this wave).
 - The browser player's 12 of 12 comes from one unjittered start; the headless 6–8 of 10 from varied
   starts is the number to believe.
-- A spam clicker gets through around his fourth or fifth fall (55% and 50% of the guard's health).
+- A spam clicker with Blood gets through around his fourth or fifth fall (55% and 40% of the guard's
+  health); one with no Blood only near the floor, at about the seventh.
 - Kiting (leading enemies round the room) is untested.
-- The "running dry" hint falls due about 6 s into most first fights, often for a companion whose brain
-  spends its own Blood on Rites (Gonzalo's Stone Hide takes him from 60 to 30); companions' brains feed
-  on their own below 30, so for a companion the hint asks little of the player, and it takes the slot
-  the feeding hint might have had.
 - What a first fight shows, measured with the scripted players: the player who uses his Rites and feeds
-  meets three or four hints (the pause, running dry, the sergeant, and the door when he is near
-  falling); a spam clicker three to six. The scripted player never sees the Rites or feeding hints,
-  because he calls a Rite and feeds before they fall due.
+  meets three to five hints (the pause, the sergeant, feeding, the door when he is down to half, and
+  running dry late in a long fight); a spam clicker three to five (the pause, the sergeant, the Rites,
+  feeding, the door). The scripted player never sees the Rites hint, as he calls a Rite before it
+  falls due.
 - A hint seen rewrites the last checkpoint's save mid-fight, with only its flag changed; the party's
   vitals in it stay as they were at the checkpoint.
