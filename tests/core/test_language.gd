@@ -50,3 +50,28 @@ func test_controls_built_after_the_switch_are_spanish_too() -> void:
 func test_an_unknown_locale_reads_as_english() -> void:
 	Language.apply(Language.pick("sv", "sv_SE"))
 	assert_eq(tr("The Fury"), "The Fury")
+
+func test_a_requested_english_wins_over_a_spanish_browser() -> void:
+	assert_eq(Language.pick("en", "es_ES"), "en")
+
+func test_speakers_names_follow_the_language() -> void:
+	assert_eq(DialogueRunner.speaker_name("The captive"), "The captive")
+	Language.apply("es")
+	assert_eq(DialogueRunner.speaker_name("The captive"), "El cautivo")
+	assert_eq(DialogueRunner.speaker_name("Malakor"), "Malakor")
+	assert_eq(DialogueRunner.speaker_name(""), "")
+
+func test_texts_put_together_read_in_spanish() -> void:
+	Language.apply("es")
+	var main: Main = Story.boot(self)
+	await wait_physics_frames(3)
+	main.hud.show_hint(Hints.TEXTS[&"dry"], ["Brother Álvar"])
+	assert_eq(main.hud.find_child("HintLabel").text, "Hermano Álvar se queda sin Sangre. Aliméntate, o la Furia elegirá por ti.")
+	main.hud.show_notice(PlayerInput.FULL_BLOOD_TEXT, ["Zahra"])
+	assert_eq(main.hud.find_child("NoticeLabel").text, "Zahra tiene la Sangre llena")
+	assert_eq(main.hud.find_child("ConscienceLabel").text, "Alma %d/10" % main.state.conscience)
+	main.hud.show_closing(8)
+	assert_string_contains((main.hud.find_child("ClosingCard") as ClosingCard).text(), "con el Alma que llevas (8 de 10)")
+	Story.finish(main)
+	TranslationServer.set_locale("en")
+	await wait_physics_frames(2)  # the HUD rebuilt in English frees what it built in Spanish

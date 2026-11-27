@@ -1,0 +1,318 @@
+# Spanish for the conversations in dialogue/*.dialogue. Each line or choice is an entry whose context
+# (msgctxt) is the line's static id, [ID:...] in the file, and whose msgid is its English text, byte
+# for byte; the comment above names the speaker. A speaker's name has the context "dialogue".
+# Maintained by hand: see the README, "Languages".
+msgid ""
+msgstr ""
+"Project-Id-Version: Nocturne of Ashes\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Speakers
+msgctxt "dialogue"
+msgid "Malakor"
+msgstr "Malakor"
+
+msgctxt "dialogue"
+msgid "Álvar"
+msgstr "Álvar"
+
+msgctxt "dialogue"
+msgid "Íñigo"
+msgstr "Íñigo"
+
+msgctxt "dialogue"
+msgid "The captive"
+msgstr "El cautivo"
+
+msgctxt "dialogue"
+msgid "Zahra"
+msgstr "Zahra"
+
+msgctxt "dialogue"
+msgid "Gonzalo"
+msgstr "Gonzalo"
+
+# waking
+#. Malakor
+msgctxt "bck0morkntt2n_bd3fca"
+msgid "You wake. Good. Not all of them do."
+msgstr "Despiertas. Bien. No todos lo hacen."
+
+#. Álvar
+msgctxt "bck0morkntt2n_b02d6f"
+msgid "Elena. Where is she?"
+msgstr "Elena. ¿Dónde está?"
+
+#. Malakor
+msgctxt "bck0morkntt2n_bb27fa"
+msgid "The woman you guarded got away through the Tagus gate, and what she carried went with her."
+msgstr "La mujer a la que guardabas escapó por la puerta del Tajo, y lo que llevaba se fue con ella."
+
+#. Malakor
+msgctxt "bck0morkntt2n_d18ac0"
+msgid "You did not. My people cut you down in the burning quarter. You died there, in the smoke, and I gave you my blood. That is the Turning."
+msgstr "Tú no. Los míos te abatieron en el barrio en llamas. Allí moriste, entre el humo, y yo te di mi sangre. Eso es la Conversión."
+
+#. Malakor
+msgctxt "bck0morkntt2n_61e814"
+msgid "You belong to the Blood-Forged now. This forge is your house, and I am its master."
+msgstr "Ahora perteneces a los Forjados en Sangre. Esta fragua es tu casa, y yo soy su señor."
+
+#. Malakor
+msgctxt "bck0morkntt2n_d47144"
+msgid "Take this. Iron in the sinew, when you call on the Blood. The first of your Rites."
+msgstr "Toma. Hierro en el tendón, cuando invoques la Sangre. El primero de tus Ritos."
+
+#. Malakor
+msgctxt "bck0morkntt2n_384a3f"
+msgid "Íñigo will tell you the rest. I do not say a thing twice."
+msgstr "Íñigo te contará el resto. Yo no digo las cosas dos veces."
+
+# malakor
+#. Malakor
+msgctxt "bck0morkntt2n_15bf17"
+msgid "The first hall is quiet, then. The lock beneath it has outlasted kings. It will keep until I say."
+msgstr "Así que la primera sala calla. El cerrojo que hay debajo ha sobrevivido a reyes. Aguardará hasta que yo lo diga."
+
+#. Malakor
+msgctxt "bck0morkntt2n_097122"
+msgid "The stair is open. Go down."
+msgstr "La escalera está abierta. Baja."
+
+#. Malakor
+msgctxt "bck0morkntt2n_42d932"
+msgid "You are becoming what I made you. Good."
+msgstr "Te estás convirtiendo en lo que hice de ti. Bien."
+
+#. Malakor
+msgctxt "bck0morkntt2n_486722"
+msgid "You still pray at night, friar. I hear it through the stone. Pray below, if you must."
+msgstr "Aún rezas de noche, fraile. Te oigo a través de la piedra. Reza abajo, si es preciso."
+
+#. Malakor
+msgctxt "bck0morkntt2n_b5c558"
+msgid "Under this city there are vaults older than its churches."
+msgstr "Bajo esta ciudad hay criptas más antiguas que sus iglesias."
+
+#. Malakor
+msgctxt "bck0morkntt2n_0e85f9"
+msgid "Every king who held Toledo hung a lock on them. I want those locks broken. You will go down and break them."
+msgstr "Cada rey que tuvo Toledo les echó un cerrojo. Quiero esos cerrojos rotos. Bajarás y los romperás."
+
+#. Malakor
+msgctxt "bck0morkntt2n_a4e6aa"
+msgid "Gonzalo knows the first stair. Zahra knows what bleeds. You go first."
+msgstr "Gonzalo conoce la primera escalera. Zahra sabe lo que sangra. Tú vas delante."
+
+#. Malakor
+msgctxt "bck0morkntt2n_f677b5"
+msgid "One thing more. You carried a letter for the translator. Give it to me."
+msgstr "Una cosa más. Llevabas una carta para la traductora. Dámela."
+
+#. choice
+msgctxt "bck0morkntt2n_9b76f1"
+msgid "Hand it over"
+msgstr "Entregársela"
+
+#. Malakor
+msgctxt "bck0morkntt2n_b7bf92"
+msgid "Good. She will not get far."
+msgstr "Bien. No llegará lejos."
+
+#. choice
+msgctxt "bck0morkntt2n_0ce0a8"
+msgid "Say it burned in the quarter"
+msgstr "Decir que ardió en el barrio"
+
+#. Malakor
+msgctxt "bck0morkntt2n_21b71f"
+msgid "Burned. Much burned that night. Remember that you told me so."
+msgstr "Ardió. Mucho ardió aquella noche. Acuérdate de que me lo dijiste."
+
+#. Malakor
+msgctxt "bck0morkntt2n_563a93"
+msgid "The stair is open. Go."
+msgstr "La escalera está abierta. Ve."
+
+#. Malakor
+msgctxt "bck0morkntt2n_d95009"
+msgid "You do not go below alone. Zahra and Gonzalo go with you. Find them."
+msgstr "No bajarás solo. Zahra y Gonzalo irán contigo. Búscalos."
+
+#. Malakor
+msgctxt "bck0morkntt2n_665d76"
+msgid "You do not go below without Zahra. Find her."
+msgstr "No bajarás sin Zahra. Búscala."
+
+#. Malakor
+msgctxt "bck0morkntt2n_749bd7"
+msgid "You do not go below without Gonzalo. Find him."
+msgstr "No bajarás sin Gonzalo. Búscalo."
+
+#. Malakor
+msgctxt "bck0morkntt2n_7feeb7"
+msgid "The prisoner is still yours. See to him before you go below."
+msgstr "El prisionero sigue siendo tuyo. Ocúpate de él antes de bajar."
+
+#. Malakor
+msgctxt "bck0morkntt2n_08f966"
+msgid "And see to the prisoner. He is yours."
+msgstr "Y ocúpate del prisionero. Es tuyo."
+
+# smith
+#. Íñigo
+msgctxt "bck0morkntt2n_f4ee70"
+msgid "I said it once. When the Blood runs low, you drink."
+msgstr "Ya lo dije una vez. Cuando la Sangre escasea, bebes."
+
+#. Íñigo
+msgctxt "bck0morkntt2n_13acb0"
+msgid "Let it run dry and the Fury chooses for you. Now mind the sparks."
+msgstr "Si dejas que se agote, la Furia elige por ti. Y ahora, cuidado con las chispas."
+
+#. Íñigo
+msgctxt "bck0morkntt2n_ccc626"
+msgid "Stand clear of the quench. You have been to the alcove, I can see it on you. He told me to tell you how things are."
+msgstr "Apártate del agua del temple. Has estado en la celda, se te nota. Él me mandó que te contara cómo están las cosas."
+
+#. Íñigo
+msgctxt "bck0morkntt2n_3adb7c"
+msgid "Stand there, out of the sparks. He told me to tell you how things are, and I have iron cooling."
+msgstr "Quédate ahí, lejos de las chispas. Él me mandó que te contara cómo están las cosas, y tengo hierro enfriándose."
+
+#. Íñigo
+msgctxt "bck0morkntt2n_0f4adf"
+msgid "The Blood in you is not your own now. Every Rite spends it. When it runs low you drink; let it run dry, and the Fury drinks for you."
+msgstr "La Sangre que llevas ya no es tuya. Cada Rito la gasta. Cuando escasea, bebes; si dejas que se agote, la Furia bebe por ti."
+
+#. Íñigo
+msgctxt "bck0morkntt2n_868bec"
+msgid "And the Silence: the living above must never learn what walks beneath them. That is all. Hand me the tongs on your way out."
+msgstr "Y el Silencio: los vivos de arriba no deben saber nunca lo que camina bajo sus pies. Eso es todo. Al salir, pásame las tenazas."
+
+# captive
+#. The captive
+msgctxt "bck0morkntt2n_7934ba"
+msgid "Stay back. I took the cross at Montpellier. I do not kneel to you."
+msgstr "Atrás. Tomé la cruz en Montpellier. No me arrodillo ante ti."
+
+#. The captive
+msgctxt "bck0morkntt2n_efd635"
+msgid "You are the friar. I saw you fall at the gate. I saw them open your throat."
+msgstr "Tú eres el fraile. Te vi caer en la puerta. Vi cómo te abrían la garganta."
+
+#. The captive
+msgctxt "bck0morkntt2n_cd80b8"
+msgid "My leg is broken, and I am thirsty, and I am not afraid of you. Do what you came for."
+msgstr "Tengo la pierna rota, y tengo sed, y no te tengo miedo. Haz aquello a lo que has venido."
+
+#. choice
+msgctxt "bck0morkntt2n_24e725"
+msgid "Drink a little"
+msgstr "Beber un poco"
+
+#. The captive
+msgctxt "bck0morkntt2n_dfb00d"
+msgid "You stopped. Why did you stop?"
+msgstr "Te has detenido. ¿Por qué te has detenido?"
+
+#. choice
+msgctxt "bck0morkntt2n_a8df0b"
+msgid "Drain him"
+msgstr "Apurarlo hasta el final"
+
+#. Álvar
+msgctxt "bck0morkntt2n_afacd5"
+msgid "The Blood is warm. He is not."
+msgstr "La Sangre está caliente. Él no."
+
+#. choice
+msgctxt "bck0morkntt2n_51df10"
+msgid "Leave him be"
+msgstr "Dejarlo en paz"
+
+#. The captive
+msgctxt "bck0morkntt2n_4047ed"
+msgid "Go, then. Whatever you are, I will pray for you. I do not know to whom."
+msgstr "Vete, pues. Seas lo que seas, rezaré por ti. No sé a quién."
+
+#. The captive
+msgctxt "bck0morkntt2n_c58f81"
+msgid "You again. You could have, and you did not. I think about that more than the leg."
+msgstr "Otra vez tú. Pudiste hacerlo, y no lo hiciste. Pienso en eso más que en la pierna."
+
+#. The captive
+msgctxt "bck0morkntt2n_ee06a9"
+msgid "My arm still burns where you drank. Come no closer."
+msgstr "Aún me arde el brazo donde bebiste. No te acerques más."
+
+# zahra
+#. Zahra
+msgctxt "bck0morkntt2n_2c4e22"
+msgid "So you are the friar from the gate. How does the Blood sit in you? Heavy, still?"
+msgstr "Así que tú eres el fraile de la puerta. ¿Cómo te sienta la Sangre? ¿Todavía pesa?"
+
+#. Zahra
+msgctxt "bck0morkntt2n_8505c0"
+msgid "I was a physician in Córdoba before my Turning. I still look at the wound before the face."
+msgstr "Era médica en Córdoba antes de mi Conversión. Todavía miro la herida antes que la cara."
+
+#. Zahra
+msgctxt "bck0morkntt2n_1b8d8a"
+msgid "The crusader in the alcove has gone quiet. Was that you? Was it hunger, or obedience?"
+msgstr "El cruzado de la celda se ha quedado callado. ¿Fuiste tú? ¿Fue hambre, u obediencia?"
+
+#. Zahra
+msgctxt "bck0morkntt2n_8f8c4f"
+msgid "You left the crusader breathing. Was that mercy, or did you not know how?"
+msgstr "Dejaste respirar al cruzado. ¿Fue piedad, o no supiste cómo?"
+
+#. Zahra
+msgctxt "bck0morkntt2n_7b5359"
+msgid "Malakor wants you below. Has he told you what is down there? No. He never does."
+msgstr "Malakor te quiere abajo. ¿Te ha dicho qué hay allí? No. Nunca lo dice."
+
+#. Zahra
+msgctxt "bck0morkntt2n_01605a"
+msgid "Then I will come with you and see it for myself. Look at me. Look hard."
+msgstr "Entonces iré contigo y lo veré con mis propios ojos. Mírame. Mírame bien."
+
+#. Zahra
+msgctxt "bck0morkntt2n_4bb1cb"
+msgid "Do you feel it behind the eyes? Hold a man's gaze like that and he forgets how to move."
+msgstr "¿Lo sientes detrás de los ojos? Sostén así la mirada de un hombre y olvidará cómo moverse."
+
+#. Zahra
+msgctxt "bck0morkntt2n_6b4885"
+msgid "It costs Blood, like everything here. Who do you think pays for it in the end?"
+msgstr "Cuesta Sangre, como todo aquí. ¿Quién crees que lo paga al final?"
+
+# gonzalo
+#. Gonzalo
+msgctxt "bck0morkntt2n_7f6011"
+msgid "You are the new one."
+msgstr "Tú eres el nuevo."
+
+#. Gonzalo
+msgctxt "bck0morkntt2n_d88f3d"
+msgid "I made blades in this cellar before your grandfather was born. I serve the Sangre."
+msgstr "Forjaba hojas en este sótano antes de que naciera tu abuelo. Sirvo a la Estirpe."
+
+#. Gonzalo
+msgctxt "bck0morkntt2n_436635"
+msgid "Zahra asks the questions. I carry the hammer."
+msgstr "Zahra hace las preguntas. Yo llevo el martillo."
+
+#. Gonzalo
+msgctxt "bck0morkntt2n_63e08a"
+msgid "Malakor says I go below with you. So I go."
+msgstr "Malakor dice que bajo contigo. Así que bajo."
+
+#. Gonzalo
+msgctxt "bck0morkntt2n_e91e97"
+msgid "Keep your blade low. Walk."
+msgstr "Lleva la hoja baja. Camina."

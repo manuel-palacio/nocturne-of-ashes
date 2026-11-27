@@ -3,6 +3,13 @@ extends Node
 ## Runs one conversation at a time through the Dialogue Manager add-on, the only place that knows the
 ## add-on's API: shows each line with the choices whose condition holds, and goes on when told to.
 ##
+## Texts: the add-on translates each line and choice as it is found, through the translation server,
+## by its English text with the line's static id (`[ID:…]` in the file) as the message context, so a
+## line without its translation reads as written. Speakers are given by the name the conversation
+## gives, the key portraits and the room's characters go by; `speaker_name()` is the name to show. When
+## the language changes, the line on show and its choices are told again in the new one
+## (`line_retold`).
+##
 ## A conversation reaches the game only through the `StoryHooks` it is started with: the add-on is
 ## told not to look in the current scene, singletons, classes or autoloads, and not to load files.
 ## Lines and choices are given as written. Each conversation gets its own copy of the hooks it is
@@ -16,12 +23,17 @@ extends Node
 
 ## A line is shown. `choices` lists the open choices in order; it is empty for a plain line.
 signal line_shown(speaker: String, text: String, choices: Array[String])
+## The language changed while a line was on show: the same line and choices, in the new language.
+signal line_retold(speaker: String, text: String, choices: Array[String])
 ## The conversation ended: it ran out, went wrong, or `stop()` was called.
 signal finished
 
 ## Real seconds the runner waits for a line before it gives the conversation up.
 const WATCHDOG_SECONDS: float = 2.0
 const _ONLY_HOOKS: String = "A conversation may only use the story hooks, not %s.%s"
+## The message context of a speaker's name in the catalogues, as the add-on's translation tooling
+## writes it.
+const SPEAKER_CONTEXT: StringName = &"dialogue"
 
 
 ## Notes errors logged by anyone, so the runner can tell that a line request went wrong.
@@ -55,6 +67,11 @@ func _enter_tree() -> void:
 
 func _exit_tree() -> void:
 	OS.remove_logger(_errors)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED and _line != null:
+		_retell()
 
 
 func _process(_delta: float) -> void:
@@ -106,6 +123,12 @@ func is_running() -> bool:
 ## Who speaks the line on show; "" while no line is on show.
 func speaker() -> String:
 	return _line.character if _line != null else ""
+
+
+## The name to show for `speaker`, a speaker's name as the conversation gives it, in the current
+## language; the name itself when it has no translation.
+static func speaker_name(speaker: String) -> String:
+	return TranslationServer.translate(speaker, SPEAKER_CONTEXT) if not speaker.is_empty() else ""
 
 
 ## What the line on show says; "" while no line is on show.
@@ -165,6 +188,28 @@ func _fetch(key: String) -> void:
 			_choices.append(response)
 			texts.append(response.text)
 	line_shown.emit(line.character, line.text, texts)
+
+
+## Tells the line on show and its open choices again in the current language.
+func _retell() -> void:
+	_line.text = _translated(_line.id, _line.text)
+	var texts: Array[String] = []
+	for response: DialogueResponse in _choices:
+		response.text = _translated(response.id, response.text)
+		texts.append(response.text)
+	line_retold.emit(_line.character, _line.text, texts)
+
+
+## The add-on's translation, in the current language, of the line or choice `id` of the conversation
+## running; `shown` for one whose text is made as it is found (from variables, inline conditions or a
+## random pick), which is not found again, so it changes language from the next line on.
+func _translated(id: String, shown: String) -> String:
+	var data: Dictionary = _resource.lines.get(id.get_slice("@", id.get_slice_count("@") - 1), {})
+	var text: String = data.get("text", "")
+	if text.is_empty() or not (data.get("text_replacements", []) as Array).is_empty() \
+			or "[[" in text or "[if " in text:
+		return shown
+	return _manager().translate(data)
 
 
 ## Narrows what conversations can reach to the hooks passed with each line request.

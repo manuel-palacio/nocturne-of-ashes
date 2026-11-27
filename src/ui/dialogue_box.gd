@@ -9,8 +9,9 @@ extends Control
 ## the mouse over its whole area, so no click on it reaches the world. It grows upwards to fit its
 ## line and choices.
 ##
-## Texts: the speaker, the line and the choices are shown as written (automatic translation is off in
-## the scene); the hint, its only text, comes from `tr()` and follows a language change.
+## Texts: the line and the choices come translated from the runner, and again in the new language when
+## it changes (`DialogueRunner.line_retold`); the speaker's name is `DialogueRunner.speaker_name()`;
+## the hint comes from `tr()` and follows a language change. Automatic translation is off in the scene.
 
 ## The actions that take the first, second… open choice.
 const CHOICE_ACTIONS: Array[StringName] = [&"choice_1", &"choice_2", &"choice_3", &"choice_4"]
@@ -44,6 +45,7 @@ func _ready() -> void:
 func bind(runner: DialogueRunner) -> void:
 	_runner = runner
 	runner.line_shown.connect(_show_line)
+	runner.line_retold.connect(_show_line)
 	runner.finished.connect(_close)
 
 
@@ -79,9 +81,9 @@ func _show_line(speaker: String, text: String, choices: Array[String]) -> void:
 	if not visible:
 		_opened_on = Engine.get_process_frames()
 	visible = true
-	_speaker.text = speaker
+	_speaker.text = DialogueRunner.speaker_name(speaker)
 	_speaker.visible = not speaker.is_empty()
-	# Looked up by the speaker's name as the conversation gives it, which is also what is shown.
+	# Looked up by the speaker's name as the conversation gives it, never by the name shown.
 	_portrait.texture = Portraits.of_speaker(speaker)
 	_portrait_frame.visible = _portrait.texture != null
 	_text.text = text

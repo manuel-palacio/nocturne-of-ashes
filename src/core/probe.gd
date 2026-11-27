@@ -84,6 +84,7 @@ func _write_state(_args: Array) -> void:
 		"flags": story.to_dict()["flags"] if story != null else [],
 		"talking": _main.is_talking(),
 		"speaker": _main.dialogue.speaker(),
+		"speaker_name": DialogueRunner.speaker_name(_main.dialogue.speaker()),
 		"line": _main.dialogue.line_text(),
 		"choices": _main.dialogue.choice_texts(),
 		"notice": _main.hud.notice(),

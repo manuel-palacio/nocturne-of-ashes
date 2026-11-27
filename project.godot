@@ -101,7 +101,7 @@ select_next={
 
 [internationalization]
 
-locale/translations=PackedStringArray("res://assets/i18n/es.po")
+locale/translations=PackedStringArray("res://assets/i18n/es.po", "res://assets/i18n/es-dialogue.po")
 locale/fallback="en"
 
 [layer_names]
