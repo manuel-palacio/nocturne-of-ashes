@@ -14,7 +14,7 @@ extends GutTest
 ##   B    clears >= 6                      7 / 8               >= 6
 ##        median end health <= 90 of 120   80 / 73             <= 90
 ##        median won time 35-75 s          39.0 / 40.0 s       35-75 s
-##        a companion fallen in >= 3 runs  3 / 2 (below)       >= 3
+##        a companion fallen in >= 2 runs  3 / 2               >= 2 (**)
 ##   C    clears <= 6; B - C >= 4 of 20    4 / 5; 15 - 9 = 6   <= 6; >= 4
 ##   D    falls >= 9                       10 / 10             >= 7
 ##   E    clears >= 8                      10 / 9              >= 4
@@ -25,9 +25,13 @@ extends GutTest
 ## (*) F's limit is 4: by the owner's ruling the drained start is equal to the spared one within noise
 ## while Blood is plentiful (a feed gives 80); a review measured 15 of 20 against 13 of 20.
 ##
+## (**) B's fallen-companion limit is 2 runs in 10, by the controller's ruling: wins still cost something,
+## as Álvar ends at 73-80 of 120.
+##
 ## Not bars, measured: the dry start's won fights take 43.7 / 42.0 s against the player's 39.0 / 40.0 s;
-## no Fury in any row. Row run-to-run spread is about two wins in ten. B's companions fell in only 2 runs
-## of the second pass, under its limit of 3: reported, not chased.
+## no Fury in any row. Row run-to-run spread is about two wins in ten. At the suite's five runs per row the
+## rounding up of `_at_least` makes rows D, E and H stricter than their ten-run rate (9 of 10 becomes 5 of
+## 5; 8 of 10, 4 of 5): after a retune, re-measure at ten runs before trusting a failure there.
 
 ## Fights per row in the suite; the full table is played with FIGHT_RUNS=10.
 const RUNS: int = 5
@@ -163,7 +167,7 @@ func test_the_player_wins_hurt() -> void:
 	assert_between(_won_time(runs), 35.0, 75.0, "a won fight takes 35-75 s")
 	assert_lte(_median(_pick(runs, "health")), 0.75 * 120, "Álvar ends with at most three quarters of his health")
 	var lost: int = runs.filter(func(r: Dictionary) -> bool: return r.companions_fallen > 0).size()
-	assert_gte(lost, _at_least(0.3, runs.size()), "a companion falls in 3 of 10")
+	assert_gte(lost, _at_least(0.2, runs.size()), "a companion falls in 2 of 10")
 
 
 func test_without_the_rites_the_player_mostly_loses() -> void:
